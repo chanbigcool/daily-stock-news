@@ -371,6 +371,8 @@ new Chart(document.getElementById('heatmapChart'), {
   .history-bar button{padding:4px 16px;font-size:.68rem;font-weight:600;border:1px solid var(--border);border-radius:8px;background:var(--card-bg);cursor:pointer;transition:all .15s;}
   .history-bar button:hover{background:#e8ecf1;}
   .history-bar button.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .history-bar a.db-link{display:inline-flex;align-items:center;padding:4px 14px;font-size:.68rem;font-weight:600;color:var(--accent);border:1px solid #bfdbfe;border-radius:8px;background:#eff6ff;cursor:pointer;text-decoration:none;transition:all .15s;}
+  .history-bar a.db-link:hover{background:#dbeafe;}
 
   /* Footer */
   .footer{text-align:center;padding:14px;font-size:.66rem;color:var(--text-muted);border-top:1px solid var(--border);margin-top:20px;line-height:1.7;}
@@ -427,6 +429,7 @@ new Chart(document.getElementById('heatmapChart'), {
     <option value="">-- 选择日期 --</option>
   </select>
   <button id="today-btn" class="active" onclick="goToday()">今天</button>
+  <a class="db-link" onclick="location.href=(window.BASE||'')+'/db.html'">📊 数据查询</a>
 </div>
 
 <div class="stats-mini">
@@ -1212,6 +1215,14 @@ async function main() {
     execFileSync(process.execPath, [join(PROJECT_ROOT, 'scripts/quality-report.mjs')], { stdio: 'inherit' });
   } catch (err) {
     console.warn(`  ⚠ 数据质量回看页生成失败: ${err.message}`);
+  }
+
+  // 7.6 静态数据库(history/db.sqlite,真 SQLite)——失败仅告警,不破坏主流程
+  try {
+    const { buildDatabase } = await import('./db-build.mjs');
+    await buildDatabase();
+  } catch (err) {
+    console.warn(`  ⚠ 数据库构建失败: ${err.message}`);
   }
 
   // 8. Send push notification

@@ -138,6 +138,8 @@
   .history-bar button{padding:4px 16px;font-size:.68rem;font-weight:600;border:1px solid var(--border);border-radius:8px;background:var(--card-bg);cursor:pointer;transition:all .15s;}
   .history-bar button:hover{background:#e8ecf1;}
   .history-bar button.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .history-bar a.db-link{display:inline-flex;align-items:center;padding:4px 14px;font-size:.68rem;font-weight:600;color:var(--accent);border:1px solid #bfdbfe;border-radius:8px;background:#eff6ff;cursor:pointer;text-decoration:none;transition:all .15s;}
+  .history-bar a.db-link:hover{background:#dbeafe;}
 
   /* Footer */
   .footer{text-align:center;padding:14px;font-size:.66rem;color:var(--text-muted);border-top:1px solid var(--border);margin-top:20px;line-height:1.7;}
@@ -178,7 +180,7 @@
 <div class="header">
   <h1>📡 行业板块日报</h1>
   <div class="subtitle">2026-08-26 · 27 条精选 · 半导体 / 光模块 / 创新药 / 黄金</div>
-  <div class="subtitle">⏱ 最后更新: 2026-08-26 14:13:56（北京时间）</div>
+  <div class="subtitle">⏱ 最后更新: 2026-08-26 14:13:58（北京时间）</div>
   <div class="badge-row">
     <span class="chip chip-ai">AI 分析</span>
     <span class="chip chip-ai">中文翻译</span>
@@ -194,6 +196,7 @@
     <option value="">-- 选择日期 --</option>
   </select>
   <button id="today-btn" class="active" onclick="goToday()">今天</button>
+  <a class="db-link" onclick="location.href=(window.BASE||'')+'/db.html'">📊 数据查询</a>
 </div>
 
 <div class="stats-mini">
@@ -1068,7 +1071,7 @@
 <div class="news-card" onclick="this.classList.toggle('expanded')">
 <div class="card-left">
 <div class="card-cat cat-gold">黄金</div>
-<div class="fresh-badge">新</div>
+
 </div>
 <div class="card-right">
 <div class="card-title">高盛：年末黄金价格将达到每盎司4900美元 - 新浪财经</div>
@@ -1101,7 +1104,7 @@
 <div class="news-card" onclick="this.classList.toggle('expanded')">
 <div class="card-left">
 <div class="card-cat cat-semi">半导体</div>
-<div class="fresh-badge">新</div>
+
 </div>
 <div class="card-right">
 <div class="card-title">A股盘前速览：美股存储芯片、光通信集体上涨，中国资产多数上涨；油价大跳水，黄金上涨；创新药龙头业绩爆棚；A股上市公司中期分红2300亿 - 东方财富</div>
@@ -1134,7 +1137,7 @@
 <div class="news-card" onclick="this.classList.toggle('expanded')">
 <div class="card-left">
 <div class="card-cat cat-optics">光模块</div>
-<div class="fresh-badge">新</div>
+
 </div>
 <div class="card-right">
 <div class="card-title">【早报】美股存储、光通信板块，集体走强；伊朗与阿曼拟建立霍尔木兹海峡安全海上通道；油价大跌，金价小幅上涨；加拿大反制美国</div>
@@ -1167,7 +1170,7 @@
 <div class="news-card" onclick="this.classList.toggle('expanded')">
 <div class="card-left">
 <div class="card-cat cat-gold">黄金</div>
-<div class="fresh-badge">新</div>
+
 </div>
 <div class="card-right">
 <div class="card-title">现货黄金逼近4700美元 北京金饰零售价站上1369元/克</div>
@@ -1238,7 +1241,7 @@ const REFRESH_SECRET = "87vBu0o-PR89DWTVf8Eqko2j";
 const BASE = window.BASE || '';
 // 页面自身构建时间(UTC ISO)。auto-check 用它和 history/build-state.json 的
 // generatedAt 比较:定时/推送构建完成后,停留在首页的用户会自动刷新到最新版。
-const PAGE_GENERATED_AT = "2026-08-26T06:13:56.792Z";
+const PAGE_GENERATED_AT = "2026-08-26T06:13:58.809Z";
 const PHASE_CN = { fetch: '抓取新闻', analyze: 'AI 分析', 'analyze-kw': '关键词引擎', chart: '图表数据', write: '写入文件', commit: '提交 git', push: '推送 git', cloud: '云端构建', done: '完成', error: '失败' };
 let refreshStartedAt = 0;
 let refreshTimer = null;

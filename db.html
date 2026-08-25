@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>数据查询 · 行业板块日报</title>
+<style>
+  :root { --bg:#f0f2f5; --card-bg:#fff; --border:#e2e4e9; --text:#1a1d28; --text-dim:#5f6570; --text-muted:#9ca0af; --accent:#2563eb; --radius:12px; --shadow:0 1px 3px rgba(0,0,0,.04); }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased;}
+  .container{max-width:1000px;margin:0 auto;padding:16px 12px 40px;}
+  .header{text-align:center;padding:18px 16px 10px;}
+  .header h1{font-size:1.4rem;font-weight:800;color:#0f172a;letter-spacing:-0.02em;}
+  .header .subtitle{font-size:.76rem;color:var(--text-dim);margin-top:2px;}
+  .back-link{display:inline-block;margin-top:8px;font-size:.72rem;color:var(--accent);text-decoration:none;font-weight:600;}
+  .back-link:hover{text-decoration:underline;}
+  .tabs{display:flex;gap:6px;background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:4px;margin:14px 0;}
+  .tab{flex:1;padding:8px 0;border:none;background:transparent;font-size:.8rem;font-weight:600;color:var(--text-dim);border-radius:8px;cursor:pointer;transition:background .15s,color .15s;}
+  .tab.active{background:var(--accent);color:#fff;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .filter-form{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+  @media(max-width:640px){.filter-form{grid-template-columns:repeat(2,1fr);}}
+  .filter-form label{display:flex;flex-direction:column;gap:4px;font-size:.64rem;color:var(--text-dim);font-weight:600;}
+  .filter-form input,.filter-form select{padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:.78rem;background:#fff;color:var(--text);}
+  .filter-form input:focus,.filter-form select:focus{outline:2px solid #bfdbfe;border-color:var(--accent);}
+  .form-actions{display:flex;gap:8px;align-items:flex-end;}
+  .btn-primary{padding:7px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:.76rem;font-weight:600;cursor:pointer;}
+  .btn-primary:hover{opacity:.9;}
+  .btn-ghost{padding:7px 14px;background:#fff;border:1px solid var(--border);border-radius:8px;font-size:.76rem;color:var(--text-dim);cursor:pointer;}
+  .btn-ghost:hover{border-color:#c8cbd4;color:var(--text);}
+  .result-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;font-size:.74rem;color:var(--text-dim);}
+  .eq-sql{font-size:.66rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .eq-sql code{background:#f1f5f9;padding:1px 6px;border-radius:4px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;}
+  .table-wrap{overflow-x:auto;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);margin-top:8px;}
+  .table-wrap .result-header{margin-top:0;padding:8px 10px 0;}
+  .result-table{width:100%;border-collapse:collapse;font-size:.72rem;}
+  .result-table th{position:sticky;top:0;background:#f8fafc;color:var(--text-dim);font-weight:700;text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap;}
+  .result-table td{padding:6px 10px;border-bottom:1px solid #eef0f4;color:var(--text);vertical-align:top;}
+  .result-table tr:last-child td{border-bottom:none;}
+  .result-table tr:hover td{background:#f8fafc;}
+  .null{color:var(--text-muted);font-style:italic;}
+  .sql-toolbar{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;}
+  #sql-input{width:100%;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.78rem;line-height:1.5;border:1px solid var(--border);border-radius:8px;padding:8px;resize:vertical;color:var(--text);background:#f8fafc;}
+  #sql-input:focus{outline:2px solid #bfdbfe;border-color:var(--accent);}
+  .sql-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .examples{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:.68rem;}
+  .ex-label{color:var(--text-muted);font-weight:600;}
+  .chip-example{padding:3px 10px;border-radius:12px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;font-size:.68rem;cursor:pointer;font-weight:600;}
+  .chip-example:hover{background:#dbeafe;}
+  .cheatsheet{margin-top:10px;font-size:.7rem;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-dim);}
+  .cheatsheet summary{cursor:pointer;font-weight:700;color:var(--text);font-size:.74rem;}
+  .cheatsheet p{margin:4px 0;}
+  .cheatsheet code{background:#f1f5f9;padding:1px 5px;border-radius:4px;font-family:ui-monospace,Consolas,monospace;font-size:.68rem;}
+  .err{color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;font-size:.72rem;margin-top:10px;display:none;white-space:pre-wrap;font-family:ui-monospace,Consolas,monospace;}
+  .hidden{display:none;}
+  #form-chart{display:none;margin-top:10px;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;}
+  .disclaimer{font-size:.66rem;color:#b91c1c;margin-top:18px;text-align:center;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📊 数据查询</h1>
+    <div class="subtitle">基于每日构建的真 SQLite 数据库 · <span id="meta-info">加载中…</span></div>
+    <a class="back-link" href="./">← 返回今日日报</a>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="form">筛选查询</button>
+    <button class="tab" data-tab="sql">SQL 控制台</button>
+  </div>
+
+  <section class="panel active" id="panel-form">
+    <form id="filter-form" class="filter-form">
+      <label>日期从<input type="text" id="f-date-from" placeholder="20260801"></label>
+      <label>日期至<input type="text" id="f-date-to" placeholder="20260825"></label>
+      <label>板块
+        <select id="f-cat">
+          <option value="">全部</option><option>半导体</option><option>光模块</option><option>创新药</option><option>黄金</option>
+        </select>
+      </label>
+      <label>方向
+        <select id="f-dir">
+          <option value="">全部</option><option>利好</option><option>利空</option><option>分化</option><option>中性</option>
+        </select>
+      </label>
+      <label>影响
+        <select id="f-impact">
+          <option value="">全部</option><option>极高</option><option>高</option><option>中</option><option>低</option>
+        </select>
+      </label>
+      <label>标题/摘要含<input type="text" id="f-kw" placeholder="关键词"></label>
+      <label>结果上限<input type="number" id="f-limit" value="50" min="1" max="500"></label>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">查询</button>
+        <button type="button" class="btn-ghost" id="f-reset">重置</button>
+      </div>
+    </form>
+    <div class="result-header">
+      <span id="form-result-count"></span>
+      <div class="eq-sql">等价 SQL：<code id="form-eq-sql"></code></div>
+    </div>
+    <div id="form-chart"><canvas id="form-chart-canvas" height="120"></canvas></div>
+    <div class="table-wrap"><table id="form-table" class="result-table"><thead></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="panel" id="panel-sql">
+    <div class="sql-toolbar">
+      <textarea id="sql-input" rows="4" spellcheck="false">SELECT cat, COUNT(*) AS 新闻数 FROM news GROUP BY cat ORDER BY 新闻数 DESC</textarea>
+      <div class="sql-actions">
+        <button class="btn-primary" id="sql-run">▶ 运行</button>
+        <button class="btn-ghost" id="sql-explain">EXPLAIN 查询计划</button>
+        <button class="btn-ghost" id="schema-btn">查看表结构</button>
+        <button class="btn-ghost" id="sql-clear">清空</button>
+      </div>
+    </div>
+    <div class="examples">
+      <span class="ex-label">示例：</span>
+      <button class="chip-example" data-sql="SELECT date, cat, dir, impact, title, score FROM news WHERE date = (SELECT MAX(date) FROM news) ORDER BY score DESC LIMIT 15">今日新闻 TOP</button>
+      <button class="chip-example" data-sql="SELECT date, COUNT(*) AS n FROM news GROUP BY date ORDER BY date DESC LIMIT 15">每日条数趋势</button>
+      <button class="chip-example" data-sql="SELECT dir, COUNT(*) AS n FROM news GROUP BY dir ORDER BY n DESC">方向分布</button>
+      <button class="chip-example" data-sql="SELECT impact, COUNT(*) AS n FROM news GROUP BY impact ORDER BY n DESC">影响等级</button>
+      <button class="chip-example" data-sql="SELECT n.date, n.cat, n.title, d.count AS 板块当日条数 FROM news n JOIN daily d USING(date, cat) WHERE n.dir = '利好' ORDER BY n.score DESC LIMIT 15">JOIN 教学例</button>
+      <button class="chip-example" data-sql="SELECT name, count, cats, firstDate, lastDate FROM companies ORDER BY count DESC LIMIT 10">公司榜 TOP10</button>
+      <button class="chip-example" data-sql="SELECT date, cat, count, etfChg FROM daily WHERE cat = '光模块' ORDER BY date DESC LIMIT 10">光模块 ETF 涨跌</button>
+    </div>
+    <details class="cheatsheet">
+      <summary>SQL 速查（真实 SQLite，与命令行 sqlite 行为一致）</summary>
+      <p>表：<code>news</code>（新闻，15 列：date/cat/dir/impact/title/summary/score…）、<code>daily</code>（每日×板块聚合，含 etfChg）、<code>companies</code>（公司频次）、<code>meta</code>（元信息）。</p>
+      <p>关联：三表以 <code>date</code>、<code>cat</code>、公司名 概念关联；<code>news</code> 与 <code>daily</code> 可用 <code>JOIN … USING(date, cat)</code>。</p>
+      <p>常用：<code>SELECT</code> <code>WHERE</code> <code>GROUP BY</code> <code>HAVING</code> <code>ORDER BY</code> <code>LIMIT</code> <code>DISTINCT</code>；聚合 <code>COUNT</code> <code>SUM</code> <code>AVG</code> <code>MIN</code> <code>MAX</code>；谓词 <code>=</code> <code>&gt;</code> <code>&lt;</code> <code>LIKE</code> <code>IN</code> <code>BETWEEN</code> <code>AND/OR/NOT</code>。</p>
+      <p>本库为完整 SQLite：JOIN、子查询、窗口函数等均可尝试，行为与真库一致。</p>
+    </details>
+    <div id="sql-error" class="err"></div>
+    <div class="result-header">
+      <span id="sql-result-count"></span>
+      <span id="sql-ms"></span>
+    </div>
+    <div class="table-wrap"><table id="sql-table" class="result-table"><thead></thead><tbody></tbody></table></div>
+    <div class="table-wrap hidden" id="plan-wrap">
+      <div class="result-header"><span>查询计划（EXPLAIN QUERY PLAN）</span><span id="plan-count"></span></div>
+      <table id="plan-table" class="result-table"><thead></thead><tbody></tbody></table>
+    </div>
+    <div class="table-wrap hidden" id="schema-wrap">
+      <div class="result-header"><span>表结构（sqlite_master）</span><span id="schema-count"></span></div>
+      <table id="schema-table" class="result-table"><thead></thead><tbody></tbody></table>
+    </div>
+  </section>
+
+  <footer class="disclaimer">本页面为学习练手项目：演示真实 SQLite（sql.js / WASM）在纯静态页面的查询。数据来自公开资讯整理，不构成投资建议。</footer>
+</div>
+<script src="./assets/chart.umd.min.js"></script>
+<script src="./assets/sql-wasm.js"></script>
+<script type="module" src="./assets/db-client.js"></script>
+</body>
+</html>

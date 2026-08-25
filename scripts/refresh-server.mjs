@@ -35,6 +35,7 @@ const MIME = {
   'png': 'image/png',
   'jpg': 'image/jpeg',
   'svg': 'image/svg+xml',
+  'wasm': 'application/wasm',
 };
 function mimeOf(path) {
   return MIME[path.split('.').pop()] || 'application/octet-stream';
@@ -316,6 +317,17 @@ const server = http.createServer((req, res) => {
       serveFile(res, 200, 'text/html; charset=utf-8', html);
     } catch (err) {
       serveFile(res, 500, 'text/plain', '历史数据解析失败: ' + err.message);
+    }
+    return;
+  }
+
+  // Serve database query page (db.html) — root-level static page
+  if (req.method === 'GET' && req.url === '/db.html') {
+    const filePath = join(ROOT, 'db.html');
+    if (existsSync(filePath)) {
+      serveFile(res, 200, 'text/html; charset=utf-8', readFileSync(filePath, 'utf-8'));
+    } else {
+      serveFile(res, 404, 'text/plain', 'db.html 不存在，请先构建');
     }
     return;
   }

@@ -54,6 +54,7 @@ flowchart LR
 | AI 分析 | Claude API 或本地关键词引擎兜底 (无需密钥) |
 | 渲染 | 纯字符串拼接 HTML, 内联 CSS + 原生 JS |
 | 图表 | Chart.js 4.4 (CDN), 无构建时依赖 |
+| 数据库 | `node:sqlite`（构建期生成真 SQLite）+ sql.js (WebAssembly，浏览器内跑完整真 SQL) |
 | 定时调度 | GitHub Actions (`0 1`/`30 4`/`0 12 * * *`, 北京时间 09/12:30/20, 每天含周末) + 心跳兜底 (`0 6/14 * * *`, 北京 14/22, 当天存档缺失才补建) |
 | 部署 | `peaceiris/actions-gh-pages@v4` → GitHub Pages（国内可直连）；EdgeOne Pages 备用；jsDelivr 仅作静态资源 CDN（其对 `.html` 返回 text/plain，不能托管页面） |
 | 推送通知 | Server酱3 (微信消息推送) |
@@ -117,6 +118,7 @@ daily-stock-news/
 │   └── daily-heartbeat.yml     # 心跳自愈:北京 14/22 兜底,当天存档缺失才补建
 ├── scripts/
 │   ├── build-daily.mjs            # 构建入口（编排 ETL 流水线 + 渲染 + 推送）
+│   ├── db-build.mjs               # 数据库构建（node:sqlite 聚合 history/ → db.sqlite）
 │   └── refresh-server.mjs         # 本地刷新服务（端口 3456，含历史 API，仅本机）
 ├── pipeline/
 │   ├── config.mjs                 # 配置中心（API 源、RSS Feed、ETF 列表、关键词规则）
@@ -126,17 +128,25 @@ daily-stock-news/
 │   ├── events.mjs                 # 事件级去重（三层漏斗 + 可插拔 Embedding 钩子）
 │   ├── analyze.mjs                # AI 分析层（Claude 兼容 API 逐条研判 + 关键词引擎兜底）
 │   └── charts.mjs                 # 图表数据层（ETF 历史累积、情绪/冲击/方向数据集）
+├── assets/                        # 前端静态资源（vendored，无 CDN 依赖）
+│   ├── chart.umd.min.js           # Chart.js 4.4
+│   ├── sql-wasm.js / sql-wasm.wasm # sql.js（SQLite WebAssembly，数据查询页真引擎）
+│   └── db-client.js               # 数据查询页逻辑（加载 db.sqlite + 表单筛选 + SQL 控制台）
 ├── output/                        # 构建产物
 │   ├── 股市热点日报_20260804.html
 │   ├── 股市热点日报_20260804.json
 │   ├── etf_history.json           # ETF 价格历史（趋势图数据源）
 │   └── ...
-├── history/                       # 历史存档（按天 JSON + 静态 HTML + 事件存档）
+├── history/                       # 历史存档（按天 JSON + 静态 HTML + 事件存档 + 数据库）
 │   ├── 日报_YYYYMMDD.json         # 当日全量数据
 │   ├── 日报_YYYYMMDD.html         # 静态历史页
 │   ├── events_YYYYMMDD.json       # 当日事件级去重结果（含多来源聚合）
-│   └── dates.json                 # 日期索引
+│   ├── dates.json                 # 日期索引
+│   └── db.sqlite                  # 全量真 SQLite 数据库（数据查询页数据源）
+├── tests/                         # 单元测试（node --test 自动发现）
+│   └── db-build.test.mjs          # 数据库构建测试（归一化 + 端到端导入断言）
 ├── index.html                     # 当日日报（部署入口）
+├── db.html                        # 数据查询页（表单筛选 + SQL 控制台，根级静态页）
 ├── package.json
 └── .gitignore
 ```
@@ -195,6 +205,82 @@ daily-stock-news/
 | `GET` | `/status` | 查询刷新任务状态 |
 
 > **注意**：`/refresh` 会执行 `git push`，因此该服务刻意只监听本机（刷新按钮在前端用 `isLocalHost()` 门控，公网域名下自动禁用）。公网站点为纯静态托管：历史下拉框读静态文件 `history/dates.json` 与 `history/日报_YYYYMMDD.html`，不需要此服务。
+
+---
+
+## 数据库与查询（db.html）
+
+> 全量历史存档导入**真 SQLite**，前端在浏览器内跑完整真 SQL —— 语法与命令行 `sqlite3` 行为一致，无任何子集限制（支持 JOIN / 子查询 / 窗口函数 / 索引）。
+
+### 原理
+
+- **构建期**：`scripts/db-build.mjs` 用 Node 内置 `node:sqlite` 扫描 `history/日报_*.json` 全量存档，降维归一化后写入 `history/db.sqlite`（build-daily 主流程 step 7.6 自动调用；也可独立运行 `node scripts/db-build.mjs`）
+- **查询期**：`db.html` 用 vendored 的 sql.js（SQLite 官方 C 代码编译为 WebAssembly）把 `.sqlite` 加载进浏览器内存，`SQL.Database` 就是一个真 SQLite 实例。表单筛选只是把条件翻译成 SQL 字符串，交给同一个真引擎执行
+- 每次构建覆盖 `history/db.sqlite`，随 `git add history/` 自动提交，GitHub Pages 部署后线上即为最新版，**无需任何后端**
+
+### 四表结构（真 CREATE TABLE）
+
+```sql
+CREATE TABLE news(          -- 单条新闻（全量，日期+板块+方向+影响+置信度等 15 列）
+  id TEXT, date TEXT NOT NULL, cat TEXT, dir TEXT,
+  impact TEXT, certainty TEXT, tw TEXT, tickers TEXT, title TEXT,
+  summary TEXT, source TEXT, pubDate TEXT, comps TEXT, link TEXT, score REAL);
+CREATE INDEX idx_news_date ON news(date);
+CREATE INDEX idx_news_cat  ON news(cat);
+CREATE INDEX idx_news_dir  ON news(dir);
+
+CREATE TABLE daily(         -- 日期×板块聚合（条数/利好/利空/…/ETF 涨跌/冲击/摘要）
+  date TEXT NOT NULL, cat TEXT NOT NULL,
+  count INTEGER, bull INTEGER, bear INTEGER, mix INTEGER, neu INTEGER,
+  vhigh INTEGER, high INTEGER, mid INTEGER, low INTEGER,
+  etfChg REAL, shock TEXT, tickers TEXT, summary TEXT,
+  PRIMARY KEY(date, cat));
+
+CREATE TABLE companies(     -- 受影响公司/标的名（频次 + 首末出现日期 + 板块集合）
+  name TEXT PRIMARY KEY, ticker TEXT, cats TEXT,
+  count INTEGER, firstDate TEXT, lastDate TEXT);
+
+CREATE TABLE meta(key TEXT PRIMARY KEY, value TEXT);  -- version/generatedAt/days/newsCount
+```
+
+页面「表结构」按钮直接从 `sqlite_master` 读出这四张表的真实建表语句。
+
+### 真外键 vs 概念外键
+
+三个业务表通过 `date` / `cat` / `name` **概念关联**，但未声明 `FOREIGN KEY` 约束：`news.date` 与 `daily.date`、`news.comps`（`|` 分隔的公司名）与 `companies.name` 是应用层约定，SQLite 不强制。这是刻意简化——外键约束是 SQL 的重要概念，可以在控制台用 `PRAGMA foreign_keys=ON;` 手动开启，对比「概念外键」与「强制外键」的行为差异。
+
+- 教学例：`news JOIN daily USING(date, cat)` 是真可跑的 JOIN（连接键 = 日期 + 板块）
+- 「EXPLAIN」按钮输出 `EXPLAIN QUERY PLAN`：观察 `SEARCH ... USING INDEX idx_news_date`（走索引）与 `SCAN news`（全表扫描）的区别
+
+### 常用 SQL 示例
+
+```sql
+-- 某天某板块的新闻，按置信度排序
+SELECT title, source, score FROM news
+WHERE date='20260825' AND cat='光模块' ORDER BY score DESC;
+
+-- 按板块聚合：条数 + 平均置信度
+SELECT cat, COUNT(*) AS 条数, ROUND(AVG(score), 2) AS 平均置信
+FROM news GROUP BY cat ORDER BY 条数 DESC;
+
+-- 新闻 JOIN 板块日报：新闻方向 + 当日 ETF 涨跌对照
+SELECT n.date, n.cat, n.title, n.dir, d.etfChg
+FROM news n JOIN daily d USING(date, cat)
+WHERE n.date='20260825' AND n.dir='利好';
+
+-- 每日新闻量趋势（前端趋势图的等价 SQL）
+SELECT date, COUNT(*) FROM news GROUP BY date ORDER BY date;
+```
+
+### 页面功能
+
+| 功能 | 说明 |
+|------|------|
+| 表单筛选 | 日期/板块/方向/影响/关键词 → 自动生成 WHERE 子句，页面同时展示**等价 SQL**（学 SQL 最快的方式：点按钮对比生成的语句） |
+| SQL 控制台 | 任意真 SQL 直接运行（含 JOIN / GROUP BY / 子查询），显示行数 + 耗时，`Ctrl+Enter` 快捷运行 |
+| EXPLAIN | 查看查询计划，对比索引加速前后的搜索方式 |
+| 表结构 | 从 `sqlite_master` 读取四张表的真实建表语句 |
+| 趋势图 | 筛选结果按日期的新闻量折线图（Chart.js） |
 
 ---
 
