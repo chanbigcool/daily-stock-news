@@ -4,7 +4,7 @@
 // 前端 assets/db-client.js 用 sql.js（wasm）加载查询，SQL 为完整真实 SQLite 语义。
 // 零 npm 依赖；由 build-daily.mjs step 7.6 调用，也可独立运行或单测。
 
-import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
+import { readFileSync, readdirSync, existsSync, statSync, rmSync } from 'fs';
 import { join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -178,6 +178,9 @@ export async function buildDatabase(histDir = _historyDir, dbPath = _dbPath) {
   allNews.sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
   allNews.forEach((n, i) => { if (!n.id) n.id = `${n.date}_${i}`; });
 
+  // 先删旧文件再建新库:node:sqlite 打开已存在文件不会清空,而 news 无唯一约束,
+  // 直接重建会在旧行上累积重复(CI checkout 会恢复上次提交的 db.sqlite)。
+  rmSync(dbPath, { force: true });
   const db = new DatabaseSync(dbPath);
   try {
     db.exec(SCHEMA);

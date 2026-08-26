@@ -163,6 +163,21 @@ test('buildDatabase:端到端生成真 SQLite 并可查询', async () => {
   }
 });
 
+test('buildDatabase:重复构建不累积(先删旧库再建)', async () => {
+  const r1 = await buildDatabase(histDir, dbPath);
+  const r2 = await buildDatabase(histDir, dbPath);
+  assert.equal(r1.newsCount, 4);
+  assert.equal(r2.newsCount, 4);
+  const { DatabaseSync } = await import('node:sqlite');
+  const db = new DatabaseSync(dbPath, { readOnly: true });
+  try {
+    const c = db.prepare('SELECT COUNT(*) c FROM news').get().c;
+    assert.equal(c, 4, '重复构建后 news 不应累积重复行');
+  } finally {
+    db.close();
+  }
+});
+
 test('buildDatabase:空 history 不抛且生成空库', async () => {
   const emptyDir = join(dir, 'empty');
   mkdirSync(emptyDir, { recursive: true });
