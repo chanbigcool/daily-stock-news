@@ -77,7 +77,7 @@ jobs:
         run: |
           rm -rf deploy-stage
           mkdir -p deploy-stage
-          cp -r index.html history quality deploy-stage/
+          cp -r index.html history quality assets deploy-stage/
 
       - name: Deploy preview to gh-pages
         if: steps.build_preview.outcome == 'success'
@@ -124,7 +124,7 @@ jobs:
         run: |
           rm -rf deploy-stage
           mkdir -p deploy-stage
-          cp -r index.html history quality deploy-stage/
+          cp -r index.html history quality assets deploy-stage/
 
       - name: Deploy AI to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
