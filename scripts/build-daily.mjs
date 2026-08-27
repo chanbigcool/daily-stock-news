@@ -615,6 +615,7 @@ function resetBtn() {
   btn.textContent = '🔄 刷新日报';
 }
 async function pollStatus(myRunId) {
+  let previewNotified = false; // 每次轮询会话只提示一次"基础版已发布"
   // ── 云端模式: 轮询 history/build-state.json,用 runId 精确判断"这一次"构建完成 ──
   if (isCloud) {
     const MAX = 90; // 8s × 90 ≈ 12 分钟,覆盖 Actions 排队 + 构建 + 部署
@@ -628,6 +629,11 @@ async function pollStatus(myRunId) {
         const d = await r.json();
         netErrors = 0;
         updateBtnPhase('cloud');
+        // 两阶段构建:preview = 纯关键词简报已上线,提示后继续轮询,等 AI 版 done
+        if (d.state === 'preview' && myRunId && d.runId === myRunId && !previewNotified) {
+          previewNotified = true;
+          showToast('基础版已发布（关键词引擎），AI 研判生成中，完成后自动刷新', 'ok');
+        }
         if (d.state === 'done' && myRunId && d.runId === myRunId) {
           stopBtnTimer();
           showToast('刷新完成!即将自动重载', 'ok');
@@ -692,6 +698,9 @@ async function checkForNewBuild() {
     if (!r.ok) return;
     const d = await r.json();
     if (!d.generatedAt || !PAGE_GENERATED_AT) return;
+    // 两阶段构建的 preview(纯关键词简报)不自动跳转 —— 定时/后台升级等 AI 版
+    // (done)落地后才刷新;只有手动刷新流程的 pollStatus 才提示预览版。
+    if (d.state === 'preview') return;
     if (d.generatedAt <= PAGE_GENERATED_AT) return; // 页面已是最新
     if (d.generatedAt === localStorage.getItem(AUTO_RELOAD_KEY)) return; // 已为这一版刷过
     localStorage.setItem(AUTO_RELOAD_KEY, d.generatedAt);
@@ -996,7 +1005,10 @@ function saveHistoryArchive(dateStr, todayDisplay, result, etfData, chartData) {
     runId: process.env.RUN_ID || '',
     generatedAt: new Date().toISOString(),
     date: dateStr,
-    state: 'done',
+    // 两阶段构建:preview 阶段(纯关键词简报)写 'preview',AI 阶段写 'done'。
+    // 前端手动刷新轮询到 preview 提示"基础版已发布,AI 更新中"并继续轮询,
+    // 到 done 才 reload;定时/后台自动检测看到 preview 不跳转,等 done。
+    state: process.env.BUILD_PHASE === 'preview' ? 'preview' : 'done',
   }, null, 2), 'utf-8');
   console.log(`🚀 构建状态: ${HISTORY_DIR}/build-state.json (runId=${process.env.RUN_ID || 'none'})`);
 }

@@ -290,10 +290,37 @@ export function groupBySector(items) {
     .filter(g => g.items.length > 0);
 }
 
+// 大分片二次拆分:> SHARD_MAX_ITEMS 的板块拆成多个 ≤10 条的并行块,让每个请求
+// 都落在 ~2-3 分钟的正常生成区间(25 条大分片实测 6.5 分钟,预算救不了)。
+// 25 条大分片拆小了,配合 AI_BUDGET_MS 软预算,健康日子全覆盖、异常只掐个别块。
+// sector 保持板块原名(供 prompt 的【板块】前缀与 key_points);label 形如
+// "半导体#1/#2"用于日志与重试提示。
+const SHARD_MAX_ITEMS = 10;
+export function chunkShards(groups) {
+  const out = [];
+  for (const g of groups) {
+    if (g.items.length <= SHARD_MAX_ITEMS) {
+      out.push({ ...g, label: g.sector });
+      continue;
+    }
+    const n = Math.ceil(g.items.length / SHARD_MAX_ITEMS);
+    for (let k = 0; k < g.items.length; k += SHARD_MAX_ITEMS) {
+      out.push({
+        sector: g.sector,
+        label: `${g.sector}#${k / SHARD_MAX_ITEMS + 1}`,
+        items: g.items.slice(k, k + SHARD_MAX_ITEMS),
+      });
+    }
+    console.log(`  ✂️  ${g.sector} ${g.items.length} 条拆成 ${n} 个并行块`);
+  }
+  return out;
+}
+
 // 单板块 AI 研判:小 prompt(保留四板块行情对照),输出按片内 __id 合并回条目。
+// label 用于日志区分(大分片二次拆分后为"半导体#1"等);prompt 内【sector】仍用板块名。
 // 返回 { analyzed, keyPoints, marketSummary };任何失败返回 null 由调用方重试。
-async function tryAnalyzeSectorOnce(sector, sectorItems, etfData) {
-  console.log(`  [${sector}] 分片调用 Claude API...`);
+async function tryAnalyzeSectorOnce(sector, sectorItems, etfData, label = sector) {
+  console.log(`  [${label}] 分片调用 Claude API...`);
 
   // 每条先跑关键词预评分作为基线(带片内稳定 id 供 AI 回填)
   const rated = sectorItems.map((n, i) => {
@@ -351,9 +378,9 @@ ${newsText}`;
   if (responseText === null) return null;
   const cleanText = responseText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
 
-  console.log(`  [${sector}] AI 已接收 ${cleanText.length} 字`);
+  console.log(`  [${label}] AI 已接收 ${cleanText.length} 字`);
   if (!cleanText) {
-    console.error(`  [${sector}] AI 返回空内容`);
+    console.error(`  [${label}] AI 返回空内容`);
     return null;
   }
 
@@ -365,18 +392,18 @@ ${newsText}`;
     const start = cleanText.indexOf('{');
     const end = cleanText.lastIndexOf('}');
     if (start < 0 || end <= start) {
-      console.error(`  [${sector}] AI 返回 JSON 解析失败`);
+      console.error(`  [${label}] AI 返回 JSON 解析失败`);
       return null;
     }
     try {
       result = JSON.parse(cleanText.slice(start, end + 1));
     } catch {
-      console.error(`  [${sector}] AI 返回 JSON 解析失败`);
+      console.error(`  [${label}] AI 返回 JSON 解析失败`);
       return null;
     }
   }
   if (!Array.isArray(result.analyzed) || result.analyzed.length === 0) {
-    console.error(`  [${sector}] AI 返回的 analyzed 为空`);
+    console.error(`  [${label}] AI 返回的 analyzed 为空`);
     return null;
   }
 
@@ -439,19 +466,30 @@ ${newsText}`;
 // 分片重试退避(ms):429 等限流窗口通常几十秒,退避递增到 20s。
 const RETRY_DELAYS = [2000, 8000, 20000];
 
-// 单片带重试;返回结果或 null
-async function runShard(shard, etfData) {
+// AI 研判阶段软预算:到点后不再启动新的尝试/重试(进行中的请求照常跑完,保住
+// 接近完成的输出),超出的分片走关键词局部兜底。原则是"多数时刻出全量 AI,
+// 少部分情况掐断"。默认 5 分钟,env AI_BUDGET_MS 可调。
+const AI_BUDGET_MS = Number(process.env.AI_BUDGET_MS) || 300_000;
+
+// 单片带重试;deadline 传 Date.now()+AI_BUDGET_MS,每次尝试前判定。
+// 返回结果或 null。
+async function runShard(shard, etfData, deadline) {
+  const name = shard.label || shard.sector;
   const start = Date.now();
   for (let attempt = 1; attempt <= RETRY_DELAYS.length; attempt++) {
-    if (attempt > 1) console.log(`  🔁 重试 ${shard.sector} 分片 (第 ${attempt}/${RETRY_DELAYS.length} 次)...`);
-    const ok = await tryAnalyzeSectorOnce(shard.sector, shard.items, etfData);
+    if (attempt > 1) console.log(`  🔁 重试 ${name} 分片 (第 ${attempt}/${RETRY_DELAYS.length} 次)...`);
+    if (deadline && Date.now() > deadline) {
+      console.log(`  ⏱ AI 预算到期，跳过 ${name} 的后续尝试`);
+      return null;
+    }
+    const ok = await tryAnalyzeSectorOnce(shard.sector, shard.items, etfData, name);
     if (ok) {
-      console.log(`  ✅ ${shard.sector} 分片完成 (${((Date.now() - start) / 1000).toFixed(1)}s, ${ok.analyzed.length} 条)`);
+      console.log(`  ✅ ${name} 分片完成 (${((Date.now() - start) / 1000).toFixed(1)}s, ${ok.analyzed.length} 条)`);
       return ok;
     }
     if (attempt < RETRY_DELAYS.length) await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt - 1]));
   }
-  console.log(`  ✗ ${shard.sector} 分片 ${RETRY_DELAYS.length} 次尝试均失败`);
+  console.log(`  ✗ ${name} 分片 ${RETRY_DELAYS.length} 次尝试均失败`);
   return null;
 }
 
@@ -478,7 +516,8 @@ export function mergeShardResults(shards, results) {
 
   return {
     analyzed,
-    keyPoints: keyPoints.slice(0, 6),
+    // 大分片二次拆分后多个块会各自产出【板块】要点,先精确去重再截断,避免重复卡片
+    keyPoints: [...new Set(keyPoints)].slice(0, 6),
     marketSummary: marketParts.length > 0
       ? marketParts.join('；')
       : `本日报聚焦半导体、光模块、创新药、黄金四大赛道，${analyzed.length} 条新闻经关键词引擎自动分析生成。`,
@@ -534,16 +573,18 @@ export async function analyzeWithClaude(newsItems, etfData) {
   // 每个分片生成更快(输出更小),即使共享 TPM 限流使并行不省时间,
   // 精简输出仍确定性降低生成量,且单板块失败不会拖垮整链。
   const targets = translated.filter(n => SECTORS.includes(n.guessedSector));
-  const shards = groupBySector(targets);
+  const shards = chunkShards(groupBySector(targets));
   if (shards.length === 0) {
     console.log('\n  ⚠ 无四板块新闻，跳过 AI 分析，使用本地关键词引擎');
     return analyzeWithKeywords(translated, etfData);
   }
 
-  console.log(`\n🤖 调用 Claude API 分片并行研判 (${shards.length} 片: ${shards.map(s => `${s.sector} ${s.items.length}条`).join('、')})...`);
-  // 错峰 1.5s 启动,避免 4 个请求同时撞上免费档限流窗口
+  console.log(`\n🤖 调用 Claude API 分片并行研判 (${shards.length} 片: ${shards.map(s => `${s.label} ${s.items.length}条`).join('、')})...`);
+  // 错峰 1.5s 启动,避免多个请求同时撞上免费档限流窗口;
+  // AI_BUDGET_MS 软预算:到期后不再发起新尝试/重试(进行中请求照常跑完)。
+  const deadline = Date.now() + AI_BUDGET_MS;
   const settled = await Promise.allSettled(shards.map((shard, i) =>
-    new Promise(r => setTimeout(r, i * 1500)).then(() => runShard(shard, etfData))
+    new Promise(r => setTimeout(r, i * 1500)).then(() => runShard(shard, etfData, deadline))
   ));
   const results = settled.map(r => r.status === 'fulfilled' ? r.value : null);
 

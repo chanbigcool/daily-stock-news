@@ -43,17 +43,58 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Build daily report
+      # ── 阶段一：手动刷新先发纯关键词简报(无 AI, ~2-3 分钟),用户立刻有东西看 ──
+      # 只对手动触发生效(workflow_dispatch 云端刷新 / push);定时构建直接走阶段二,不白耗 runner。
+      # best-effort: preview 失败不阻断 AI 正式构建;其 Commit/Deploy 由 outcome 守卫。
+      - name: Build preview (关键词简报)
+        id: build_preview
+        if: github.event_name != 'schedule'
+        continue-on-error: true
         env:
+          BUILD_PHASE: preview
+          ANTHROPIC_API_KEY: ''
+          RUN_ID: ${{ github.event.inputs.run_id || '' }}
+        run: node scripts/build-daily.mjs
+
+      - name: Commit preview to main
+        if: steps.build_preview.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html history/ quality/
+          if git diff --cached --quiet; then
+            echo "无变化，跳过提交"
+          else
+            git commit -m "日报自动构建(preview): $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push origin main
+          fi
+
+      - name: Deploy preview to gh-pages
+        if: steps.build_preview.outcome == 'success'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: '.'
+          publish_branch: gh-pages
+          force_orphan: true
+
+      - name: Deploy preview to EdgeOne Pages (国内镜像)
+        if: steps.build_preview.outcome == 'success' && env.EDGEONE_PAGES_API_TOKEN != ''
+        continue-on-error: true
+        env:
+          EDGEONE_PAGES_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
+        run: npx edgeone makers deploy . --name daily-stock-news --area global --json
+
+      # ── 阶段二：AI 研判正式构建(AI_BUDGET_MS 预算封顶),完成后覆盖部署,前端自动刷新 ──
+      - name: Build AI report
+        env:
+          BUILD_PHASE: ai
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_MODEL: ${{ secrets.ANTHROPIC_MODEL }}
           RUN_ID: ${{ github.event.inputs.run_id || '' }}
         run: node scripts/build-daily.mjs
 
-      # 把构建产物（当日 history/ 存档 + 首页）提交回 main，让历史在 main 上
-      # 永久累积。第二天 checkout 时能读到全部历史，跨构建累积自然生效；
-      # 手动/定时构建也不会再互相覆盖历史。
-      - name: Commit build artifacts to main
+      - name: Commit AI artifacts to main
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -65,7 +106,7 @@ jobs:
             git push origin main
           fi
 
-      - name: Deploy to gh-pages branch
+      - name: Deploy AI to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -76,7 +117,7 @@ jobs:
       # 国内镜像:EdgeOne Pages(腾讯,国内节点)。
       # 未配置 EDGEONE_API_TOKEN 前自动跳过,不影响 gh-pages 主部署。
       # 首次部署会自动创建 daily-stock-news 项目并分配默认免费域名。
-      - name: Deploy to EdgeOne Pages (国内镜像)
+      - name: Deploy AI to EdgeOne Pages (国内镜像)
         if: env.EDGEONE_PAGES_API_TOKEN != ''
         continue-on-error: true
         env:

@@ -7,7 +7,7 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../pipeline/config.mjs';
-import { analyzeWithKeywords, analyzeWithClaude, translateWithLocalDict, proxyReachable, deriveExplanation, parseSSEText, groupBySector, mergeShardResults, keywordItemShape } from '../pipeline/analyze.mjs';
+import { analyzeWithKeywords, analyzeWithClaude, translateWithLocalDict, proxyReachable, deriveExplanation, parseSSEText, groupBySector, mergeShardResults, keywordItemShape, chunkShards } from '../pipeline/analyze.mjs';
 import { sanitizeExplanation, explanationToRating } from '../pipeline/sentiment.mjs';
 import { SECTORS } from '../pipeline/sectors.mjs';
 
@@ -233,6 +233,24 @@ test('groupBySector:按四板块定序分组,空板块剔除', () => {
   assert.deepEqual(groups.map(g => g.sector), ['半导体', '黄金']);
   assert.equal(groups[0].items.length, 2);
   assert.equal(groups[1].items.length, 1);
+});
+
+test('chunkShards:>10 条拆成 ≤10 的并行块,label 形如 半导体#1', () => {
+  const items = Array.from({ length: 25 }, (_, i) => item(`半导体新闻${i}`, '', '半导体'));
+  const shards = chunkShards(groupBySector(items));
+  assert.equal(shards.length, 3);
+  assert.deepEqual(shards.map(s => s.label), ['半导体#1', '半导体#2', '半导体#3']);
+  assert.equal(shards[0].sector, '半导体'); // sector 保持板块名,供 prompt【板块】前缀
+  assert.ok(shards.every(s => s.items.length <= 10));
+  assert.equal(shards.reduce((n, s) => n + s.items.length, 0), 25);
+});
+
+test('chunkShards:≤10 条不拆,label 即板块名', () => {
+  const items = [item('A', '', '半导体'), item('B', '', '黄金')];
+  const shards = chunkShards(groupBySector(items));
+  assert.equal(shards.length, 2);
+  assert.equal(shards[0].label, '半导体');
+  assert.equal(shards[0].items.length, 1);
 });
 
 test('keywordItemShape:字段全量完整(含存档/db 所需的 title/description/pubDate/source/link)', () => {
