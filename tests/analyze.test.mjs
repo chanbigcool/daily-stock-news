@@ -7,7 +7,7 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../pipeline/config.mjs';
-import { analyzeWithKeywords, analyzeWithClaude, translateWithLocalDict, proxyReachable, deriveExplanation } from '../pipeline/analyze.mjs';
+import { analyzeWithKeywords, analyzeWithClaude, translateWithLocalDict, proxyReachable, deriveExplanation, parseSSEText } from '../pipeline/analyze.mjs';
 import { sanitizeExplanation, explanationToRating } from '../pipeline/sentiment.mjs';
 import { SECTORS } from '../pipeline/sectors.mjs';
 
@@ -173,5 +173,51 @@ test('AI 条目:sanitizeExplanation + explanationToRating 推导 direction/impac
   assert.deepEqual(expl.affected_companies, ['中芯国际']);
   assert.deepEqual(expl.reasoning, ['板块大跌']);
   assert.deepEqual(expl.evidence, ['半导体ETF跌8%']);
+});
+
+// ── 流式响应解析(parseSSEText):Anthropic/GLM SSE 文本累积 ──
+
+test('parseSSEText:SSE 多行 text_delta 累积', () => {
+  const raw = [
+    'event: content_block_start',
+    'data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}',
+    '',
+    'event: content_block_delta',
+    'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"半导"}}',
+    '',
+    'event: content_block_delta',
+    'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"体大涨"}}',
+    '',
+  ].join('\n');
+  assert.equal(parseSSEText(raw), '半导体大涨');
+});
+
+test('parseSSEText:message_stop 提前截断后续行', () => {
+  const raw = [
+    'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"A"}}',
+    'data: {"type":"message_stop"}',
+    'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"B"}}',
+  ].join('\n');
+  assert.equal(parseSSEText(raw), 'A');
+});
+
+test('parseSSEText:跳过 thinking 块与 [DONE],只留文本', () => {
+  const raw = [
+    'data: {"type":"content_block_delta","delta":{"type":"thinking_delta","thinking":"思考过程"}}',
+    'data: [DONE]',
+    'data: {"type":"content_block_delta","delta":{"type":"text_delta","text":"结果"}}',
+  ].join('\n');
+  assert.equal(parseSSEText(raw), '结果');
+});
+
+test('parseSSEText:非 SSE 完整 JSON 兜底走 extractTextBlock', () => {
+  const raw = JSON.stringify({ content: [{ type: 'text', text: '{"analyzed":[]}' }] });
+  assert.equal(parseSSEText(raw), '{"analyzed":[]}');
+});
+
+test('parseSSEText:空/垃圾输入返回空串', () => {
+  assert.equal(parseSSEText(''), '');
+  assert.equal(parseSSEText('hello world'), '');
+  assert.equal(parseSSEText('data: not-json'), '');
 });
 

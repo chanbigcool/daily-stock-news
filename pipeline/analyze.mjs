@@ -35,6 +35,102 @@ function extractTextBlock(data) {
   return responseText || data?.choices?.[0]?.message?.content || '';
 }
 
+// 从流式原始文本累积 text_delta(Anthropic / GLM 兼容端点 SSE 格式);
+// 端点忽略 stream 返回普通 JSON(非 SSE)时兜底走 extractTextBlock。
+export function parseSSEText(raw) {
+  let out = '';
+  for (const line of String(raw).split('\n')) {
+    if (!line.startsWith('data: ')) continue;
+    const payload = line.slice(6);
+    if (payload === '[DONE]') continue;
+    try {
+      const ev = JSON.parse(payload);
+      if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta' && typeof ev.delta.text === 'string') {
+        out += ev.delta.text;
+      } else if (ev.type === 'message_stop') {
+        break;
+      }
+    } catch { /* 跳过无法解析的行(如 ping 保活) */ }
+  }
+  if (!out) {
+    try {
+      const t = extractTextBlock(JSON.parse(raw));
+      if (t) out = t;
+    } catch { /* 非 JSON 响应,保持空 */ }
+  }
+  return out;
+}
+
+// 流式调用 AI 接口并累积纯文本返回。超时策略改为「首 token 120s + 空闲 30s」:
+// 旧 180s 硬超时会把真正在生成(需 4-5 分钟)的慢请求误杀,导致 3×180s 白等重试。
+// 流式下只要 token 持续到达就保活;真正挂死(无任何数据)120s 内放弃,生成中途
+// 停住 30s 放弃 —— 单次最坏 ~2 分钟,不牺牲会成功的请求。
+// 兼容 Anthropic 及 GLM 兼容端点的 SSE 格式;端点忽略 stream 返回普通 JSON 时兜底走 extractTextBlock。
+async function streamResponseText(prompt) {
+  const controller = new AbortController();
+  let gotData = false;
+  let idleTimer = null;
+  const arm = () => {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => controller.abort(), gotData ? 30_000 : 120_000);
+  };
+  arm();
+
+  let resp;
+  try {
+    resp = await fetch(`${CONFIG.apiBase}/v1/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': CONFIG.apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: CONFIG.model,
+        max_tokens: 32768,
+        stream: true,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    clearTimeout(idleTimer);
+    console.error(`  Claude API 请求失败 (${err.message})`);
+    return null;
+  }
+  if (!resp.ok) {
+    clearTimeout(idleTimer);
+    console.error(`  Claude API 错误 (${resp.status})`);
+    return null;
+  }
+  if (!resp.body) {
+    clearTimeout(idleTimer);
+    console.error('  Claude API 无流式响应体');
+    return null;
+  }
+
+  let raw = '';
+  try {
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      gotData = true;
+      arm();
+      raw += decoder.decode(value, { stream: true });
+    }
+    raw += decoder.decode();
+  } catch (err) {
+    console.error(`  Claude API 流读取失败 (${controller.signal.aborted ? '超时: 120s 无首 token / 30s 无新数据' : err.message})`);
+    return null;
+  } finally {
+    clearTimeout(idleTimer);
+  }
+
+  return parseSSEText(raw);
+}
+
 // ── 本地 proxy 可用性探测(快速失败) ──────────────────────
 // 用户不想配置 ANTHROPIC_API_KEY,本地分析走 127.0.0.1:15721 的 proxy。
 // 若 proxy 没在运行,旧逻辑会对着不存在的服务空等 3×180s 重试 + 90s 翻译,
@@ -251,64 +347,30 @@ ${marketContext(etfData)}
 
 ${newsText}`;
 
-  let resp;
-  try {
-    resp = await fetch(`${CONFIG.apiBase}/v1/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': CONFIG.apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: CONFIG.model,
-        max_tokens: 32768,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      timeout: 180000,
-      // 同上:resp.json() 读 body 无超时,GLM 挂起会无限等 → 3×180s 内必失败返回 null,
-      // 由调用方重试/降级关键词引擎,构建最长约 9 分钟,不会无限卡。
-      signal: AbortSignal.timeout(180000),
-    });
-  } catch (err) {
-    console.error(`  Claude API 请求失败 (${err.message})`);
-    return null;
-  }
-
-  if (!resp.ok) {
-    console.error(`  Claude API 错误 (${resp.status})`);
-    return null;
-  }
-
-  let data;
-  try {
-    data = await resp.json();
-  } catch (err) {
-    console.error(`  Claude API 响应解析失败 (${err.message})`);
-    return null;
-  }
-  const responseText = extractTextBlock(data).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  const responseText = await streamResponseText(prompt);
+  if (responseText === null) return null;
+  const cleanText = responseText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
 
   console.log(`  API 模型: ${CONFIG.model}`);
-  console.log(`  AI 分析中...（已接收 ${responseText.length} 字）`);
-  if (!responseText) {
+  console.log(`  AI 分析中...（已接收 ${cleanText.length} 字）`);
+  if (!cleanText) {
     console.error('  AI 返回空内容');
     return null;
   }
 
   let result;
   try {
-    result = JSON.parse(responseText);
+    result = JSON.parse(cleanText);
   } catch {
     // 稳定解析:整体解析失败时提取首个 JSON 对象块再试(仿 translateItems)
-    const start = responseText.indexOf('{');
-    const end = responseText.lastIndexOf('}');
+    const start = cleanText.indexOf('{');
+    const end = cleanText.lastIndexOf('}');
     if (start < 0 || end <= start) {
       console.error('  AI 返回 JSON 解析失败');
       return null;
     }
     try {
-      result = JSON.parse(responseText.slice(start, end + 1));
+      result = JSON.parse(cleanText.slice(start, end + 1));
     } catch {
       console.error('  AI 返回 JSON 解析失败');
       return null;
