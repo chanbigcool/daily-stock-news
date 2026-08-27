@@ -127,6 +127,9 @@ async function translateItems(newsItems) {
       },
       body: JSON.stringify({ model: CONFIG.model, max_tokens: 8192, messages: [{ role: 'user', content: prompt }] }),
       timeout: 90000,
+      // fetch 的 timeout 只覆盖到收到 headers;resp.json() 读 body 可能无限挂起
+      // (GLM 返回 200 后 body 不结束)。AbortSignal.timeout 覆盖整个请求+body。
+      signal: AbortSignal.timeout(90000),
     });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
@@ -263,6 +266,9 @@ ${newsText}`;
         messages: [{ role: 'user', content: prompt }],
       }),
       timeout: 180000,
+      // 同上:resp.json() 读 body 无超时,GLM 挂起会无限等 → 3×180s 内必失败返回 null,
+      // 由调用方重试/降级关键词引擎,构建最长约 9 分钟,不会无限卡。
+      signal: AbortSignal.timeout(180000),
     });
   } catch (err) {
     console.error(`  Claude API 请求失败 (${err.message})`);
