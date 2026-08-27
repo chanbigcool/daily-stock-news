@@ -7,7 +7,7 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../pipeline/config.mjs';
-import { analyzeWithKeywords, analyzeWithClaude, translateWithLocalDict, proxyReachable, deriveExplanation, parseSSEText } from '../pipeline/analyze.mjs';
+import { analyzeWithKeywords, analyzeWithClaude, translateWithLocalDict, proxyReachable, deriveExplanation, parseSSEText, groupBySector, mergeShardResults, keywordItemShape } from '../pipeline/analyze.mjs';
 import { sanitizeExplanation, explanationToRating } from '../pipeline/sentiment.mjs';
 import { SECTORS } from '../pipeline/sectors.mjs';
 
@@ -219,5 +219,107 @@ test('parseSSEText:空/垃圾输入返回空串', () => {
   assert.equal(parseSSEText(''), '');
   assert.equal(parseSSEText('hello world'), '');
   assert.equal(parseSSEText('data: not-json'), '');
+});
+
+// ── 分片并行:分组 / 字段形状 / 合并 ──────────────────────
+
+test('groupBySector:按四板块定序分组,空板块剔除', () => {
+  const items = [
+    item('A', '', '半导体'),
+    item('B', '', '半导体'),
+    item('C', '', '黄金'),
+  ];
+  const groups = groupBySector(items);
+  assert.deepEqual(groups.map(g => g.sector), ['半导体', '黄金']);
+  assert.equal(groups[0].items.length, 2);
+  assert.equal(groups[1].items.length, 1);
+});
+
+test('keywordItemShape:字段全量完整(含存档/db 所需的 title/description/pubDate/source/link)', () => {
+  const n = item('中芯国际营收创新高,业绩超预期', '产线投产', '半导体');
+  const a = keywordItemShape(n);
+  assert.equal(a.category, '半导体');
+  assert.ok(a.title, '应有 title');
+  assert.ok(a.description, '应有 description');
+  assert.ok(a.pubDate instanceof Date, '应有 pubDate');
+  assert.ok(a.source, '应有 source');
+  assert.equal(a.link, '');
+  assert.ok(a.title_cn, '应有 title_cn');
+  assert.ok(['利好', '利空', '中性', '分化'].includes(a.direction));
+  assert.ok(['极高', '高', '中', '低'].includes(a.impact));
+  assert.ok(['高', '中', '低'].includes(a.certainty));
+  assert.ok(['短期', '中期', '长期'].includes(a.time_window));
+  assert.ok(a.tickers, '应有 tickers');
+  assert.ok(a.notes.includes('评分引擎'), 'notes 应含可审计的评分依据');
+  assert.ok(['利好', '利空', '中性', '分化'].includes(a.sentiment));
+  assert.ok(['极高', '高', '中', '低'].includes(a.market_impact));
+  assert.ok(Array.isArray(a.affected_companies));
+  assert.ok(Array.isArray(a.reasoning));
+  assert.ok(Array.isArray(a.evidence));
+  assert.equal(typeof a.confidence_score, 'number');
+  assert.equal(typeof a.uncertainty, 'string');
+});
+
+const fakeShardResult = (analyzed, keyPoints = [], marketSummary = '') => ({ analyzed, keyPoints, marketSummary });
+
+test('mergeShardResults:全成功 → 拼接 analyzed/keyPoints/marketSummary,isAi=true', () => {
+  const items = [item('A', '', '半导体'), item('B', '', '黄金')];
+  const shards = groupBySector(items);
+  assert.equal(shards.length, 2);
+  const results = [
+    fakeShardResult([keywordItemShape(shards[0].items[0])], ['【半导体】要点1'], '半导体动态一句话'),
+    fakeShardResult([keywordItemShape(shards[1].items[0])], ['【黄金】要点2', '【黄金】要点3'], '黄金动态一句话'),
+  ];
+  const merged = mergeShardResults(shards, results);
+  assert.equal(merged.isAi, true);
+  assert.equal(merged.analyzed.length, 2);
+  assert.deepEqual(merged.keyPoints, ['【半导体】要点1', '【黄金】要点2', '【黄金】要点3']);
+  assert.equal(merged.marketSummary, '半导体动态一句话；黄金动态一句话');
+});
+
+test('mergeShardResults:一片失败 → 该片关键词兜底(全字段),isAi 仍 true', () => {
+  const items = [item('A', '', '半导体'), item('B', '', '黄金')];
+  const shards = groupBySector(items);
+  const results = [
+    null,
+    fakeShardResult([keywordItemShape(shards[1].items[0])], ['【黄金】要点'], '黄金动态'),
+  ];
+  const merged = mergeShardResults(shards, results);
+  assert.equal(merged.isAi, true);
+  assert.equal(merged.analyzed.length, 2);
+  const fallback = merged.analyzed.find(a => a.category === '半导体');
+  assert.ok(fallback.title, '兜底条目应有 title');
+  assert.ok(fallback.pubDate instanceof Date, '兜底条目应有 pubDate');
+  assert.ok(fallback.source, '兜底条目应有 source');
+  assert.ok(Array.isArray(fallback.evidence), '兜底条目应有 evidence');
+  assert.equal(typeof fallback.confidence_score, 'number');
+  assert.ok(fallback.notes.includes('评分引擎'), '兜底条目应走关键词评分');
+  assert.equal(fallback.category, '半导体');
+});
+
+test('mergeShardResults:全失败 → isAi=false,marketSummary 用兜底句', () => {
+  const items = [item('A', '', '半导体'), item('B', '', '黄金')];
+  const shards = groupBySector(items);
+  const merged = mergeShardResults(shards, [null, null]);
+  assert.equal(merged.isAi, false);
+  assert.equal(merged.analyzed.length, 2);
+  assert.ok(merged.marketSummary.includes('关键词引擎'));
+  assert.deepEqual(merged.keyPoints, []);
+});
+
+test('mergeShardResults:keyPoints 超 6 条截断', () => {
+  const items = [item('A', '', '半导体'), item('B', '', '黄金'), item('C', '', '光模块'), item('D', '', '创新药')];
+  const shards = groupBySector(items);
+  assert.equal(shards.length, 4);
+  const mk = (s) => {
+    const shard = shards.find(g => g.sector === s);
+    return fakeShardResult(
+      [keywordItemShape(shard.items[0])],
+      [`【${s}】1`, `【${s}】2`, `【${s}】3`],
+      `${s}动态`,
+    );
+  };
+  const merged = mergeShardResults(shards, ['半导体', '光模块', '创新药', '黄金'].map(mk));
+  assert.equal(merged.keyPoints.length, 6);
 });
 

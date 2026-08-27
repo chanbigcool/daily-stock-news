@@ -87,7 +87,7 @@ async function streamResponseText(prompt) {
       },
       body: JSON.stringify({
         model: CONFIG.model,
-        max_tokens: 32768,
+        max_tokens: 8192,
         stream: true,
         messages: [{ role: 'user', content: prompt }],
       }),
@@ -282,40 +282,33 @@ export function deriveExplanation(kw) {
   };
 }
 
-// One attempt at full per-item AI judgment; returns null on any failure so the caller can retry
-async function tryAnalyzeOnce(newsItems, etfData) {
-  console.log('\n🤖 调用 Claude API 进行逐条 AI 研判 + 中文翻译...');
+// 按板块分片:4 个独立小请求替代 1 个全量请求,失败隔离到单板块。
+// 空板块剔除;顺序按 SECTORS 定序,便于日志与拼接稳定。
+export function groupBySector(items) {
+  return SECTORS
+    .map(s => ({ sector: s, items: items.filter(n => n.guessedSector === s) }))
+    .filter(g => g.items.length > 0);
+}
 
-  // 只研判四板块条目,与关键词路径一致,省 token
-  const targets = newsItems.filter(n => SECTORS.includes(n.guessedSector));
+// 单板块 AI 研判:小 prompt(保留四板块行情对照),输出按片内 __id 合并回条目。
+// 返回 { analyzed, keyPoints, marketSummary };任何失败返回 null 由调用方重试。
+async function tryAnalyzeSectorOnce(sector, sectorItems, etfData) {
+  console.log(`  [${sector}] 分片调用 Claude API...`);
 
-  // Count sector distribution
-  const inputSectorCounts = {};
-  for (const n of targets) {
-    const s = n.guessedSector || '未分类';
-    inputSectorCounts[s] = (inputSectorCounts[s] || 0) + 1;
-  }
-  const sectorSummary = Object.entries(inputSectorCounts).map(([k, v]) => `${k} ${v}条`).join('、');
-
-  // 每条先跑关键词预评分作为基线(带稳定 id 供 AI 回填)
-  const rated = targets.map((n, i) => {
+  // 每条先跑关键词预评分作为基线(带片内稳定 id 供 AI 回填)
+  const rated = sectorItems.map((n, i) => {
     const rating = scoreNewsItem(n);
     return { ...n, __id: i, keyword: rating };
   });
 
-  // Sort items by sector for better AI understanding
-  const sortedItems = [...rated].sort((a, b) => {
-    const sa = a.guessedSector || '未分类', sb = b.guessedSector || '未分类';
-    if (sa === sb) return b.pubDate - a.pubDate;
-    const order = {'半导体':1, '光模块':2, '创新药':3, '黄金':4, '未分类':5};
-    return (order[sa] || 9) - (order[sb] || 9);
-  });
+  // 片内按发布时间倒序,便于 AI 理解先后
+  const sortedItems = [...rated].sort((a, b) => b.pubDate - a.pubDate);
 
   const newsText = sortedItems.map(n =>
     `[${n.__id}]【${n.guessedSector || '未分类'}】标题: ${n.title}\n    描述: ${n.description}\n    关键词预判: ${n.keyword.direction}/${n.keyword.impact}\n    日期: ${n.pubDate.toISOString()}\n    来源: ${n.source}`
   ).join('\n\n');
 
-  const prompt = `你是资深金融分析师，专注半导体、光模块、创新药、黄金四大赛道。以下 ${rated.length} 条新闻已按板块预分类（${sectorSummary}），每条标题前的【】标签为板块提示。每条附了本地关键词引擎的预判（方向/影响），供你参考，但以你的专业判断为准。
+  const prompt = `你是资深金融分析师，专注半导体、光模块、创新药、黄金四大赛道。以下 ${rated.length} 条【${sector}】新闻已按板块预分类，每条标题前的【】标签为板块提示。每条附了本地关键词引擎的预判（方向/影响），供你参考，但以你的专业判断为准。
 
 ${marketContext(etfData)}
 
@@ -330,18 +323,20 @@ ${marketContext(etfData)}
 - sentiment：利好 / 利空 / 中性 / 分化
 - market_impact：极高 / 高 / 中 / 低
 - affected_companies：受影响的 A 股相关公司数组（来自原文，无明确公司可留空数组）
-- reasoning：研判依据数组，2-3 条，每条一句话
-- evidence：证据数组 —— 必须逐字引用原文(标题/描述)中的事实句，写明原文摘句；【禁止编造原文不存在的数据、数字、公司、事件】；无法从原文引用时该条留空数组
+- reasoning：研判依据，1-2 条，每条不超过 15 字
+- evidence：证据数组，最多 1 条，只逐字引用原文(标题/描述)中最相关的一句话；【禁止编造原文不存在的数据、数字、公司、事件】；无法从原文引用时该条留空数组
 - confidence_score：0.0-1.0 的置信度（对研判的确信程度）
 - uncertainty：仍存在的不确定性说明（一句话，无则空字符串）
 - time_window：短期 / 中期 / 长期
 
+回复务必简洁，本条分片全文控制在 1500 字以内。
+
 另外生成：
-- key_points：4-6条，以【板块】开头，包含具体数据或标的
-- market_summary：一段话总结当日产业动态
+- key_points：1-2 条，以【${sector}】开头，包含具体数据或标的
+- market_summary：一句话总结本板块当日产业动态
 
 输出 JSON，不要 markdown 包裹，不要任何其他文字：
-{"analyzed": [{"id": 0, "sentiment": "利空", "market_impact": "高", "affected_companies": [], "reasoning": [""], "evidence": ["原文摘句"], "confidence_score": 0.8, "uncertainty": "", "time_window": "短期"}], "key_points": ["【半导体】..."], "market_summary": "..."}
+{"analyzed": [{"id": 0, "sentiment": "利空", "market_impact": "高", "affected_companies": [], "reasoning": [""], "evidence": ["原文摘句"], "confidence_score": 0.8, "uncertainty": "", "time_window": "短期"}], "key_points": ["【${sector}】..."], "market_summary": "..."}
 
 新闻原文：
 
@@ -351,10 +346,9 @@ ${newsText}`;
   if (responseText === null) return null;
   const cleanText = responseText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
 
-  console.log(`  API 模型: ${CONFIG.model}`);
-  console.log(`  AI 分析中...（已接收 ${cleanText.length} 字）`);
+  console.log(`  [${sector}] AI 已接收 ${cleanText.length} 字`);
   if (!cleanText) {
-    console.error('  AI 返回空内容');
+    console.error(`  [${sector}] AI 返回空内容`);
     return null;
   }
 
@@ -366,18 +360,18 @@ ${newsText}`;
     const start = cleanText.indexOf('{');
     const end = cleanText.lastIndexOf('}');
     if (start < 0 || end <= start) {
-      console.error('  AI 返回 JSON 解析失败');
+      console.error(`  [${sector}] AI 返回 JSON 解析失败`);
       return null;
     }
     try {
       result = JSON.parse(cleanText.slice(start, end + 1));
     } catch {
-      console.error('  AI 返回 JSON 解析失败');
+      console.error(`  [${sector}] AI 返回 JSON 解析失败`);
       return null;
     }
   }
   if (!Array.isArray(result.analyzed) || result.analyzed.length === 0) {
-    console.error('  AI 返回的 analyzed 为空');
+    console.error(`  [${sector}] AI 返回的 analyzed 为空`);
     return null;
   }
 
@@ -386,7 +380,7 @@ ${newsText}`;
   for (const a of result.analyzed) {
     if (typeof a.id === 'number' || typeof a.id === 'string') byId.set(String(a.id), a);
   }
-  const maxInputDate = targets.reduce((max, n) => n.pubDate > max ? n.pubDate : max, new Date(0));
+  const maxInputDate = rated.reduce((max, n) => n.pubDate > max ? n.pubDate : max, new Date(0));
   const baseDate = maxInputDate.getTime() > 0 ? maxInputDate : new Date();
 
   const analyzed = rated.map(n => {
@@ -430,17 +424,57 @@ ${newsText}`;
     };
   });
 
-  console.log(`  AI 逐条研判: ${analyzed.length} 条（原始 ${newsItems.length} 条，筛选 ${targets.length} 条）`);
+  return {
+    analyzed,
+    keyPoints: Array.isArray(result.key_points) ? result.key_points : [],
+    marketSummary: typeof result.market_summary === 'string' ? result.market_summary : '',
+  };
+}
 
-  // 逐条方向按内容判断(板块看行情、新闻看内容):不强制让新闻跟随板块行情
+// 单片带重试:3 次尝试 + 退避(429 等临时错误同样被覆盖);返回结果或 null
+async function runShard(shard, etfData) {
+  const start = Date.now();
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    if (attempt > 1) console.log(`  🔁 重试 ${shard.sector} 分片 (第 ${attempt}/3 次)...`);
+    const ok = await tryAnalyzeSectorOnce(shard.sector, shard.items, etfData);
+    if (ok) {
+      console.log(`  ✅ ${shard.sector} 分片完成 (${((Date.now() - start) / 1000).toFixed(1)}s, ${ok.analyzed.length} 条)`);
+      return ok;
+    }
+    await new Promise(r => setTimeout(r, 2000 * attempt));
+  }
+  console.log(`  ✗ ${shard.sector} 分片 3 次尝试均失败`);
+  return null;
+}
+
+// 合并各分片:成功片 concat 完整条目,失败片用关键词引擎局部兜底(不拖垮整链)。
+// results[i] 为 null 表示该片失败。isAi = 任一片成功(渲染层仅展示用)。
+export function mergeShardResults(shards, results) {
+  const analyzed = [];
+  const keyPoints = [];
+  const marketParts = [];
+  let anyAi = false;
+
+  for (let i = 0; i < shards.length; i++) {
+    const value = results[i];
+    if (value) {
+      anyAi = true;
+      analyzed.push(...value.analyzed);
+      keyPoints.push(...(value.keyPoints || []));
+      if (value.marketSummary) marketParts.push(value.marketSummary);
+    } else {
+      console.log(`  ⚠ ${shards[i].sector} 分片 AI 失败，用关键词引擎局部兜底`);
+      analyzed.push(...shards[i].items.map(keywordItemShape));
+    }
+  }
 
   return {
     analyzed,
-    sectorMatrix: buildSectorMatrix(analyzed, etfData),
-    keyPoints: result.key_points || [],
-    marketSummary: result.market_summary || '',
-    isAi: true,
-    fullNews: newsItems,
+    keyPoints: keyPoints.slice(0, 6),
+    marketSummary: marketParts.length > 0
+      ? marketParts.join('；')
+      : `本日报聚焦半导体、光模块、创新药、黄金四大赛道，${analyzed.length} 条新闻经关键词引擎自动分析生成。`,
+    isAi: anyAi,
   };
 }
 
@@ -488,15 +522,31 @@ export async function analyzeWithClaude(newsItems, etfData) {
   // also fully in simplified Chinese (independent of which analysis path runs).
   const translated = dedupTranslated(await translateItems(newsItems));
 
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    if (attempt > 1) console.log(`\n  🔁 重试 AI 分析 (第 ${attempt}/3 次)...`);
-    const ok = await tryAnalyzeOnce(translated, etfData);
-    if (ok) return ok;
-    await new Promise(r => setTimeout(r, 1500 * attempt));
+  // 按板块分片并行:4 个小请求替代 1 个全量请求,失败隔离到单板块。
+  // 每个分片生成更快(输出更小),即使共享 TPM 限流使并行不省时间,
+  // 精简输出仍确定性降低生成量,且单板块失败不会拖垮整链。
+  const targets = translated.filter(n => SECTORS.includes(n.guessedSector));
+  const shards = groupBySector(targets);
+  if (shards.length === 0) {
+    console.log('\n  ⚠ 无四板块新闻，跳过 AI 分析，使用本地关键词引擎');
+    return analyzeWithKeywords(translated, etfData);
   }
 
-  console.log('  AI 分析 3 次均失败，回退到本地关键词引擎');
-  return analyzeWithKeywords(translated, etfData);
+  console.log(`\n🤖 调用 Claude API 分片并行研判 (${shards.length} 片: ${shards.map(s => `${s.sector} ${s.items.length}条`).join('、')})...`);
+  const settled = await Promise.allSettled(shards.map(shard => runShard(shard, etfData)));
+  const results = settled.map(r => r.status === 'fulfilled' ? r.value : null);
+
+  const merged = mergeShardResults(shards, results);
+  console.log(`  AI 逐条研判: ${merged.analyzed.length} 条（原始 ${newsItems.length} 条，筛选 ${targets.length} 条）`);
+
+  return {
+    analyzed: merged.analyzed,
+    sectorMatrix: buildSectorMatrix(merged.analyzed, etfData),
+    keyPoints: merged.keyPoints,
+    marketSummary: merged.marketSummary,
+    isAi: merged.isAi,
+    fullNews: newsItems,
+  };
 }
 
 // ── Local keyword engine (fallback) ──────────────────────
@@ -567,38 +617,44 @@ export function buildSectorMatrix(analyzed, etfData) {
   return Object.values(secMap).sort((a, b) => shockOrder[a.shock] - shockOrder[b.shock] || b.news_count - a.news_count);
 }
 
+// 关键词路径逐条字段形状(analyzeWithKeywords 与分片局部兜底共用)。
+// 板块归属由清洗层 classifier 决定(guessedSector);评级由 sentiment.mjs 评分
+// 引擎负责:命中信号的 base 累计方向分/冲击分 → direction/impact/certainty/
+// time_window/notes,全部可审计可复现(旧 KEYWORD_RULES 是"命中哪条规则就取
+// 写死的评级",不可解释)。必须带全 ...n 与 title_cn/summary_cn:
+// 存档与 db-build 读 title/description/pubDate/source/link,deriveExplanation
+// 单独用会缺这些字段。
+export function keywordItemShape(n) {
+  const sector = n.guessedSector || '';
+  const rating = scoreNewsItem(n);
+  const expl = deriveExplanation(rating);
+  return {
+    ...n,
+    title_cn: n.title_cn || n.title,
+    summary_cn: n.summary_cn || n.description.substring(0, 80),
+    category: sector,
+    direction: rating.direction,
+    impact: rating.impact,
+    certainty: rating.certainty,
+    time_window: rating.time_window,
+    tickers: rating.tickers || '—',
+    notes: rating.notes,
+    sentiment: expl.sentiment,
+    market_impact: expl.market_impact,
+    affected_companies: expl.affected_companies,
+    reasoning: expl.reasoning,
+    evidence: expl.evidence,
+    confidence_score: expl.confidence_score,
+    uncertainty: expl.uncertainty,
+    link: n.link || '',
+  };
+}
+
 export async function analyzeWithKeywords(newsItems, etfData) {
   // Translate non-Chinese titles so the report stays fully in simplified Chinese
   const translated = await translateItems(newsItems);
 
-  const analyzed = translated.map((n) => {
-    // 板块归属由清洗层 classifier 决定(guessedSector);评级由 sentiment.mjs 评分
-    // 引擎负责:命中信号的 base 累计方向分/冲击分 → direction/impact/certainty/
-    // time_window/notes,全部可审计可复现(旧 KEYWORD_RULES 是"命中哪条规则就取
-    // 写死的评级",不可解释)。
-    const sector = n.guessedSector || '';
-    const rating = scoreNewsItem(n);
-    const expl = deriveExplanation(rating);
-    return {
-      ...n,
-      title_cn: n.title_cn || n.title,
-      summary_cn: n.summary_cn || n.description.substring(0, 80),
-      category: sector,
-      direction: rating.direction,
-      impact: rating.impact,
-      certainty: rating.certainty,
-      time_window: rating.time_window,
-      tickers: rating.tickers || '—',
-      notes: rating.notes,
-      sentiment: expl.sentiment,
-      market_impact: expl.market_impact,
-      affected_companies: expl.affected_companies,
-      reasoning: expl.reasoning,
-      evidence: expl.evidence,
-      confidence_score: expl.confidence_score,
-      uncertainty: expl.uncertainty,
-    };
-  }).filter(n => SECTORS.includes(n.category));
+  const analyzed = translated.map(keywordItemShape).filter(n => SECTORS.includes(n.category));
 
   // 板块方向:加权投票聚合 + ETF 硬校准(板块看行情)
   const matrix = buildSectorMatrix(analyzed, etfData);
