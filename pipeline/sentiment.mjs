@@ -25,15 +25,15 @@ export const SIGNALS = [
   // ── 基本面硬信号 ──
   { cat: '业绩', kw: ['营收创新高', '净利大增', '业绩超预期', '财报超预期', '翻倍', '增长超50%', 'beat estimates', 'earnings beat'], dir: '利好', base: 40, weight: 3 },
   { cat: '业绩', kw: ['亏损扩大', '净利下滑', '业绩不及预期', '下调业绩指引', 'profit warning', 'miss estimates', 'guidance cut'], dir: '利空', base: 40, weight: 3 },
-  { cat: '订单', kw: ['大单', '中标', '订单增长', '订单饱满', '拿单', '长单', 'booking', 'orders surge', 'order backlog'], dir: '利好', base: 30, weight: 2 },
-  { cat: '扩产', kw: ['扩产', '新增产能', '量产', '投产', 'fabs', 'capacity expansion', 'mass production'], dir: '利好', base: 20, weight: 2 },
-  { cat: '技术', kw: ['突破', '重大进展', '全球首发', '原型', '首款', '成功验证', 'breakthrough', 'first to market'], dir: '利好', base: 20, weight: 2 },
+  { cat: '订单', kw: ['大单', '中标', '订单增长', '订单饱满', '拿单', '长单', '订单爬坡', '新增订单', '新签订单', '小批量订单', '订单交付', 'booking', 'orders surge', 'order backlog'], dir: '利好', base: 30, weight: 2 },
+  { cat: '扩产', kw: ['扩产', '新增产能', '量产', '投产', '项目总投资', '总投资', '扩建', '建厂', 'fabs', 'capacity expansion', 'mass production'], dir: '利好', base: 20, weight: 2 },
+  { cat: '技术', kw: ['突破', '重大进展', '全球首发', '原型', '首款', '成功验证', '转产验证', '产能爬坡', 'breakthrough', 'first to market'], dir: '利好', base: 20, weight: 2 },
   // ── 创新药临床/授权 ──
   { cat: '临床', kw: ['FDA批准', '上市获批', 'NDA获批', 'BLA获批', '优先审评', '临床成功', 'III期达主要终点', 'approval', 'drug approved', 'phase 3 success'], dir: '利好', base: 40, weight: 3, sectors: ['创新药'] },
   { cat: '临床', kw: ['临床失败', '试验中止', '审批被拒', '撤回申请', '安全性问题', 'trial failed', 'withdrawn', 'rejected', 'discontinued'], dir: '利空', base: 40, weight: 3, sectors: ['创新药'] },
   { cat: '授权', kw: ['License-out', '授权出海', '全球权益授予', 'BD交易', '合作开发', '总里程碑付款'], dir: '利好', base: 30, weight: 2, sectors: ['创新药'] },
   // ── 黄金 ──
-  { cat: '价格', kw: ['金价大涨', '创历史新高', '涨超', '现货黄金突破', 'gold hits record', 'price surge'], dir: '利好', base: 30, weight: 2, sectors: ['黄金'] },
+  { cat: '价格', kw: ['金价大涨', '创历史新高', '涨超', '现货黄金突破', '现货白银', '金价站上', 'gold hits record', 'price surge'], dir: '利好', base: 30, weight: 2, sectors: ['黄金'] },
   { cat: '价格', kw: ['金价大跌', '跳水', '跌超', '回调', '跌破', 'gold plunges', 'price slump', 'selloff'], dir: '利空', base: 30, weight: 2, sectors: ['黄金'] },
   { cat: '央行购金', kw: ['央行购金', '增持黄金', '黄金储备上升', 'central bank buys gold', 'reserve accumulation'], dir: '利好', base: 25, weight: 2, sectors: ['黄金'] },
   // ── 政策/制裁(方向分板块)──
@@ -49,8 +49,8 @@ export const SIGNALS = [
   // 避免"板块暴跌新闻被压成中性"。
   // 补充多字词(下跌/收跌/走弱…):让"板块下跌3.2%"这类行情描述新闻也能
   // 按内容定向,不再依赖"大跌/跳水"等强词(刻意不加单字"跌/涨"防误伤)。
-  { cat: '行情', kw: ['股价上涨', '大涨', '涨停', '领涨', '上涨', '收涨', '走强', '上行', '反弹', '翻红', 'surge', 'rally', 'soars', 'climbs'], dir: '利好', base: 15, weight: 1, note: '板块行情上涨' },
-  { cat: '行情', kw: ['暴跌', '重挫', '大跌', '跳水', '下挫', '领跌', '闪崩', '持续走低', '跌幅居前', '下跌', '收跌', '走弱', '走低', '回调', '回落', '下行', '下滑', '飘绿', 'crashed', 'plunge', 'plummet', 'slump', 'tumble', 'selloff', 'nosedive'], dir: '利空', base: 18, weight: 2, note: '板块行情走弱' },
+  { cat: '行情', kw: ['股价上涨', '大涨', '涨停', '领涨', '上涨', '收涨', '走强', '上行', '反弹', '翻红', '涨超', '涨近', '涨幅扩大', '普涨', '拉升', 'surge', 'rally', 'soars', 'climbs'], dir: '利好', base: 15, weight: 1, note: '板块行情上涨' },
+  { cat: '行情', kw: ['暴跌', '重挫', '大跌', '跳水', '下挫', '领跌', '闪崩', '持续走低', '跌幅居前', '下跌', '收跌', '走弱', '走低', '回调', '回落', '下行', '下滑', '飘绿', '跌超', '跌近', '跌幅扩大', '普跌', '走跌', 'crashed', 'plunge', 'plummet', 'slump', 'tumble', 'selloff', 'nosedive'], dir: '利空', base: 18, weight: 2, note: '板块行情走弱' },
   // ── 供需/价格传导(半导体/光模块)──
   { cat: '涨价', kw: ['涨价', '提价', '涨价函', '上调价格', '供需紧张', '供不应求', '缺货', '价格上调', 'price hike', 'price increase', 'shortage'], dir: '利好', base: 25, weight: 2, sectors: ['半导体', '光模块'], note: '供不应求/涨价,量价齐升利好' },
   { cat: '降价', kw: ['降价', '跌价', '价格战', '以价换量', '去库存', '清库存', '库存高企', '供过于求', 'price war', 'oversupply', 'inventory glut'], dir: '利空', base: 25, weight: 2, sectors: ['半导体', '光模块'], note: '去库存/价格战,盈利承压' },
@@ -59,10 +59,10 @@ export const SIGNALS = [
   { cat: '回购', kw: ['回购', '增持', '大股东增持', '管理层增持', 'buyback'], dir: '利好', base: 20, weight: 2, note: '回购/增持,大股东看好' },
   { cat: '减持', kw: ['减持', '套现', '解禁', '股东减持', 'share sale'], dir: '利空', base: 20, weight: 2, note: '减持/解禁,筹码承压' },
   // ── 财报口径补充 ──
-  { cat: '业绩', kw: ['营收增长', '净利增长', '利润增长', '业绩大增', '净利润同比增'], dir: '利好', base: 25, weight: 2 },
-  { cat: '业绩', kw: ['营收下滑', '净利下滑', '转亏', '首亏', '业绩预减', '利润下滑'], dir: '利空', base: 25, weight: 2 },
+  { cat: '业绩', kw: ['营收增长', '净利增长', '利润增长', '业绩大增', '净利润同比增', '上调业绩指引', '释放积极信号'], dir: '利好', base: 25, weight: 2 },
+  { cat: '业绩', kw: ['营收下滑', '净利下滑', '转亏', '首亏', '业绩预减', '利润下滑', '业绩下滑'], dir: '利空', base: 25, weight: 2 },
   // ── 机构/研报(弱信号)──
-  { cat: '机构', kw: ['目标价上调', '买入评级', '增持评级', '推荐评级', '首予买入'], dir: '利好', base: 15, weight: 1, note: '机构看多(弱信号)' },
+  { cat: '机构', kw: ['目标价上调', '买入评级', '增持评级', '推荐评级', '首予买入', '上调目标价', '维持买入', '首次覆盖'], dir: '利好', base: 15, weight: 1, note: '机构看多(弱信号)' },
   { cat: '机构', kw: ['目标价下调', '卖出评级', '下调评级', '减持评级'], dir: '利空', base: 15, weight: 1, note: '机构看空(弱信号)' },
   // ── 创新药:医保/临床申报 ──
   { cat: '医保', kw: ['医保谈判', '纳入医保', '医保目录', '进医保', '集采', '带量采购'], dir: '中性', base: 15, weight: 1, sectors: ['创新药'], note: '医保/集采放量利好但降价承压,标中性' },

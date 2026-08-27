@@ -53,6 +53,55 @@ test('关键词引擎:命中硬信号 → 利好/方向', async () => {
   assert.ok(a.notes.includes('评分引擎'), 'notes 应含可审计的评分依据');
 });
 
+// ── 词表扩充回归:本次新增关键词的方向命中 ──────────────
+
+test('词表扩充:涨超/涨近/跌超/跌近 → 行情类利好/利空定向', async () => {
+  const up = await analyzeWithKeywords([item('英伟达涨超1%', '', '半导体')]);
+  assert.equal(up.analyzed[0].direction, '利好');
+  assert.match(up.analyzed[0].notes, /行情·利好/);
+  const up2 = await analyzeWithKeywords([item('费城半导体指数涨近2%', '', '半导体')]);
+  assert.equal(up2.analyzed[0].direction, '利好');
+  const down = await analyzeWithKeywords([item('费城半导体指数跌近3%', '', '半导体')]);
+  assert.equal(down.analyzed[0].direction, '利空');
+  assert.match(down.analyzed[0].notes, /行情·利空/);
+  const down2 = await analyzeWithKeywords([item('英伟达跌超1%', '', '半导体')]);
+  assert.equal(down2.analyzed[0].direction, '利空');
+});
+
+test('词表扩充:上调业绩指引 → 业绩利好;业绩下滑 → 业绩利空', async () => {
+  const up = await analyzeWithKeywords([item('公司上调业绩指引', '', '半导体')]);
+  assert.equal(up.analyzed[0].direction, '利好');
+  assert.match(up.analyzed[0].notes, /业绩·利好/);
+  const down = await analyzeWithKeywords([item('公司业绩下滑', '', '半导体')]);
+  assert.equal(down.analyzed[0].direction, '利空');
+  assert.match(down.analyzed[0].notes, /业绩·利空/);
+});
+
+test('词表扩充:订单爬坡/新增订单 → 订单利好', async () => {
+  const a = await analyzeWithKeywords([item('公司下半年订单爬坡', '', '半导体')]);
+  assert.equal(a.analyzed[0].direction, '利好');
+  assert.match(a.analyzed[0].notes, /订单·利好/);
+  const b = await analyzeWithKeywords([item('公司获北美厂商新增订单', '', '光模块')]);
+  assert.equal(b.analyzed[0].direction, '利好');
+  assert.match(b.analyzed[0].notes, /订单·利好/);
+});
+
+test('词表扩充:现货白银 → 黄金利好;金价跌破 → 黄金利空', async () => {
+  const up = await analyzeWithKeywords([item('现货白银大涨', '', '黄金')]);
+  assert.equal(up.analyzed[0].direction, '利好');
+  assert.match(up.analyzed[0].notes, /价格·利好/);
+  const down = await analyzeWithKeywords([item('金价跌破1800美元', '', '黄金')]);
+  assert.equal(down.analyzed[0].direction, '利空');
+  assert.match(down.analyzed[0].notes, /价格·利空/);
+});
+
+test('词表扩充:上调目标价 → 机构利好(弱信号,非硬)', async () => {
+  const a = await analyzeWithKeywords([item('券商上调目标价', '', '半导体')]);
+  assert.equal(a.analyzed[0].direction, '利好');
+  assert.match(a.analyzed[0].notes, /机构·利好/);
+  assert.equal(a.analyzed[0].certainty, '中');
+});
+
 // ── 降级路径触发 ──────────────────────────────────────
 
 test('analyzeWithClaude:无 apiKey → 自动降级到关键词引擎(零 AI 调用)', async () => {
