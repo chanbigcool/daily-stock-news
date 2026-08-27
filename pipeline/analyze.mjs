@@ -66,7 +66,7 @@ export function parseSSEText(raw) {
 // 流式下只要 token 持续到达就保活;真正挂死(无任何数据)120s 内放弃,生成中途
 // 停住 30s 放弃 —— 单次最坏 ~2 分钟,不牺牲会成功的请求。
 // 兼容 Anthropic 及 GLM 兼容端点的 SSE 格式;端点忽略 stream 返回普通 JSON 时兜底走 extractTextBlock。
-async function streamResponseText(prompt) {
+async function streamResponseText(prompt, maxTokens = 8192) {
   const controller = new AbortController();
   let gotData = false;
   let idleTimer = null;
@@ -87,7 +87,7 @@ async function streamResponseText(prompt) {
       },
       body: JSON.stringify({
         model: CONFIG.model,
-        max_tokens: 8192,
+        max_tokens: maxTokens,
         stream: true,
         messages: [{ role: 'user', content: prompt }],
       }),
@@ -304,6 +304,11 @@ async function tryAnalyzeSectorOnce(sector, sectorItems, etfData) {
   // 片内按发布时间倒序,便于 AI 理解先后
   const sortedItems = [...rated].sort((a, b) => b.pubDate - a.pubDate);
 
+  // 输出预算随分片大小伸缩:小片 800 字,24 条的大片 ~3000 字。
+  // 固定上限会让大分片在生成中途被截断 → JSON 不完整 → 整片误判失败。
+  const outBudget = Math.max(800, rated.length * 120);
+  const maxTokens = Math.max(4096, Math.min(32768, rated.length * 600));
+
   const newsText = sortedItems.map(n =>
     `[${n.__id}]【${n.guessedSector || '未分类'}】标题: ${n.title}\n    描述: ${n.description}\n    关键词预判: ${n.keyword.direction}/${n.keyword.impact}\n    日期: ${n.pubDate.toISOString()}\n    来源: ${n.source}`
   ).join('\n\n');
@@ -329,7 +334,7 @@ ${marketContext(etfData)}
 - uncertainty：仍存在的不确定性说明（一句话，无则空字符串）
 - time_window：短期 / 中期 / 长期
 
-回复务必简洁，本条分片全文控制在 1500 字以内。
+回复务必简洁，本条分片全文控制在 ${outBudget} 字以内。
 
 另外生成：
 - key_points：1-2 条，以【${sector}】开头，包含具体数据或标的
@@ -342,7 +347,7 @@ ${marketContext(etfData)}
 
 ${newsText}`;
 
-  const responseText = await streamResponseText(prompt);
+  const responseText = await streamResponseText(prompt, maxTokens);
   if (responseText === null) return null;
   const cleanText = responseText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
 
@@ -431,19 +436,22 @@ ${newsText}`;
   };
 }
 
-// 单片带重试:3 次尝试 + 退避(429 等临时错误同样被覆盖);返回结果或 null
+// 分片重试退避(ms):429 等限流窗口通常几十秒,退避递增到 20s。
+const RETRY_DELAYS = [2000, 8000, 20000];
+
+// 单片带重试;返回结果或 null
 async function runShard(shard, etfData) {
   const start = Date.now();
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    if (attempt > 1) console.log(`  🔁 重试 ${shard.sector} 分片 (第 ${attempt}/3 次)...`);
+  for (let attempt = 1; attempt <= RETRY_DELAYS.length; attempt++) {
+    if (attempt > 1) console.log(`  🔁 重试 ${shard.sector} 分片 (第 ${attempt}/${RETRY_DELAYS.length} 次)...`);
     const ok = await tryAnalyzeSectorOnce(shard.sector, shard.items, etfData);
     if (ok) {
       console.log(`  ✅ ${shard.sector} 分片完成 (${((Date.now() - start) / 1000).toFixed(1)}s, ${ok.analyzed.length} 条)`);
       return ok;
     }
-    await new Promise(r => setTimeout(r, 2000 * attempt));
+    if (attempt < RETRY_DELAYS.length) await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt - 1]));
   }
-  console.log(`  ✗ ${shard.sector} 分片 3 次尝试均失败`);
+  console.log(`  ✗ ${shard.sector} 分片 ${RETRY_DELAYS.length} 次尝试均失败`);
   return null;
 }
 
@@ -533,7 +541,10 @@ export async function analyzeWithClaude(newsItems, etfData) {
   }
 
   console.log(`\n🤖 调用 Claude API 分片并行研判 (${shards.length} 片: ${shards.map(s => `${s.sector} ${s.items.length}条`).join('、')})...`);
-  const settled = await Promise.allSettled(shards.map(shard => runShard(shard, etfData)));
+  // 错峰 1.5s 启动,避免 4 个请求同时撞上免费档限流窗口
+  const settled = await Promise.allSettled(shards.map((shard, i) =>
+    new Promise(r => setTimeout(r, i * 1500)).then(() => runShard(shard, etfData))
+  ));
   const results = settled.map(r => r.status === 'fulfilled' ? r.value : null);
 
   const merged = mergeShardResults(shards, results);
