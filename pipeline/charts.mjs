@@ -34,6 +34,17 @@ export function saveETFHistory(outputDir, history) {
   writeFileSync(join(outputDir, 'etf_history.json'), JSON.stringify(history, null, 2), 'utf-8');
 }
 
+// 取板块代表 ETF 的当日价,与 fetchETFHistoryKLine 的历史曲线同口径(单只)。
+// 不能按 category 取全量 ETF 均价:光模块三只价格跨度大(0.68/1.05/3.01),
+// 均价 1.58 会让 base-100 曲线最后一天从 ~100 跳到 ~150。代表 ETF 缺失时回退均价。
+function pickEtfPrice(etfData, sector) {
+  const code = SECTOR_ETF[sector];
+  const single = etfData.find(e => e.code === code && e.price > 0);
+  if (single) return single.price;
+  const items = etfData.filter(e => e.category === sector && e.price > 0);
+  return items.length > 0 ? items.reduce((s, e) => s + e.price, 0) / items.length : null;
+}
+
 // Append today's ETF data to the history and keep last N entries.
 // The bucket date follows the Beijing day (not the host's local date), so a CI
 // build before 08:00 Beijing writes into the correct day.
@@ -55,18 +66,14 @@ export function accumulateETF(history, etfData, maxDays = 60) {
   const existingIdx = history.dates.indexOf(dateStr);
   if (existingIdx >= 0) {
     for (const sector of Object.keys(SECTOR_ETF)) {
-      const items = etfData.filter(e => e.category === sector);
-      if (items.length > 0) {
-        const avg = items.reduce((s, e) => s + e.price, 0) / items.length;
-        history.prices[sector][existingIdx] = parseFloat(avg.toFixed(4));
-      }
+      const price = pickEtfPrice(etfData, sector);
+      if (price !== null) history.prices[sector][existingIdx] = parseFloat(price.toFixed(4));
     }
   } else {
     history.dates.push(dateStr);
     for (const sector of Object.keys(SECTOR_ETF)) {
-      const items = etfData.filter(e => e.category === sector);
-      const avg = items.length > 0 ? items.reduce((s, e) => s + e.price, 0) / items.length : null;
-      history.prices[sector].push(avg !== null ? parseFloat(avg.toFixed(4)) : null);
+      const price = pickEtfPrice(etfData, sector);
+      history.prices[sector].push(price !== null ? parseFloat(price.toFixed(4)) : null);
     }
   }
 
