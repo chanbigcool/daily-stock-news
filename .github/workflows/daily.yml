@@ -69,14 +69,28 @@ jobs:
             git push origin main
           fi
 
+      # gh-pages 部署用独立暂存目录而非仓库根目录: peaceiris 对 publish_dir 为
+      # '.' 时会重建工作区 .git 指向 gh-pages,导致阶段二的 AI 提交步骤报
+      # "fatal: not in a git directory"。
+      - name: Stage preview site for gh-pages
+        if: steps.build_preview.outcome == 'success'
+        run: |
+          rm -rf deploy-stage
+          mkdir -p deploy-stage
+          cp -r index.html history quality deploy-stage/
+
       - name: Deploy preview to gh-pages
         if: steps.build_preview.outcome == 'success'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: '.'
+          publish_dir: 'deploy-stage'
           publish_branch: gh-pages
           force_orphan: true
+
+      - name: Clean preview stage
+        if: steps.build_preview.outcome == 'success'
+        run: rm -rf deploy-stage
 
       - name: Deploy preview to EdgeOne Pages (国内镜像)
         if: steps.build_preview.outcome == 'success' && env.EDGEONE_PAGES_API_TOKEN != ''
@@ -106,13 +120,22 @@ jobs:
             git push origin main
           fi
 
+      - name: Stage AI site for gh-pages
+        run: |
+          rm -rf deploy-stage
+          mkdir -p deploy-stage
+          cp -r index.html history quality deploy-stage/
+
       - name: Deploy AI to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: '.'
+          publish_dir: 'deploy-stage'
           publish_branch: gh-pages
           force_orphan: true
+
+      - name: Clean AI stage
+        run: rm -rf deploy-stage
 
       # 国内镜像:EdgeOne Pages(腾讯,国内节点)。
       # 未配置 EDGEONE_API_TOKEN 前自动跳过,不影响 gh-pages 主部署。
