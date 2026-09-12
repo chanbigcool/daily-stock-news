@@ -43,7 +43,7 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
   const newsCards = analyzed.map((n) => {
     const fresh = (Date.now() - new Date(n.pubDate).getTime()) < 12 * 3600 * 1000;
     return [
-      `<div class="news-card" onclick="this.classList.toggle('expanded')">`,
+      `<div class="news-card" data-sector="${escHtml(n.category || '')}" onclick="this.classList.toggle('expanded')">`,
       `<div class="card-left">`,
       `<div class="card-cat cat-${CATEGORY_CLS[n.category] || 'other'}">${escHtml(n.category || '综合')}</div>`,
       fresh ? `<div class="fresh-badge">新</div>` : '',
@@ -288,12 +288,20 @@ new Chart(document.getElementById('heatmapChart'), {
   .etf-change{font-size:.65rem;font-weight:700;}
   .etf-item+.etf-item{border-top:1px solid var(--border);}
 
-  /* Sector summary row */
+  /* Sector summary row — .sc 是可点的板块筛选按钮,行为见页尾脚本「板块筛选」 */
   .sector-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;}
   @media(max-width:640px){.sector-row{grid-template-columns:repeat(2,1fr);}}
-  .sc{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;text-align:center;}
-  .sc-name{font-weight:700;font-size:.82rem;margin-bottom:4px;}
-  .sc-stat{font-size:.7rem;color:var(--text-dim);}
+  .sc{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;text-align:center;cursor:pointer;font:inherit;color:inherit;transition:box-shadow .15s,border-color .15s;}
+  .sc:hover{border-color:#c8cbd4;box-shadow:var(--shadow);}
+  .sc:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  /* 选中态用该板块自己的颜色(currentColor 取自下面的 data-cat 规则) */
+  .sc.active{box-shadow:0 0 0 2px currentColor;}
+  .sc.active[data-cat="semi"]{color:var(--semi);}
+  .sc.active[data-cat="optics"]{color:var(--optics);}
+  .sc.active[data-cat="pharma"]{color:var(--pharma);}
+  .sc.active[data-cat="gold"]{color:var(--gold);}
+  .sc-name{display:block;font-weight:700;font-size:.82rem;margin-bottom:4px;}
+  .sc-stat{display:block;font-size:.7rem;color:var(--text-dim);}
   .sc-stat strong{font-size:.9rem;}
 
   /* Section divider */
@@ -302,6 +310,13 @@ new Chart(document.getElementById('heatmapChart'), {
 
   /* News cards */
   .news-grid{display:grid;gap:6px;}
+  /* 筛选靠 hidden 属性,但 .news-card 的 display:flex 特异性高于 UA 的
+     [hidden]{display:none} —— 不显式补这条,设了 hidden 也藏不住。 */
+  .news-card[hidden]{display:none;}
+  .news-empty{font-size:.72rem;color:var(--text-dim);background:var(--card-bg);border:1px dashed var(--border);border-radius:var(--radius);padding:12px 14px;text-align:center;}
+  .news-count{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:.68rem;font-weight:600;color:var(--text-dim);white-space:nowrap;}
+  .news-count button{font:inherit;font-weight:600;padding:2px 10px;border:1px solid #bfdbfe;border-radius:8px;background:#eff6ff;color:var(--accent);cursor:pointer;transition:background .15s;}
+  .news-count button:hover{background:#dbeafe;}
   .news-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;cursor:pointer;transition:box-shadow .15s,border-color .15s;display:flex;gap:10px;}
   .news-card:hover{box-shadow:var(--shadow);border-color:#c8cbd4;}
   .news-card.expanded{box-shadow:0 2px 8px rgba(0,0,0,.06);}
@@ -468,14 +483,14 @@ ${sectorMatrix.length > 0 ? `
 <div class="sec-title">板块速览</div>
 <div class="sector-row">
 ${sectorMatrix.map(s => `
-  <div class="sc">
-    <div class="sc-name">${escHtml(s.name)}</div>
-    <div class="sc-stat">
+  <button type="button" class="sc" data-sector="${escHtml(s.name)}" data-cat="${CATEGORY_CLS[s.name] || 'other'}" aria-pressed="false">
+    <span class="sc-name">${escHtml(s.name)}</span>
+    <span class="sc-stat">
       <span class="badge ${dirCls(s.direction)}">${s.direction}</span>
       <span class="impact-tag ${impactCls(s.shock === '强' ? '极高' : s.shock === '中' ? '中' : '低')}">${s.shock}冲击</span>
       <br><strong>${s.news_count}</strong> 条新闻
-    </div>
-  </div>
+    </span>
+  </button>
 `).join('')}
 </div>
 ` : ''}
@@ -484,10 +499,11 @@ ${marketSummary ? `<div class="market-summary">💡 ${escHtml(marketSummary)}</d
 
 ${chartPanels}
 
-<div class="sec-title">新闻列表（按时间从近到远）</div>
-<div class="news-grid">
+<div class="sec-title" id="newsSection">新闻列表（按时间从近到远）<span class="news-count"><span id="newsCountText">共 ${analyzed.length} 条</span><button type="button" id="newsFilterClear" hidden>显示全部</button></span></div>
+<div class="news-grid" id="newsGrid">
 ${newsCards}
 </div>
+<div class="news-empty" id="newsEmpty" hidden>该板块今日无入选新闻</div>
 
 <div class="sec-title">板块冲击矩阵</div>
 <div class="table-wrap">
@@ -744,6 +760,64 @@ function showHistoryDate(){
 function goToday(){
   window.location.href = BASE + '/';
 }
+// ── 板块筛选 ─────────────────────────────────────────────
+// 点「板块速览」的卡片 → 新闻列表只显示该板块,再点同一张(或「显示全部」)恢复。
+// 状态写进 URL hash(#半导体):120s 一次的新构建自动重载、手动刷新、分享链接都能
+// 带着筛选。用 replaceState 写入,不往浏览器后退键里塞条目。
+function sectorFromHash() {
+  try { return decodeURIComponent((location.hash || '').replace(/^#/, '')); }
+  catch (e) { return ''; }
+}
+// 本页实际存在卡片的板块集合。hash 是用户可手改的,出现不在集合里的值就当没筛选,
+// 否则会得到一整页空白。
+function knownSectors() {
+  return Array.from(document.querySelectorAll('.sector-row .sc')).map(b => b.dataset.sector).filter(Boolean);
+}
+function applySectorFilter(sector, opts) {
+  const grid = document.getElementById('newsGrid');
+  if (!grid) return; // 没有新闻列表的渲染路径(理论上不存在,防御一下)
+  const cards = grid.querySelectorAll('.news-card');
+  const active = knownSectors().indexOf(sector) >= 0 ? sector : '';
+  let shown = 0;
+  cards.forEach(c => {
+    const hit = !active || c.dataset.sector === active;
+    c.hidden = !hit;
+    if (hit) shown++;
+  });
+  const countEl = document.getElementById('newsCountText');
+  if (countEl) countEl.textContent = active
+    ? active + ' · ' + shown + ' / ' + cards.length + ' 条'
+    : '共 ' + cards.length + ' 条';
+  const clearBtn = document.getElementById('newsFilterClear');
+  if (clearBtn) clearBtn.hidden = !active;
+  const emptyEl = document.getElementById('newsEmpty');
+  if (emptyEl) emptyEl.hidden = !(active && shown === 0);
+  document.querySelectorAll('.sector-row .sc').forEach(b => {
+    const on = !!active && b.dataset.sector === active;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  history.replaceState(null, '', active
+    ? '#' + encodeURIComponent(active)
+    : location.pathname + location.search);
+  // 速览在页面上半部、列表在中部(中间隔着图表),筛选后滚过去才看得到结果
+  if (active && opts && opts.scroll) {
+    (document.getElementById('newsSection') || grid).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+const sectorRow = document.querySelector('.sector-row');
+if (sectorRow) {
+  sectorRow.addEventListener('click', (e) => {
+    const btn = e.target.closest('.sc');
+    if (!btn || !btn.dataset.sector) return;
+    const next = sectorFromHash() === btn.dataset.sector ? '' : btn.dataset.sector;
+    applySectorFilter(next, { scroll: next !== '' });
+  });
+}
+const filterClearBtn = document.getElementById('newsFilterClear');
+if (filterClearBtn) filterClearBtn.addEventListener('click', () => applySectorFilter(''));
+window.addEventListener('hashchange', () => applySectorFilter(sectorFromHash()));
+applySectorFilter(sectorFromHash()); // 带 hash 的链接/刷新后首屏即生效
 document.addEventListener('DOMContentLoaded', () => {
   loadHistoryDates();
   // 刷新按钮显隐: 公网无代理时隐藏(避免不可用的按钮),历史页隐藏;本机预览始终显示
