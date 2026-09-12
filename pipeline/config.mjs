@@ -16,6 +16,11 @@ export const CONFIG = {
   apiBase: IS_CI ? (process.env.ANTHROPIC_BASE_URL || 'https://open.bigmodel.cn/api/anthropic') : 'http://127.0.0.1:15721',
   model: IS_CI ? (process.env.ANTHROPIC_MODEL || 'glm-4.5-flash') : 'claude-sonnet-4-20250514',
 
+  // Google News RSS 的时间窗(见 fetch.mjs 的 withRecency)。Google 的搜索 RSS 按
+  // 相关度而非时间排序,实测 2054 条里只有 8 条当日 → 统一在 q 后追加 when:1d 运算符。
+  // 若这个运算符被 Google 停用/失效,把这里改成 null 即可整体关掉(不删代码,便于回滚)。
+  rssRecencyWindow: '1d',
+
   // Google News RSS feeds (blocked in mainland China, kept as fallback)
   feeds: [
     { url: 'https://news.google.com/rss/search?q=semiconductor+chip+Nvidia+TSMC+Intel+AMD+HBM+foundry&hl=en-US&gl=US&ceid=US:en', name: '半导体' },
@@ -88,6 +93,11 @@ export const CONFIG = {
   health: {
     minKept: 10,        // 当日(北京时间)可用新闻下限,低于此判 failed
     minApiSources: 3,   // 直连 API 成功源数下限(共 6 个),低于此判 degraded
+    // 源内最新条目的最大年龄(小时),超过判 degraded。防「返回 200 的存量池」
+    // 这类假绿灯:见闻医药频道 09-12 实测返回 100 条、HTTP 200,最新一条却停在
+    // 4 天前,只数条数的健康判定判它 ok。48 小时是折中——足够放过周末的自然清淡,
+    // 又能抓到「频道已停更」这种日级别的死亡。
+    maxStaleHours: 48,
   },
 
   serverChanSendkey: process.env.SERVERCHAN_SENDKEY || '',

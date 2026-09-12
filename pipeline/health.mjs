@@ -14,11 +14,13 @@ import { CONFIG } from './config.mjs';
 const SEVERITY = { ok: 0, degraded: 1, failed: 2 };
 
 // stats 来自 fetchAllNews();kept/analyzed 由构建脚本在清洗后回填。
+// now 可注入,便于单测「源内容陈旧」这条与时钟相关的规则。
 // 返回 { level, issues, summary, counts }。
-export function evaluateHealth(stats = {}, { kept = 0, analyzed = 0 } = {}) {
+export function evaluateHealth(stats = {}, { kept = 0, analyzed = 0, now = Date.now() } = {}) {
   const cfg = CONFIG.health || {};
   const minKept = cfg.minKept ?? 10;
   const minApiSources = cfg.minApiSources ?? 3;
+  const maxStaleHours = cfg.maxStaleHours ?? 48;
 
   const rss = stats.rss || { total: 0, okFeeds: 0, failFeeds: 0, items: 0 };
   const api = stats.api || { total: 0, okSources: 0, failSources: 0, items: 0 };
@@ -63,6 +65,20 @@ export function evaluateHealth(stats = {}, { kept = 0, analyzed = 0 } = {}) {
     flag('degraded', 'api-error', `API 源抓取失败: ${failedApis.join('、')}`);
   }
 
+  // 6. 源「有返回,但内容是存量池」——条数看着满、最新条目却很久以前。
+  // 09-12 实测:见闻医药返回 100 条 HTTP 200,最新一条停在 4 天前,只数条数的判定
+  // 判它 ok,于是板块专用源死了四天没人发现。这条把它降级并点名。
+  // 只对「确实有返回」的源判(s.count > 0):0 条的情况由规则 4 覆盖,不重复报。
+  const stale = sources
+    .filter(s => s.ok && s.count > 0 && Number.isFinite(s.newest))
+    .map(s => ({ name: s.name, hours: Math.floor((now - s.newest) / 3600000) }))
+    .filter(s => s.hours >= maxStaleHours);
+  if (stale.length > 0) {
+    const shown = stale.slice(0, 5).map(s => `${s.name} 最新 ${s.hours} 小时前`);
+    const more = stale.length > shown.length ? ` 等 ${stale.length} 个源` : '';
+    flag('degraded', 'stale-source', `源内容陈旧(>${maxStaleHours}h): ${shown.join('、')}${more}`);
+  }
+
   const counts = {
     fetched: (rss.items || 0) + (api.items || 0),
     kept,
@@ -85,9 +101,12 @@ export function evaluateHealth(stats = {}, { kept = 0, analyzed = 0 } = {}) {
 
 // 控制台/推送用的可读摘要:RSS 汇总一行 + 逐个直连 API 一行。
 // onlyProblems=true 时只留有问题的行(告警正文用,避免把 43 个 RSS 源刷屏)。
-export function formatSourceSummary(stats = {}, { onlyProblems = false } = {}) {
+// 陈旧源(count>0 但最新条目很老)也按「有问题」处理并标注年龄 —— 否则它会被
+// 打印成「✓ 100 条」,正是要消灭的假绿灯。
+export function formatSourceSummary(stats = {}, { onlyProblems = false, now = Date.now() } = {}) {
   const rss = stats.rss || { total: 0, okFeeds: 0, failFeeds: 0, items: 0 };
   const sources = Array.isArray(stats.sources) ? stats.sources : [];
+  const maxStaleHours = CONFIG.health?.maxStaleHours ?? 48;
   const lines = [];
 
   const rssEnabled = !!stats.rssEnabled;
@@ -101,9 +120,15 @@ export function formatSourceSummary(stats = {}, { onlyProblems = false } = {}) {
 
   for (const s of sources) {
     if (s.kind !== 'api') continue;
-    if (onlyProblems && s.ok && s.count > 0) continue;
-    const status = s.ok ? `${s.count} 条` : (s.error || '失败');
-    lines.push(`  ${s.ok && s.count > 0 ? '✓' : '✗'} ${s.name} → ${status}`);
+    const ageHours = (s.ok && s.count > 0 && Number.isFinite(s.newest))
+      ? Math.floor((now - s.newest) / 3600000) : null;
+    const stale = ageHours !== null && ageHours >= maxStaleHours;
+    const healthy = s.ok && s.count > 0 && !stale;
+    if (onlyProblems && healthy) continue;
+    const status = s.ok
+      ? (stale ? `${s.count} 条 · 最新 ${ageHours} 小时前` : `${s.count} 条`)
+      : (s.error || '失败');
+    lines.push(`  ${healthy ? '✓' : '✗'} ${s.name} → ${status}`);
   }
 
   return lines.length > 0 ? lines.join('\n') : '(所有源正常)';

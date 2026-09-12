@@ -51,6 +51,27 @@ export async function fetchETFData() {
 
 // ── Google News RSS ──────────────────────────────────────
 
+// Google News 搜索 RSS 是**按相关度**排序的,不是按时间 —— 2026-09-12 线上实测:
+// 43 个源抓回 2054 条,当日(北京时间)只有 8 条,93% 比 4 天前还老。所以 RSS 一直
+// 抓不到当日量,不是"掉线"而是"排序口径不对"。给 q 加 Google 的 when:1d 时间窗
+// 运算符把 feed 限定到最近 24 小时(写法:关键词之间用 + 连接,when:1d 当作一个词)。
+// 已是存量池的源(sites: 之类的组合查询)同样适用。非 Google News 的 URL 原样返回。
+export function withRecency(url, win = '1d') {
+  if (!url || !url.includes('news.google.com')) return url;
+  return url.replace(/([?&]q=[^&]*)/, m => (m.includes('when:') ? m : `${m}+when:${win}`));
+}
+
+// 源内最新条目的时间戳(ms);无条目/时间不可解析 → null。
+// 供健康判定识别「条数看着满、内容却是存量池」的假绿灯(见闻医药)。
+function newestTime(items) {
+  let max = 0;
+  for (const it of items) {
+    const t = it.pubDate instanceof Date ? it.pubDate.getTime() : NaN;
+    if (Number.isFinite(t) && t > max) max = t;
+  }
+  return max || null;
+}
+
 export async function fetchGoogleNewsRSS(feed) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
@@ -283,7 +304,10 @@ async function probeRSSAvailable(allFeeds) {
 
 export async function fetchAllNews() {
   const allItems = [];
-  const allFeeds = [...CONFIG.feeds, ...(CONFIG.extraFeeds || [])];
+  // when:1d 时间窗在抓取处统一注入,配置里仍保留人类可读的关键词查询串。
+  const rssWindow = CONFIG.rssRecencyWindow === null ? null : (CONFIG.rssRecencyWindow || '1d');
+  const allFeeds = [...CONFIG.feeds, ...(CONFIG.extraFeeds || [])]
+    .map(f => (rssWindow ? { ...f, url: withRecency(f.url, rssWindow) } : f));
   const sources = []; // 每源一条统计,供健康判定 / quality 回看页
 
   // 1. Google News RSS (batched by 8) — skipped entirely when unreachable locally
@@ -300,11 +324,11 @@ export async function fetchAllNews() {
           allItems.push(...items);
           rssStats.okFeeds++;
           rssStats.items += items.length;
-          sources.push({ name: feed.name, kind: 'rss', ok: true, count: items.length, error: null });
+          sources.push({ name: feed.name, kind: 'rss', ok: true, count: items.length, newest: newestTime(items), error: null });
         }).catch(err => {
           console.warn(`  [${b + j + 1}/${allFeeds.length}] ${feed.name} ⚠ ${err.message}`);
           rssStats.failFeeds++;
-          sources.push({ name: feed.name, kind: 'rss', ok: false, count: 0, error: err.message });
+          sources.push({ name: feed.name, kind: 'rss', ok: false, count: 0, newest: null, error: err.message });
         }))
       );
       if (b + BATCH < allFeeds.length) await sleep(800);
@@ -335,12 +359,12 @@ export async function fetchAllNews() {
         allItems.push(...r.value);
         apiStats.okSources++;
         apiStats.items += r.value.length;
-        sources.push({ name, kind: 'api', ok: true, count: r.value.length, error: null });
+        sources.push({ name, kind: 'api', ok: true, count: r.value.length, newest: newestTime(r.value), error: null });
       } else {
         const msg = r.reason?.message || String(r.reason);
         console.warn(`  [API] ${name} ⚠ ${msg}`);
         apiStats.failSources++;
-        sources.push({ name, kind: 'api', ok: false, count: 0, error: msg });
+        sources.push({ name, kind: 'api', ok: false, count: 0, newest: null, error: msg });
       }
     });
   }
