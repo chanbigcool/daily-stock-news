@@ -270,9 +270,11 @@ async function probeRSSAvailable(allFeeds) {
 export async function fetchAllNews() {
   const allItems = [];
   const allFeeds = [...CONFIG.feeds, ...(CONFIG.extraFeeds || [])];
+  const sources = []; // 每源一条统计,供健康判定 / quality 回看页
 
   // 1. Google News RSS (batched by 8) — skipped entirely when unreachable locally
   const rssAvailable = await probeRSSAvailable(allFeeds);
+  const rssStats = { total: allFeeds.length, okFeeds: 0, failFeeds: 0, items: 0 };
   if (rssAvailable) {
     console.log('\n📡 拉取 Google News RSS (并行)...');
     const BATCH = 8;
@@ -282,16 +284,24 @@ export async function fetchAllNews() {
         batch.map((feed, j) => fetchGoogleNewsRSS(feed).then(items => {
           console.log(`  [${b + j + 1}/${allFeeds.length}] ${feed.name} → ${items.length} 条`);
           allItems.push(...items);
+          rssStats.okFeeds++;
+          rssStats.items += items.length;
+          sources.push({ name: feed.name, kind: 'rss', ok: true, count: items.length, error: null });
         }).catch(err => {
           console.warn(`  [${b + j + 1}/${allFeeds.length}] ${feed.name} ⚠ ${err.message}`);
+          rssStats.failFeeds++;
+          sources.push({ name: feed.name, kind: 'rss', ok: false, count: 0, error: err.message });
         }))
       );
       if (b + BATCH < allFeeds.length) await sleep(800);
     }
+  } else {
+    console.log('  📡 RSS 按设计跳过(本地探测不可达),不计入健康判定');
   }
 
   // 2. Direct API sources in parallel
   const apiSources = (CONFIG.apiSources || []).filter(s => s.enabled !== false);
+  const apiStats = { total: apiSources.length, okSources: 0, failSources: 0, items: 0 };
   if (apiSources.length > 0) {
     console.log(`\n🔌 直连 ${apiSources.length} 个财经 API (并行)...`);
     const apiPromises = apiSources.map(async (src) => {
@@ -302,11 +312,29 @@ export async function fetchAllNews() {
       console.log(`  [API] ${src.name} → ${items.length} 条`);
       return items;
     });
+    // 按索引对应回源名:被 allSettled 丢掉的 rejected 也要记进统计,
+    // 否则「某个源静默失败」正是本次要消灭的盲区。
     const apiResults = await Promise.allSettled(apiPromises);
-    for (const r of apiResults) {
-      if (r.status === 'fulfilled') allItems.push(...r.value);
-    }
+    apiResults.forEach((r, i) => {
+      const name = apiSources[i].name;
+      if (r.status === 'fulfilled') {
+        allItems.push(...r.value);
+        apiStats.okSources++;
+        apiStats.items += r.value.length;
+        sources.push({ name, kind: 'api', ok: true, count: r.value.length, error: null });
+      } else {
+        const msg = r.reason?.message || String(r.reason);
+        console.warn(`  [API] ${name} ⚠ ${msg}`);
+        apiStats.failSources++;
+        sources.push({ name, kind: 'api', ok: false, count: 0, error: msg });
+      }
+    });
   }
 
-  return allItems;
+  // rssEnabled 让健康判定区分「按设计跳过」(本地) 与「尝试了但全灭」(CI),
+  // 否则本地每次构建都会因 RSS 缺失误报失败。
+  return {
+    items: allItems,
+    stats: { rssEnabled: rssAvailable, rss: rssStats, api: apiStats, sources },
+  };
 }

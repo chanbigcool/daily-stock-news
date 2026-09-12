@@ -19,13 +19,34 @@ import { fetchAllNews, fetchETFData } from '../pipeline/fetch.mjs';
 import { dedupAndClean, dedupKey } from '../pipeline/clean.mjs';
 import { analyzeWithClaude, buildSectorMatrix, deriveExplanation } from '../pipeline/analyze.mjs';
 import { scoreNewsItem } from '../pipeline/sentiment.mjs';
+import { evaluateHealth, formatSourceSummary } from '../pipeline/health.mjs';
 import { SECTORS, CATEGORY_CLS, IMPACT_RANK, impactCompare } from '../pipeline/sectors.mjs';
 import { loadETFHistory, saveETFHistory, accumulateETF, buildETFChartData, buildSentimentData, buildImpactHeatmap, buildDirectionChart, buildTimeWindowData, fetchETFHistoryKLine } from '../pipeline/charts.mjs';
 
 // ── HTML 渲染 ──────────────────────────────────────────
 
+// 抓取健康横幅:数据源异常时置顶提示,避免「页面看着正常、当天其实只有 8 条」
+// 这种静默降级。sourceHealth 由构建主流程挂在 result 上,存档 payload 同样携带,
+// 所以历史静态页也会显示当天的横幅。
+function healthBannerHtml(sourceHealth) {
+  if (!sourceHealth || sourceHealth.level === 'ok') return '';
+  const isFail = sourceHealth.level === 'failed';
+  const c = sourceHealth.counts || {};
+  const tone = isFail
+    ? { bg: '#fef2f2', bd: '#dc2626', fg: '#991b1b' }
+    : { bg: '#fffbeb', bd: '#d97706', fg: '#92400e' };
+  const issues = (sourceHealth.issues || []).map(i => escHtml(i.message)).join('；');
+  // 本地运行按设计不尝试 RSS,别把「未尝试」写成「全挂了」
+  const rssText = c.rssEnabled === false ? 'RSS 未尝试(本地)' : `RSS ${c.rssOk ?? 0}/${c.rssTotal ?? 0} 源`;
+  return `<div style="background:${tone.bg};border:1px solid ${tone.bd};border-left:4px solid ${tone.bd};color:${tone.fg};border-radius:8px;padding:10px 14px;margin:12px 0;font-size:13px;line-height:1.6">
+  <b>${isFail ? '🚨 今日抓取异常' : '⚠️ 今日抓取降级'}</b> — 精选 <b>${c.analyzed ?? '—'}</b> 条 · 当日可用 ${c.kept ?? '—'} 条 · ${rssText} · 直连 API ${c.apiOk ?? 0}/${c.apiTotal ?? 0} 源
+  ${issues ? `<div style="margin-top:4px">${issues}</div>` : ''}
+  <div style="margin-top:4px"><a style="color:${tone.fg};text-decoration:underline;cursor:pointer" onclick="location.href=(window.BASE||'')+'/quality/index.html'">查看数据质量详情 →</a></div>
+</div>`;
+}
+
 export function renderHTML(result, todayDisplay, etfData, chartData) {
-  const { analyzed, sectorMatrix, keyPoints, marketSummary, isAi } = result;
+  const { analyzed, sectorMatrix, keyPoints, marketSummary, isAi, sourceHealth } = result;
 
   const impactCls = (imp) => imp === '极高' ? 'impact-vhigh' : imp === '高' ? 'impact-high' : imp === '中' ? 'impact-mid' : 'impact-low';
   const dirCls = (d) => (d || '').includes('利好') ? 'badge-bull' : (d || '').includes('利空') ? 'badge-bear' : (d === '中性' ? 'badge-neutral' : 'badge-mixed');
@@ -430,7 +451,10 @@ new Chart(document.getElementById('heatmapChart'), {
   </select>
   <button id="today-btn" class="active" onclick="goToday()">今天</button>
   <a class="db-link" onclick="location.href=(window.BASE||'')+'/db.html'">📊 数据查询</a>
+  <a class="db-link" onclick="location.href=(window.BASE||'')+'/quality/index.html'">🩺 数据质量</a>
 </div>
+
+${healthBannerHtml(sourceHealth)}
 
 <div class="stats-mini">
   <div class="st">📈利好 <b style="color:#15803d">${stats.bull}</b></div>
@@ -813,11 +837,16 @@ async function sendNotification(result, etfData, dateStr) {
     '🤖 AI 分析 · ' + beijingNowString(),
   ].join('\n');
 
-  const isNewKey = CONFIG.serverChanSendkey.startsWith('sctp');
-  const apiUrl = isNewKey
+  await pushServerChan(title, desp);
+}
+
+// Server酱推送(日报正文与健康告警共用)。未配置 SendKey 时静默跳过。
+// Server酱3 的 key 以 sctp 开头,走独立域名;旧 key 走 sctapi。
+async function pushServerChan(title, desp) {
+  if (!CONFIG.serverChanSendkey) return;
+  const apiUrl = CONFIG.serverChanSendkey.startsWith('sctp')
     ? 'https://' + CONFIG.serverChanSendkey + '.push.ft07.com/send'
     : 'https://sctapi.ftqq.com/' + CONFIG.serverChanSendkey + '.send';
-
   try {
     const resp = await fetch(apiUrl, {
       method: 'POST',
@@ -834,6 +863,48 @@ async function sendNotification(result, etfData, dateStr) {
   } catch (err) {
     console.warn('  ⚠ 推送失败: ' + err.message);
   }
+}
+
+// 抓取降级/异常时的独立告警推送 —— 与日报正文分开,标题带 ⚠️ 便于在微信里
+// 一眼区分。只在 AI 阶段发,避免 preview 阶段重复告警。
+async function sendHealthAlert(health, fetchStats, dateStr) {
+  if (health.level === 'ok') return;
+  if (process.env.BUILD_PHASE === 'preview') return;
+  if (!CONFIG.serverChanSendkey) {
+    console.warn('  📤 健康告警: 未配置 SERVERCHAN_SENDKEY,仅记录日志');
+    return;
+  }
+
+  const displayDate = dateStr.slice(0,4) + '-' + dateStr.slice(4,6) + '-' + dateStr.slice(6,8);
+  const emoji = health.level === 'failed' ? '🚨' : '⚠️';
+  const title = `${emoji} 抓取${health.level === 'failed' ? '异常' : '降级'} · ${displayDate}`;
+  const { counts } = health;
+  const desp = [
+    '## ' + title,
+    '',
+    '> ' + health.summary,
+    '',
+    '**🩺 问题**',
+    ...health.issues.map(i => '- ' + i.message),
+    '',
+    '**📡 各源条数**',
+    '```',
+    formatSourceSummary(fetchStats),
+    '```',
+    '',
+    '**📊 当日**',
+    `- 原始抓取: ${counts.fetched} 条`,
+    `- 当日可用: ${counts.kept} 条`,
+    `- 精选卡片: ${counts.analyzed} 条`,
+    `- RSS: ${counts.rssEnabled === false ? '未尝试(本地运行)' : counts.rssOk + '/' + counts.rssTotal + ' 源成功'}`,
+    `- 直连 API: ${counts.apiOk}/${counts.apiTotal} 源成功`,
+    '',
+    '---',
+    '🤖 抓取健康监控 · ' + beijingNowString(),
+  ].join('\n');
+
+  console.log('\n📤 发送抓取健康告警...');
+  await pushServerChan(title, desp);
 }
 
 // ── 历史日报: 加载、跨构建累积、静态化 ─────────────────────
@@ -943,6 +1014,8 @@ function saveHistoryArchive(dateStr, todayDisplay, result, etfData, chartData) {
     keyPoints: result.keyPoints || [],
     marketSummary: result.marketSummary || '',
     isAi: result.isAi,
+    // 当日抓取健康(源条数/问题列表)——quality 回看页与静态历史页都读它
+    sourceHealth: result.sourceHealth || null,
     fullNews: (result.fullNews || []).map(n => ({
       title: n.title_cn || n.title,
       description: n.description || '',
@@ -1009,8 +1082,13 @@ function saveHistoryArchive(dateStr, todayDisplay, result, etfData, chartData) {
     // 前端手动刷新轮询到 preview 提示"基础版已发布,AI 更新中"并继续轮询,
     // 到 done 才 reload;定时/后台自动检测看到 preview 不跳转,等 done。
     state: process.env.BUILD_PHASE === 'preview' ? 'preview' : 'done',
+    // 抓取健康结论。CI 在 Deploy 之后读这两个字段决定是否把 run 判红
+    // (先发布再判红:坏数据日照常更新站点,不整站冻结)。
+    health: result.sourceHealth
+      ? { level: result.sourceHealth.level, issues: result.sourceHealth.issues.map(i => i.message) }
+      : { level: 'ok', issues: [] },
   }, null, 2), 'utf-8');
-  console.log(`🚀 构建状态: ${HISTORY_DIR}/build-state.json (runId=${process.env.RUN_ID || 'none'})`);
+  console.log(`🚀 构建状态: ${HISTORY_DIR}/build-state.json (runId=${process.env.RUN_ID || 'none'}, 健康=${result.sourceHealth?.level || 'ok'})`);
 }
 
 // ── 历史图表重建 ─────────────────────────────────────────
@@ -1058,7 +1136,9 @@ async function main() {
   console.log(`  Google News RSS: ${CONFIG.feeds.length} 源`);
 
   // 1. Fetch news and ETF data in parallel
-  const [newsItems, etfData] = await Promise.all([fetchAllNews(), fetchETFData()]);
+  const [newsResult, etfData] = await Promise.all([fetchAllNews(), fetchETFData()]);
+  const newsItems = newsResult.items;
+  const fetchStats = newsResult.stats;
 
   const dateStr = getTodayStr();
 
@@ -1079,6 +1159,23 @@ async function main() {
 
   // 3. Analyze
   const result = await analyzeWithClaude(kept, etfData);
+
+  // 3-健康. 抓取健康判定:把「源 → 条数」变成可判定的等级,供页面横幅、微信
+  // 告警、quality 回看页、CI 判红共用。挂在 result 上,渲染与存档都取得到
+  // (renderHTML / saveHistoryArchive 都从 result 取值,无需改签名)。
+  const health = evaluateHealth(fetchStats, {
+    kept: kept.length,
+    analyzed: (result.analyzed || []).length,
+  });
+  result.sourceHealth = {
+    level: health.level,
+    issues: health.issues,
+    summary: health.summary,
+    counts: health.counts,
+  };
+  console.log('\n🩺 抓取健康:');
+  console.log(formatSourceSummary(fetchStats).split('\n').map(l => '  ' + l).join('\n'));
+  console.log(`  → ${health.level} · ${health.summary}`);
 
   // 3a. 事件级去重:按 eventId 聚合 kept(代表条目已挂事件元数据),
   // 重建当日 events 列表供存档(events_YYYYMMDD.json)。
@@ -1239,6 +1336,9 @@ async function main() {
 
   // 8. Send push notification
   await sendNotification(result, etfData, dateStr);
+
+  // 8b. 抓取降级/异常时另发一条告警——与日报正文分开,避免被正常推送淹没
+  await sendHealthAlert(result.sourceHealth, fetchStats, dateStr);
 
   console.log('\n✅ 完成！\n');
 }

@@ -106,6 +106,11 @@ export function computeDays() {
       if (dir in dirCount) dirCount[dir]++;
     }
 
+    // 抓取健康(2026-09-13 起存档携带;更早的存档无此字段 → null 显示为「—」)
+    const health = d.sourceHealth
+      ? { level: d.sourceHealth.level || 'ok', issues: (d.sourceHealth.issues || []).map(i => i.message || String(i)) }
+      : null;
+
     days.push({
       date: d.date,
       displayDate: d.displayDate,
@@ -117,6 +122,7 @@ export function computeDays() {
       impact: { vhigh, high },
       signalHitRate,
       directions: dirCount,
+      health,
       matrix: matrix.map(s => ({ name: s.name, direction: s.direction, shock: s.shock })),
     });
   }
@@ -180,6 +186,11 @@ function renderHTML(r) {
     const dirChips = Object.entries(day.directions)
       .filter(([, v]) => v > 0)
       .map(([k, v]) => `<span class="chip" style="color:${DIR_COLOR[k]}">${k}${v}</span>`).join('');
+    const healthCell = !day.health
+      ? '<span style="color:#64748b">—</span>'
+      : day.health.level === 'ok'
+        ? '<span class="ok">正常</span>'
+        : `<span class="${day.health.level === 'failed' ? 'bad' : 'warn'}" title="${escHtml(day.health.issues.join('；'))}">${day.health.level === 'failed' ? '异常' : '降级'}</span>`;
     return `<tr>
       <td>${escHtml(day.displayDate)}</td>
       <td>${day.isAi ? '<span class="badge-ai">AI</span>' : '<span class="badge-kw">关键词</span>'}</td>
@@ -188,6 +199,7 @@ function renderHTML(r) {
       <td>${dirChips}</td>
       <td>${impactChips}</td>
       <td>${day.signalHitRate}%</td>
+      <td>${healthCell}</td>
     </tr>`;
   }).join('\n');
 
@@ -198,6 +210,11 @@ function renderHTML(r) {
     </tr>`).join('\n');
 
   const latest = r.days[r.days.length - 1];
+  // 最近一天的抓取健康 + 区间内降级天数(健康字段随 2026-09-13 起构建存档)
+  const healthDays = r.days.filter(d => d.health && d.health.level !== 'ok');
+  const lh = latest?.health;
+  const healthTone = !lh ? '#64748b' : lh.level === 'ok' ? '#4ade80' : lh.level === 'failed' ? '#ef4444' : '#fbbf24';
+  const healthText = !lh ? '—' : lh.level === 'ok' ? '正常' : lh.level === 'failed' ? '异常' : '降级';
   return `<!doctype html>
 <html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>数据质量·历史表现回看</title>
@@ -215,6 +232,7 @@ th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #334155}
 th{color:#94a3b8;font-weight:600;background:#172033}
 .ok{color:#4ade80;font-weight:600}
 .warn{color:#fbbf24;font-weight:600}
+.bad{color:#ef4444;font-weight:600;cursor:help}
 .chip{font-size:12px;margin-right:6px}
 .vhigh{color:#ef4444}.badge-ai{background:#7c3aed;color:#fff;padding:1px 6px;border-radius:6px;font-size:11px}.badge-kw{background:#475569;color:#fff;padding:1px 6px;border-radius:6px;font-size:11px}
 .section-title{font-size:15px;font-weight:700;margin:28px 0 10px;color:#f1f5f9}
@@ -227,6 +245,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
   <div class="card"><div class="num">${r.total}</div><div class="label">已存档交易日</div></div>
   <div class="card"><div class="num">${r.coverageRate}%</div><div class="label">四板块完整覆盖率</div></div>
   <div class="card"><div class="num">${r.avgImpactHigh}</div><div class="label">每日平均 高+极高影响事件</div></div>
+  <div class="card"><div class="num" style="color:${healthTone}">${healthText}</div><div class="label">最近一日抓取健康 · 区间内异常/降级 ${healthDays.length} 天</div></div>
 </div>
 
 <div class="section-title">板块方向 → 次日 ETF 实际涨跌 一致率</div>
@@ -237,10 +256,10 @@ ${matrixRows || '<tr><td colspan="2" style="color:#64748b">暂无跨日 ETF 数�
 
 <div class="section-title">逐日明细</div>
 <table>
-<tr><th>日期</th><th>引擎</th><th>简讯数</th><th>板块覆盖</th><th>方向分布</th><th>高影响</th><th>信号命中率</th></tr>
-${daysHtml || '<tr><td colspan="7" style="color:#64748b">暂无存档</td></tr>'}
+<tr><th>日期</th><th>引擎</th><th>简讯数</th><th>板块覆盖</th><th>方向分布</th><th>高影响</th><th>信号命中率</th><th>源健康</th></tr>
+${daysHtml || '<tr><td colspan="8" style="color:#64748b">暂无存档</td></tr>'}
 </table>
-<div class="note">信号命中率 = 简讯中命中评分引擎信号(非「未命中明显信号」)的比例。</div>
+<div class="note">信号命中率 = 简讯中命中评分引擎信号(非「未命中明显信号」)的比例。源健康取自当日构建的抓取判定(悬停可看具体问题);2026-09-13 之前的存档无此字段。</div>
 </div></body></html>`;
 }
 

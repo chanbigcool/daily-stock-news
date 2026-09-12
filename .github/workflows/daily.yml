@@ -146,3 +146,23 @@ jobs:
         env:
           EDGEONE_PAGES_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
         run: npx edgeone makers deploy . --name daily-stock-news --area global --json
+
+      # ── 抓取健康闸门：放在 Deploy 之后，先发布再判红 ──
+      # 坏数据日照常更新站点(不整站冻结,心跳工作流照常补建),但 run 变红 →
+      # GitHub 邮件告警。判定逻辑见 pipeline/health.mjs,结果写在 build-state.json。
+      - name: Fetch health gate
+        if: always()
+        run: |
+          node -e '
+            const fs = require("fs");
+            const p = "history/build-state.json";
+            if (!fs.existsSync(p)) { console.log("无 build-state.json，跳过健康闸门"); process.exit(0); }
+            const h = (JSON.parse(fs.readFileSync(p, "utf8")).health) || { level: "ok", issues: [] };
+            const detail = (h.issues || []).join("；");
+            if (h.level === "failed") {
+              console.error("::error::抓取健康判定为 failed — " + detail);
+              process.exit(1);
+            }
+            if (h.level === "degraded") console.warn("::warning::抓取降级 — " + detail);
+            console.log("抓取健康: " + h.level + (detail ? " — " + detail : ""));
+          '

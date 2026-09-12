@@ -60,28 +60,52 @@ test('fetchClsNews:正常响应 → 映射出标题/描述/link/pubDate', async 
 
 // fetchAllNews 依赖 CONFIG.feeds + CONFIG.apiSources + 内部 probeRSSAvailable。
 // 在非 CI(本地)且 mock RSS 全失败时,probe 返回 false → 跳过 RSS,只走 API。
-// 这里模拟「API 部分成功 + RSS 不可达」,验证整体不中断、返回已成功的部分。
-test('fetchAllNews:单源失败不中断,返回成功源的数据', async () => {
+// 这里模拟「API 部分成功 + RSS 不可达」,验证整体不中断、返回已成功的部分,
+// 并且每源统计能区分「抓了但 0 条」与「压根没尝试」。
+test('fetchAllNews:单源失败不中断,返回 {items, stats} 且逐源留痕', async () => {
   const origFeeds = CONFIG.feeds;
+  const origExtra = CONFIG.extraFeeds;
   const origApi = CONFIG.apiSources;
   CONFIG.isCi = false;
   CONFIG.feeds = [{ url: 'http://fake/rss', name: 'x' }];
+  CONFIG.extraFeeds = []; // allFeeds 会拼接 extraFeeds,不清空则总数对不上
   CONFIG.apiSources = [
     { name: '财联社', url: 'http://fake/cls', enabled: true },
     { name: '金十数据', url: 'http://fake/jin10', enabled: true },
   ];
-  // 两个 API:一个成功(财联社),一个失败(金十)。probe 的 RSS fetch 全失败 → 跳过 RSS。
+  // 两个 API:一个成功(财联社),一个内部抛错被 fetcher 吞掉 → 成功但 0 条
+  // (金十)。probe 的 RSS fetch 全失败 → 跳过 RSS。
   const apiOk = async (url) => {
     if (url.includes('cls')) return { ok: true, json: async () => ({ data: { roll_data: [{ id: 9, title: '英伟达业绩超预期', brief: '营收创新高', ctime: Math.floor(Date.now() / 1000) }] } }) };
     if (url.includes('jin10')) throw new Error('jin10 down');
     throw new Error('rss unreachable');
   };
   global.fetch = apiOk;
-  const all = await fetchAllNews();
-  assert.ok(all.length >= 1, '成功源的新闻应被收集');
-  assert.ok(all.some(n => n.title.includes('英伟达')));
+  const { items, stats } = await fetchAllNews();
+
+  assert.ok(items.length >= 1, '成功源的新闻应被收集');
+  assert.ok(items.some(n => n.title.includes('英伟达')));
+
+  // RSS 探测失败 → 按设计跳过:既不算成功也不算失败,且 rssEnabled 明确为 false
+  assert.equal(stats.rssEnabled, false);
+  assert.equal(stats.rss.total, 1);
+  assert.equal(stats.rss.okFeeds, 0);
+  assert.equal(stats.rss.failFeeds, 0, '未尝试 ≠ 失败,不应计入 failFeeds');
+
+  // 直连 API:逐源留痕 —— 本次要消灭的就是「静默失败」
+  assert.equal(stats.api.total, 2);
+  assert.equal(stats.api.okSources, 2);
+  assert.equal(stats.sources.length, 2);
+  const cls = stats.sources.find(s => s.name === '财联社');
+  assert.equal(cls.ok, true);
+  assert.equal(cls.count, 1);
+  const jin10 = stats.sources.find(s => s.name === '金十数据');
+  assert.equal(jin10.ok, true);
+  assert.equal(jin10.count, 0, 'fetcher 内部吞掉的失败表现为「成功但 0 条」,由 health 规则点名');
+
   // 清理:恢复 CONFIG
   CONFIG.feeds = origFeeds;
+  CONFIG.extraFeeds = origExtra;
   CONFIG.apiSources = origApi;
   delete global.fetch;
 });

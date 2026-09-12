@@ -76,6 +76,13 @@ export const CONFIG = {
   ],
   apiSourceMaxItems: 80,
 
+  // 抓取健康阈值(见 pipeline/health.mjs)。默认值是依据 history/ 22 天存档的
+  // analyzed 条数分布(14~95,中位约 40)取的保守下限,先观察再收紧。
+  health: {
+    minKept: 10,        // 当日(北京时间)可用新闻下限,低于此判 failed
+    minApiSources: 3,   // 直连 API 成功源数下限(共 6 个),低于此判 degraded
+  },
+
   serverChanSendkey: process.env.SERVERCHAN_SENDKEY || '',
 };
 
