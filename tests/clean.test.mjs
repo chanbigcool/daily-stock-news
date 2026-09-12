@@ -125,6 +125,25 @@ test('黄金假阳性被 exclude 拦截(黄金周 → 不分类)', () => {
   assert.equal(out.length, 0, '「黄金周」不应误分类为黄金板块');
 });
 
+// 「出海」跨行业(服务/文化/机器人/货物都在用),只能当 context 加分,不能单独成立。
+// 实测一天 11 条创新药里 7 条是这么误收的。
+test('创新药假阳性被拦(服务/文化出海 → 不分类)', () => {
+  const items = [
+    { title: '多点开花齐提速 中国服务出海动力足', description: '本届服贸会聚焦中国服务出海', sourceType: 'direct_api' },
+    { title: '文化贸易增速领跑 出海产业链加速成型', description: '', sourceType: 'direct_api' },
+  ];
+  assert.equal(dedupAndClean(items).length, 0, '只有「出海」的新闻不该判进创新药');
+});
+
+test('创新药出海类新闻仍能归类(靠核心词命中,不靠「出海」本身)', () => {
+  const items = [
+    { title: '创新药出海再下一城', description: '', sourceType: 'direct_api' },
+    { title: '百济神州双抗管线达成海外授权', description: '', sourceType: 'direct_api' },
+  ];
+  const out = dedupAndClean(items);
+  assert.deepEqual(out.map(i => i.guessedSector), ['创新药', '创新药']);
+});
+
 // ── dedupAndClean:漏斗计数(可选参数)────────────────────
 
 test('传入 funnel 时按 stage 名回填各级剩余条数', () => {
