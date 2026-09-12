@@ -163,24 +163,38 @@ export async function fetchJin10News(source) {
 }
 
 export async function fetchSinaNews(source) {
+  // page 参数有效(实测 p1∩p2 重叠约 25%),翻页可拿到当日更早时段。
+  // source.pages 由 config 标定;上限在最后统一截断,而不是每页截断。
+  const pages = Math.max(1, source.pages || 1);
+  const out = [];
   try {
-    const resp = await fetch(source.url, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://finance.sina.com.cn/' },
-      timeout: 10000,
-    });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    const items = (data?.result?.data?.feed?.list || data?.result?.data || []);
-    return items.slice(0, CONFIG.apiSourceMaxItems).map(item => ({
-      title: (item.rich_text || item.title || '').replace(/<[^>]+>/g, '').trim(),
-      description: (item.content || '').replace(/<[^>]+>/g, '').trim().substring(0, 600),
-      link: item.docurl || item.link || '',
-      // Sina's create_time is a "YYYY-MM-DD HH:mm:ss" string in Beijing time —
-      // parse it as such (fixed UTC+8) so CI's UTC container doesn't shift it +8h.
-      pubDate: parseBeijingTime(item.create_time),
-      source: source.name,
-    })).filter(n => n.title);
-  } catch (err) { console.warn(`  [API] ${source.name} ⚠ ${err.message}`); return []; }
+    for (let p = 1; p <= pages; p++) {
+      const url = source.url.replace(/([?&]page=)\d+/, `$1${p}`);
+      const resp = await fetch(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://finance.sina.com.cn/' },
+        timeout: 10000,
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      const items = (data?.result?.data?.feed?.list || data?.result?.data || []);
+      out.push(...items.map(item => ({
+        title: (item.rich_text || item.title || '').replace(/<[^>]+>/g, '').trim(),
+        description: (item.content || '').replace(/<[^>]+>/g, '').trim().substring(0, 600),
+        link: item.docurl || item.link || '',
+        // Sina's create_time is a "YYYY-MM-DD HH:mm:ss" string in Beijing time —
+        // parse it as such (fixed UTC+8) so CI's UTC container doesn't shift it +8h.
+        pubDate: parseBeijingTime(item.create_time),
+        source: source.name,
+      })).filter(n => n.title));
+      if (p < pages) await sleep(300);
+    }
+    return out.slice(0, CONFIG.apiSourceMaxItems);
+  } catch (err) {
+    // 首页失败=整体失败(源健康会点名);中途某页失败则保住已取到的页。
+    const note = out.length === 0 ? '' : `(已取 ${out.length} 条)`;
+    console.warn(`  [API] ${source.name} ⚠ ${err.message}${note}`);
+    return out.slice(0, CONFIG.apiSourceMaxItems);
+  }
 }
 
 export async function fetchWallStreetCNNews(source) {

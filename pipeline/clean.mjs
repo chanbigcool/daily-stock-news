@@ -133,9 +133,18 @@ function stageFilter(kept) {
   return filtered;
 }
 
-export function dedupAndClean(allItems) {
+// funnel(可选):传入一个对象即按 stage 名回填各级剩余条数(如 {dedup: 512,
+// noise: 506, clusterEvents: 300, classify: 300, filter: 12}),供构建脚本落盘
+// 做漏斗诊断——「少」到底少在哪一级,不靠猜。不传则零开销,旧调用方无需改。
+export function dedupAndClean(allItems, funnel = null) {
   let items = allItems;
-  for (const stage of STAGES) items = stage(items);
+  for (const stage of STAGES) {
+    items = stage(items);
+    if (funnel) {
+      const name = stage.name.replace(/^stage/, '');
+      funnel[name.charAt(0).toLowerCase() + name.slice(1)] = items.length;
+    }
+  }
   return items;
 }
 

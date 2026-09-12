@@ -5,7 +5,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fetchGoogleNewsRSS, fetchClsNews, fetchAllNews } from '../pipeline/fetch.mjs';
+import { fetchGoogleNewsRSS, fetchClsNews, fetchSinaNews, fetchAllNews } from '../pipeline/fetch.mjs';
 import { CONFIG } from '../pipeline/config.mjs';
 
 // 简易 RSS 样本
@@ -55,6 +55,54 @@ test('fetchClsNews:正常响应 → 映射出标题/描述/link/pubDate', async 
   assert.equal(items.length, 1);
   assert.equal(items[0].title, '台积电扩产');
   assert.ok(items[0].pubDate instanceof Date && !isNaN(items[0].pubDate));
+  delete global.fetch;
+});
+
+// ── fetchSinaNews:翻页 ──────────────────────────────────
+// 新浪 page 参数有效,扩大候选池靠翻页 + page_size;这里锁住翻页行为本身:
+// page 递增、跨页合并、总量上限在最后统一截断、中途某页失败保住已取的页。
+
+const sinaPage = (n, extra = '') => ({
+  ok: true,
+  json: async () => ({ result: { data: { feed: { list: [
+    { rich_text: `第${n}页新闻A${extra}`, create_time: '2026-09-12 10:00:00' },
+    { rich_text: `第${n}页新闻B${extra}`, create_time: '2026-09-12 10:01:00' },
+  ] } } } }),
+});
+
+test('fetchSinaNews:按 pages 逐页请求,合并后按总量上限截断', async () => {
+  const origMax = CONFIG.apiSourceMaxItems;
+  CONFIG.apiSourceMaxItems = 5;
+  const seen = [];
+  global.fetch = async (url) => {
+    seen.push(url);
+    return sinaPage(Number(url.match(/page=(\d+)/)[1]));
+  };
+  const items = await fetchSinaNews({ name: '新浪财经', url: 'https://x/feed?page=1&page_size=100', pages: 3 });
+  assert.deepEqual(seen.map(u => u.match(/page=(\d+)/)[1]), ['1', '2', '3']);
+  assert.equal(items.length, 5, '3 页共 6 条 → 按 apiSourceMaxItems=5 截断');
+  assert.equal(items[0].source, '新浪财经');
+  assert.ok(items[0].pubDate instanceof Date && !isNaN(items[0].pubDate));
+  CONFIG.apiSourceMaxItems = origMax;
+  delete global.fetch;
+});
+
+test('fetchSinaNews:中途某页失败 → 保住已取到的页', async () => {
+  let call = 0;
+  global.fetch = async () => {
+    call++;
+    if (call === 2) throw new Error('page 2 down');
+    return sinaPage(call);
+  };
+  const items = await fetchSinaNews({ name: '新浪财经', url: 'https://x/feed?page=1', pages: 3 });
+  assert.equal(items.length, 2, '第 1 页的 2 条应被保住,失败页不返回');
+  delete global.fetch;
+});
+
+test('fetchSinaNews:首页就失败 → 返回空数组(由源健康点名)', async () => {
+  global.fetch = async () => { throw new Error('down'); };
+  const items = await fetchSinaNews({ name: '新浪财经', url: 'https://x/feed?page=1', pages: 3 });
+  assert.deepEqual(items, []);
   delete global.fetch;
 });
 

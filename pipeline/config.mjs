@@ -65,16 +65,23 @@ export const CONFIG = {
     { url: 'https://news.google.com/rss/search?q=semiconductor+chip+TSMC+Samsung+SK+hynix+supply+chain&hl=en-US&gl=US&ceid=US:en&sites=nikkei', name: 'Nikkei-亚洲供应链' },
   ],
 
+  // 每源条数上限(2026-09-12 实测标定):原先 5 个源都写死 page=1&page_size=30,
+  // 30 条只覆盖最近 2~3 小时 → 当日候选池被人工压到约 150 条。实测放大后当日
+  // 条数:东财 30→82、见闻 30→100、见闻医药 40→100(但该频道自 09-08 起停更)、
+  // 新浪 30→100 且翻页有效(3 页累计 243 条当日,第 4 页开始跨日)。
+  // 财联社(19)、金十(49)是固定批量端点,不支持加量。
   apiSources: [
     { name: '财联社', url: 'https://www.cls.cn/api/cache?app=CailianpressWeb&name=telegraph&os=web&sv=8.7.9', enabled: true },
     { name: '金十数据', url: 'https://www.jin10.com/flash_newest.js', enabled: true },
-    { name: '东方财富', url: 'https://np-listapi.eastmoney.com/comm/web/getNewsByColumns?client=web&biz=web_news_new&column=350,35,466,467&order=1&needInteractData=0&page_index=1&page_size=30&req_trace=test', enabled: true },
-    { name: '新浪财经', url: 'https://zhibo.sina.com.cn/api/zhibo/feed?page=1&page_size=30&zhibo_id=152&tag_id=0&type=0', enabled: true },
-    { name: '华尔街见闻', url: 'https://api-one.wallstcn.com/apiv1/content/lives?channel=global-channel&limit=30', enabled: true },
+    { name: '东方财富', url: 'https://np-listapi.eastmoney.com/comm/web/getNewsByColumns?client=web&biz=web_news_new&column=350,35,466,467&order=1&needInteractData=0&page_index=1&page_size=100&req_trace=test', enabled: true },
+    // pages:新浪的 page 参数有效(未去重重叠约 25%),3 页正好覆盖到北京当日 00:00
+    { name: '新浪财经', url: 'https://zhibo.sina.com.cn/api/zhibo/feed?page=1&page_size=100&zhibo_id=152&tag_id=0&type=0', pages: 3, enabled: true },
+    { name: '华尔街见闻', url: 'https://api-one.wallstcn.com/apiv1/content/lives?channel=global-channel&limit=100', enabled: true },
     // 华尔街见闻医药频道 — 专门的创新药新闻源（礼来/百济/诺和诺德/药明康德等）
-    { name: '华尔街见闻医药', url: 'https://api-one.wallstcn.com/apiv1/content/information-flow?channel=medicine&client=pc&limit=40', enabled: true },
+    { name: '华尔街见闻医药', url: 'https://api-one.wallstcn.com/apiv1/content/information-flow?channel=medicine&client=pc&limit=100', enabled: true },
   ],
-  apiSourceMaxItems: 80,
+  // 单源总量兜底(不是每页上限):新浪 3 页 ×100 是当前最大的一源,取 300 留余量。
+  apiSourceMaxItems: 300,
 
   // 抓取健康阈值(见 pipeline/health.mjs)。默认值是依据 history/ 22 天存档的
   // analyzed 条数分布(14~95,中位约 40)取的保守下限,先观察再收紧。

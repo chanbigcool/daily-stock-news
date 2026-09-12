@@ -124,3 +124,27 @@ test('黄金假阳性被 exclude 拦截(黄金周 → 不分类)', () => {
   const out = dedupAndClean(items);
   assert.equal(out.length, 0, '「黄金周」不应误分类为黄金板块');
 });
+
+// ── dedupAndClean:漏斗计数(可选参数)────────────────────
+
+test('传入 funnel 时按 stage 名回填各级剩余条数', () => {
+  const items = [
+    { title: '英伟达营收创新高', description: '', sourceType: 'direct_api' },
+    { title: '英伟达营收创新高', description: '', sourceType: 'direct_api' }, // 去重掉
+    { title: '1. 特斯拉：股价新高', description: '', sourceType: 'direct_api' }, // 噪声
+    { title: '某地今日天气晴', description: '', sourceType: 'direct_api' },      // 非四板块
+  ];
+  const funnel = {};
+  const out = dedupAndClean(items, funnel);
+  assert.deepEqual(Object.keys(funnel).sort(),
+    ['classify', 'clusterEvents', 'dedup', 'filter', 'noise']);
+  assert.equal(funnel.dedup, 3);
+  assert.equal(funnel.noise, 2);
+  assert.equal(funnel.filter, out.length, '末级计数应等于返回值长度');
+  assert.equal(funnel.filter, 1);
+});
+
+test('不传 funnel 时行为不变(旧调用方零改动)', () => {
+  const items = [{ title: '中芯国际先进制程突破', description: '', sourceType: 'direct_api' }];
+  assert.equal(dedupAndClean(items).length, 1);
+});

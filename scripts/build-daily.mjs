@@ -1064,6 +1064,8 @@ function saveHistoryArchive(dateStr, todayDisplay, result, etfData, chartData) {
     health: result.sourceHealth
       ? { level: result.sourceHealth.level, issues: result.sourceHealth.issues.map(i => i.message) }
       : { level: 'ok', issues: [] },
+    // 漏斗诊断:哪一级把候选池吃掉了。只读用途,CI 不据此判定。
+    funnel: result.funnel || null,
   }, null, 2), 'utf-8');
   console.log(`🚀 构建状态: ${HISTORY_DIR}/build-state.json (runId=${process.env.RUN_ID || 'none'}, 健康=${result.sourceHealth?.level || 'ok'})`);
 }
@@ -1102,6 +1104,21 @@ export function rebuildChartData(payload) {
   return chartData;
 }
 
+// 按北京日期给条目计数,只保留最近 maxDays 天,更早的合并成一项——
+// 原始 RSS 可横跨数周,不合并会把 build-state.json 撑成几百行。
+function dayHistogram(items, maxDays = 5) {
+  const counts = new Map();
+  for (const item of items) {
+    const key = beijingDateKey(item.pubDate) || '日期未知';
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+  const sorted = [...counts.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  const out = Object.fromEntries(sorted.slice(0, maxDays));
+  const rest = sorted.slice(maxDays).reduce((n, [, v]) => n + v, 0);
+  if (rest > 0) out['更早'] = rest;
+  return out;
+}
+
 // ── 主流程 ─────────────────────────────────────────────
 
 async function main() {
@@ -1128,10 +1145,25 @@ async function main() {
   // Bound the report to the target Beijing day (dateStr), not a rolling 24h
   // window — otherwise yesterday-evening headlines bleed into today's report
   // (08-07 晚间新闻混进 08-08 日报) and the "两天混一起" complaint recurs.
-  const deduped = dedupAndClean(mergedItems);
+  // 漏斗计数:把「原始 → 去重 → 清洗 → 聚类 → 分类 → 当日」每级条数落盘,
+  // 定位「报告为什么这么薄」时直接看数字,不靠猜是哪一级吃掉的。
+  // RSS/API 分量单独记:合并后 sourceType 仍可区分(直连 API 会被打标)。
+  const isApi = item => item.sourceType === 'direct_api';
+  const funnel = {
+    raw: mergedItems.length,
+    rawApi: mergedItems.filter(isApi).length,
+    rawRss: mergedItems.filter(i => !isApi(i)).length,
+    // RSS 条目的发布日分布:验证「Google 返回大量非当日旧文 → 被日界过滤」
+    // 这个假设到底是真是假(此前 2000 条 RSS 只贡献 2~6 条/天,原因未证实)。
+    rawRssByDay: dayHistogram(mergedItems.filter(i => !isApi(i))),
+  };
+  const deduped = dedupAndClean(mergedItems, funnel);
   const kept = deduped.filter(item => beijingDateKey(item.pubDate) === dateStr);
   const dropped = deduped.length - kept.length;
   if (dropped > 0) console.log(`  🗓️  丢弃非当日(北京时间 ${dateStr})新闻: ${dropped} 条`);
+  funnel.dayFilter = kept.length;
+  funnel.keptApi = kept.filter(isApi).length;
+  funnel.keptRss = kept.length - funnel.keptApi;
   console.log(`\n✅ 最终 ${kept.length} 条待分析新闻（${dateStr} 当日）\n`);
 
   // 3. Analyze
@@ -1153,6 +1185,12 @@ async function main() {
   console.log('\n🩺 抓取健康:');
   console.log(formatSourceSummary(fetchStats).split('\n').map(l => '  ' + l).join('\n'));
   console.log(`  → ${health.level} · ${health.summary}`);
+
+  // 漏斗诊断随 result 一路进存档,落盘在 build-state.json 的 funnel 字段。
+  result.funnel = funnel;
+  console.log(`  📉 漏斗: 原始 ${funnel.raw}(API ${funnel.rawApi}/RSS ${funnel.rawRss})`
+    + ` → 去重 ${funnel.dedup} → 清洗 ${funnel.noise} → 聚类 ${funnel.clusterEvents}`
+    + ` → 分类 ${funnel.filter} → 当日 ${funnel.dayFilter}(API ${funnel.keptApi}/RSS ${funnel.keptRss})`);
 
   // 3a. 事件级去重:按 eventId 聚合 kept(代表条目已挂事件元数据),
   // 重建当日 events 列表供存档(events_YYYYMMDD.json)。
