@@ -1604,25 +1604,27 @@
     {
       "date": "20260912",
       "displayDate": "2026-09-12",
-      "isAi": true,
-      "newsCount": 40,
+      "isAi": false,
+      "newsCount": 59,
       "sectorCount": 4,
       "missingSectors": [],
       "covered": true,
       "impact": {
-        "vhigh": 6,
-        "high": 2
+        "vhigh": 8,
+        "high": 6
       },
-      "signalHitRate": 33,
+      "signalHitRate": 51,
       "directions": {
-        "利好": 0,
+        "利好": 1,
         "利空": 0,
         "分化": 0,
-        "中性": 4
+        "中性": 3
       },
       "health": {
-        "level": "ok",
-        "issues": []
+        "level": "degraded",
+        "issues": [
+          "源内容陈旧(>48h): 华尔街见闻医药 最新 93 小时前"
+        ]
       },
       "matrix": [
         {
@@ -1642,8 +1644,8 @@
         },
         {
           "name": "光模块",
-          "direction": "中性",
-          "shock": "弱"
+          "direction": "利好",
+          "shock": "强"
         }
       ]
     }
