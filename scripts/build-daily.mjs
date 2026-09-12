@@ -40,6 +40,10 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
     high: analyzed.filter(n => n.impact === '高').length,
   };
 
+  // 筛选胶囊条上的数字,取自实际渲染出的卡片,和新闻卡同源不会对不上
+  const sectorCounts = {};
+  for (const n of analyzed) if (n.category) sectorCounts[n.category] = (sectorCounts[n.category] || 0) + 1;
+
   const newsCards = analyzed.map((n) => {
     const fresh = (Date.now() - new Date(n.pubDate).getTime()) < 12 * 3600 * 1000;
     return [
@@ -292,7 +296,8 @@ new Chart(document.getElementById('heatmapChart'), {
   .sector-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;}
   @media(max-width:640px){.sector-row{grid-template-columns:repeat(2,1fr);}}
   .sc{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;text-align:center;cursor:pointer;font:inherit;color:inherit;transition:box-shadow .15s,border-color .15s;}
-  .sc:hover{border-color:#c8cbd4;box-shadow:var(--shadow);}
+  .sc:hover{border-color:var(--accent);box-shadow:var(--shadow);}
+  .sc:active{transform:translateY(1px);}
   .sc:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   /* 选中态用该板块自己的颜色(currentColor 取自下面的 data-cat 规则) */
   .sc.active{box-shadow:0 0 0 2px currentColor;}
@@ -307,6 +312,7 @@ new Chart(document.getElementById('heatmapChart'), {
   /* Section divider */
   .sec-title{display:flex;align-items:center;gap:8px;font-size:.82rem;font-weight:700;color:#0f172a;margin:20px 0 10px;}
   .sec-title::before{content:'';width:3px;height:16px;background:var(--accent);border-radius:2px;}
+  .sec-hint{margin-left:auto;font-size:.66rem;font-weight:600;color:var(--text-muted);}
 
   /* News cards */
   .news-grid{display:grid;gap:6px;}
@@ -315,8 +321,25 @@ new Chart(document.getElementById('heatmapChart'), {
   .news-card[hidden]{display:none;}
   .news-empty{font-size:.72rem;color:var(--text-dim);background:var(--card-bg);border:1px dashed var(--border);border-radius:var(--radius);padding:12px 14px;text-align:center;}
   .news-count{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:.68rem;font-weight:600;color:var(--text-dim);white-space:nowrap;}
-  .news-count button{font:inherit;font-weight:600;padding:2px 10px;border:1px solid #bfdbfe;border-radius:8px;background:#eff6ff;color:var(--accent);cursor:pointer;transition:background .15s;}
-  .news-count button:hover{background:#dbeafe;}
+  /* 新闻列表上方的筛选胶囊条:常驻可见,是筛选功能主要的入口 */
+  .news-filter{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px;}
+  .fchip{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:.7rem;font-weight:600;color:#475569;background:var(--card-bg);border:1px solid var(--border);border-radius:999px;padding:4px 11px;cursor:pointer;transition:background .15s,border-color .15s,color .15s;}
+  .fchip:hover{border-color:#94a3b8;}
+  .fchip:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .fchip b{font-weight:700;font-variant-numeric:tabular-nums;color:var(--text-muted);}
+  .fchip-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--dot,var(--text-muted));}
+  .fchip[data-cat="semi"]{--dot:var(--semi);}
+  .fchip[data-cat="optics"]{--dot:var(--optics);}
+  .fchip[data-cat="pharma"]{--dot:var(--pharma);}
+  .fchip[data-cat="gold"]{--dot:var(--gold);}
+  /* 选中态直接上该板块的主色,和新闻卡左侧的色块对得上 */
+  .fchip.active{color:#fff;background:var(--accent);border-color:var(--accent);}
+  .fchip.active[data-cat="semi"]{background:var(--semi);border-color:var(--semi);}
+  .fchip.active[data-cat="optics"]{background:var(--optics);border-color:var(--optics);}
+  .fchip.active[data-cat="pharma"]{background:var(--pharma);border-color:var(--pharma);}
+  .fchip.active[data-cat="gold"]{background:var(--gold);border-color:var(--gold);}
+  .fchip.active b{color:rgba(255,255,255,.85);}
+  .fchip.active .fchip-dot{background:#fff;}
   .news-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;cursor:pointer;transition:box-shadow .15s,border-color .15s;display:flex;gap:10px;}
   .news-card:hover{box-shadow:var(--shadow);border-color:#c8cbd4;}
   .news-card.expanded{box-shadow:0 2px 8px rgba(0,0,0,.06);}
@@ -480,7 +503,7 @@ ${SECTORS.map(cat => {
 ` : ''}
 
 ${sectorMatrix.length > 0 ? `
-<div class="sec-title">板块速览</div>
+<div class="sec-title">板块速览<span class="sec-hint">点击卡片可只看该板块新闻</span></div>
 <div class="sector-row">
 ${sectorMatrix.map(s => `
   <button type="button" class="sc" data-sector="${escHtml(s.name)}" data-cat="${CATEGORY_CLS[s.name] || 'other'}" aria-pressed="false">
@@ -499,7 +522,13 @@ ${marketSummary ? `<div class="market-summary">💡 ${escHtml(marketSummary)}</d
 
 ${chartPanels}
 
-<div class="sec-title" id="newsSection">新闻列表（按时间从近到远）<span class="news-count"><span id="newsCountText">共 ${analyzed.length} 条</span><button type="button" id="newsFilterClear" hidden>显示全部</button></span></div>
+<div class="sec-title" id="newsSection">新闻列表（按时间从近到远）<span class="news-count" id="newsCountText">共 ${analyzed.length} 条</span></div>
+<div class="news-filter" id="newsFilter" role="group" aria-label="按板块筛选新闻">
+  <button type="button" class="fchip active" data-sector="" aria-pressed="true">全部<b>${analyzed.length}</b></button>
+  ${sectorMatrix.map(s => `
+  <button type="button" class="fchip" data-sector="${escHtml(s.name)}" data-cat="${CATEGORY_CLS[s.name] || 'other'}" aria-pressed="false"><span class="fchip-dot"></span>${escHtml(s.name)}<b>${sectorCounts[s.name] || 0}</b></button>
+`).join('')}
+</div>
 <div class="news-grid" id="newsGrid">
 ${newsCards}
 </div>
@@ -761,23 +790,26 @@ function goToday(){
   window.location.href = BASE + '/';
 }
 // ── 板块筛选 ─────────────────────────────────────────────
-// 点「板块速览」的卡片 → 新闻列表只显示该板块,再点同一张(或「显示全部」)恢复。
-// 状态写进 URL hash(#半导体):120s 一次的新构建自动重载、手动刷新、分享链接都能
-// 带着筛选。用 replaceState 写入,不往浏览器后退键里塞条目。
+// 两个入口共用同一个筛选状态:新闻列表上方的胶囊条 #newsFilter,以及「板块速览」
+// 的 .sc 卡片。再点当前选中的那个(或「全部」)取消。状态写进 URL hash(#半导体):
+// 120s 一次的新构建自动重载、手动刷新、分享链接都能带着筛选。用 replaceState
+// 写入,不往浏览器后退键里塞条目。
+let currentSector = '';
 function sectorFromHash() {
   try { return decodeURIComponent((location.hash || '').replace(/^#/, '')); }
   catch (e) { return ''; }
 }
-// 本页实际存在卡片的板块集合。hash 是用户可手改的,出现不在集合里的值就当没筛选,
-// 否则会得到一整页空白。
+// 本页可筛的板块,取自胶囊条(「全部」那个 data-sector 是空串,filter 掉)。
+// hash 是用户可手改的,出现不在集合里的值就当没筛选,否则会得到一整页空白。
 function knownSectors() {
-  return Array.from(document.querySelectorAll('.sector-row .sc')).map(b => b.dataset.sector).filter(Boolean);
+  return Array.from(document.querySelectorAll('.news-filter .fchip')).map(b => b.dataset.sector).filter(Boolean);
 }
 function applySectorFilter(sector, opts) {
   const grid = document.getElementById('newsGrid');
   if (!grid) return; // 没有新闻列表的渲染路径(理论上不存在,防御一下)
   const cards = grid.querySelectorAll('.news-card');
   const active = knownSectors().indexOf(sector) >= 0 ? sector : '';
+  currentSector = active;
   let shown = 0;
   cards.forEach(c => {
     const hit = !active || c.dataset.sector === active;
@@ -788,12 +820,11 @@ function applySectorFilter(sector, opts) {
   if (countEl) countEl.textContent = active
     ? active + ' · ' + shown + ' / ' + cards.length + ' 条'
     : '共 ' + cards.length + ' 条';
-  const clearBtn = document.getElementById('newsFilterClear');
-  if (clearBtn) clearBtn.hidden = !active;
   const emptyEl = document.getElementById('newsEmpty');
   if (emptyEl) emptyEl.hidden = !(active && shown === 0);
-  document.querySelectorAll('.sector-row .sc').forEach(b => {
-    const on = !!active && b.dataset.sector === active;
+  // 两个入口的选中态一起同步;「全部」胶囊的 data-sector 是空串,未筛选时正好命中
+  document.querySelectorAll('.news-filter .fchip, .sector-row .sc').forEach(b => {
+    const on = (b.dataset.sector || '') === active;
     b.classList.toggle('active', on);
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
@@ -805,17 +836,18 @@ function applySectorFilter(sector, opts) {
     (document.getElementById('newsSection') || grid).scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
-const sectorRow = document.querySelector('.sector-row');
-if (sectorRow) {
-  sectorRow.addEventListener('click', (e) => {
-    const btn = e.target.closest('.sc');
-    if (!btn || !btn.dataset.sector) return;
-    const next = sectorFromHash() === btn.dataset.sector ? '' : btn.dataset.sector;
-    applySectorFilter(next, { scroll: next !== '' });
+// 两个入口绑同一段逻辑:点到当前选中的那个就取消筛选
+function bindSectorTrigger(container, opts) {
+  if (!container) return;
+  container.addEventListener('click', (e) => {
+    const btn = e.target.closest('.fchip, .sc');
+    if (!btn || btn.dataset.sector === undefined) return;
+    const s = btn.dataset.sector;
+    applySectorFilter(s && s !== currentSector ? s : '', opts);
   });
 }
-const filterClearBtn = document.getElementById('newsFilterClear');
-if (filterClearBtn) filterClearBtn.addEventListener('click', () => applySectorFilter(''));
+bindSectorTrigger(document.getElementById('newsFilter'), { scroll: false });
+bindSectorTrigger(document.querySelector('.sector-row'), { scroll: true });
 window.addEventListener('hashchange', () => applySectorFilter(sectorFromHash()));
 applySectorFilter(sectorFromHash()); // 带 hash 的链接/刷新后首屏即生效
 document.addEventListener('DOMContentLoaded', () => {

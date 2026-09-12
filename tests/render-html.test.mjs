@@ -63,14 +63,28 @@ test('板块速览渲染成原生 button,带 data-sector / data-cat / aria-press
 
 test('新闻列表的挂载点与初始计数都在(#newsGrid 等)', () => {
   const html = render();
-  for (const id of ['newsSection', 'newsGrid', 'newsCountText', 'newsFilterClear', 'newsEmpty']) {
+  for (const id of ['newsSection', 'newsGrid', 'newsCountText', 'newsFilter', 'newsEmpty']) {
     assert.ok(html.includes(`id="${id}"`), `缺少 id="${id}"`);
   }
   // 无 JS 时也要看到条数;JS 接管后会改写成「板块 · N / M 条」
   assert.match(html, /id="newsCountText">共 3 条</);
-  // 空态提示与「显示全部」默认都是隐藏的
-  assert.match(html, /id="newsFilterClear" hidden>/);
+  // 空态提示默认隐藏
   assert.match(html, /id="newsEmpty" hidden>/);
+});
+
+test('新闻列表上方常驻筛选胶囊条:全部 + 四板块,带条数', () => {
+  const html = render();
+  const chips = [...html.matchAll(/<button type="button" class="fchip(?: active)?" data-sector="([^"]*)"[^>]*>/g)];
+  // 0 条的板块也要有胶囊,点了显示空态(和速览卡片保持一致)
+  assert.equal(chips.length, 5, '「全部」+ 四个板块');
+  assert.deepEqual(chips.map(c => c[1]), ['', '半导体', '光模块', '创新药', '黄金']);
+  // 「全部」默认选中,其余 aria-pressed 为 false
+  assert.match(html, /class="fchip active" data-sector="" aria-pressed="true">全部<b>3<\/b>/);
+  // 胶囊上的数字来自实际渲染出的卡片,不是速览里的 news_count
+  assert.match(html, /data-sector="半导体"[^>]*>[\s\S]{0,80}?<b>1<\/b>/);
+  assert.match(html, /data-sector="创新药"[^>]*>[\s\S]{0,80}?<b>0<\/b>/);
+  // 色点靠 data-cat 上色,和新闻卡左侧的 .card-cat 用同一套变量
+  assert.match(html, /class="fchip" data-sector="光模块" data-cat="optics"/);
 });
 
 test('样式里显式关掉了 [hidden] —— .news-card 的 display:flex 会压过 UA 的 [hidden]', () => {
