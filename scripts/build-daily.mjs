@@ -25,28 +25,8 @@ import { loadETFHistory, saveETFHistory, accumulateETF, buildETFChartData, build
 
 // ── HTML 渲染 ──────────────────────────────────────────
 
-// 抓取健康横幅:数据源异常时置顶提示,避免「页面看着正常、当天其实只有 8 条」
-// 这种静默降级。sourceHealth 由构建主流程挂在 result 上,存档 payload 同样携带,
-// 所以历史静态页也会显示当天的横幅。
-function healthBannerHtml(sourceHealth) {
-  if (!sourceHealth || sourceHealth.level === 'ok') return '';
-  const isFail = sourceHealth.level === 'failed';
-  const c = sourceHealth.counts || {};
-  const tone = isFail
-    ? { bg: '#fef2f2', bd: '#dc2626', fg: '#991b1b' }
-    : { bg: '#fffbeb', bd: '#d97706', fg: '#92400e' };
-  const issues = (sourceHealth.issues || []).map(i => escHtml(i.message)).join('；');
-  // 本地运行按设计不尝试 RSS,别把「未尝试」写成「全挂了」
-  const rssText = c.rssEnabled === false ? 'RSS 未尝试(本地)' : `RSS ${c.rssOk ?? 0}/${c.rssTotal ?? 0} 源`;
-  return `<div style="background:${tone.bg};border:1px solid ${tone.bd};border-left:4px solid ${tone.bd};color:${tone.fg};border-radius:8px;padding:10px 14px;margin:12px 0;font-size:13px;line-height:1.6">
-  <b>${isFail ? '🚨 今日抓取异常' : '⚠️ 今日抓取降级'}</b> — 精选 <b>${c.analyzed ?? '—'}</b> 条 · 当日可用 ${c.kept ?? '—'} 条 · ${rssText} · 直连 API ${c.apiOk ?? 0}/${c.apiTotal ?? 0} 源
-  ${issues ? `<div style="margin-top:4px">${issues}</div>` : ''}
-  <div style="margin-top:4px"><a style="color:${tone.fg};text-decoration:underline;cursor:pointer" onclick="location.href=(window.BASE||'')+'/quality/index.html'">查看数据质量详情 →</a></div>
-</div>`;
-}
-
 export function renderHTML(result, todayDisplay, etfData, chartData) {
-  const { analyzed, sectorMatrix, keyPoints, marketSummary, isAi, sourceHealth } = result;
+  const { analyzed, sectorMatrix, keyPoints, marketSummary, isAi } = result;
 
   const impactCls = (imp) => imp === '极高' ? 'impact-vhigh' : imp === '高' ? 'impact-high' : imp === '中' ? 'impact-mid' : 'impact-low';
   const dirCls = (d) => (d || '').includes('利好') ? 'badge-bull' : (d || '').includes('利空') ? 'badge-bear' : (d === '中性' ? 'badge-neutral' : 'badge-mixed');
@@ -451,10 +431,7 @@ new Chart(document.getElementById('heatmapChart'), {
   </select>
   <button id="today-btn" class="active" onclick="goToday()">今天</button>
   <a class="db-link" onclick="location.href=(window.BASE||'')+'/db.html'">📊 数据查询</a>
-  <a class="db-link" onclick="location.href=(window.BASE||'')+'/quality/index.html'">🩺 数据质量</a>
 </div>
-
-${healthBannerHtml(sourceHealth)}
 
 <div class="stats-mini">
   <div class="st">📈利好 <b style="color:#15803d">${stats.bull}</b></div>
