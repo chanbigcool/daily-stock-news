@@ -15,6 +15,7 @@ th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #334155}
 th{color:#94a3b8;font-weight:600;background:#172033}
 .ok{color:#4ade80;font-weight:600}
 .warn{color:#fbbf24;font-weight:600}
+.bad{color:#ef4444;font-weight:600;cursor:help}
 .chip{font-size:12px;margin-right:6px}
 .vhigh{color:#ef4444}.badge-ai{background:#7c3aed;color:#fff;padding:1px 6px;border-radius:6px;font-size:11px}.badge-kw{background:#475569;color:#fff;padding:1px 6px;border-radius:6px;font-size:11px}
 .section-title{font-size:15px;font-weight:700;margin:28px 0 10px;color:#f1f5f9}
@@ -27,6 +28,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
   <div class="card"><div class="num">38</div><div class="label">已存档交易日</div></div>
   <div class="card"><div class="num">84%</div><div class="label">四板块完整覆盖率</div></div>
   <div class="card"><div class="num">10</div><div class="label">每日平均 高+极高影响事件</div></div>
+  <div class="card"><div class="num" style="color:#ef4444">异常</div><div class="label">最近一日抓取健康 · 区间内异常/降级 1 天</div></div>
 </div>
 
 <div class="section-title">板块方向 → 次日 ETF 实际涨跌 一致率</div>
@@ -52,7 +54,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
 
 <div class="section-title">逐日明细</div>
 <table>
-<tr><th>日期</th><th>引擎</th><th>简讯数</th><th>板块覆盖</th><th>方向分布</th><th>高影响</th><th>信号命中率</th></tr>
+<tr><th>日期</th><th>引擎</th><th>简讯数</th><th>板块覆盖</th><th>方向分布</th><th>高影响</th><th>信号命中率</th><th>源健康</th></tr>
 <tr>
       <td>2026-08-06</td>
       <td><span class="badge-kw">关键词</span></td>
@@ -61,6 +63,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好4</span></td>
       <td><b>高14</b></td>
       <td>0%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-07</td>
@@ -70,6 +73,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好4</span></td>
       <td><b class="vhigh">极高8</b> <b>高48</b></td>
       <td>0%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-08</td>
@@ -79,6 +83,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好2</span><span class="chip" style="color:#7c3aed">分化2</span></td>
       <td><b class="vhigh">极高1</b> <b>高8</b></td>
       <td>0%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-09</td>
@@ -88,6 +93,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好4</span></td>
       <td><b class="vhigh">极高2</b> <b>高3</b></td>
       <td>33%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-10</td>
@@ -97,6 +103,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好4</span></td>
       <td><b>高11</b></td>
       <td>36%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-11</td>
@@ -106,6 +113,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好3</span><span class="chip" style="color:#dc2626">利空1</span></td>
       <td><b class="vhigh">极高1</b> <b>高7</b></td>
       <td>33%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-12</td>
@@ -115,6 +123,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好3</span><span class="chip" style="color:#7c3aed">分化1</span></td>
       <td></td>
       <td>32%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-13</td>
@@ -124,6 +133,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好2</span><span class="chip" style="color:#dc2626">利空1</span><span class="chip" style="color:#7c3aed">分化1</span></td>
       <td><b class="vhigh">极高3</b> <b>高3</b></td>
       <td>25%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-14</td>
@@ -133,6 +143,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好3</span><span class="chip" style="color:#dc2626">利空1</span></td>
       <td><b class="vhigh">极高3</b> <b>高3</b></td>
       <td>32%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-15</td>
@@ -142,6 +153,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好3</span><span class="chip" style="color:#7c3aed">分化1</span></td>
       <td><b class="vhigh">极高1</b> <b>高3</b></td>
       <td>27%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-16</td>
@@ -151,6 +163,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好4</span></td>
       <td><b class="vhigh">极高1</b> <b>高1</b></td>
       <td>9%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-17</td>
@@ -160,6 +173,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好3</span><span class="chip" style="color:#dc2626">利空1</span></td>
       <td><b>高4</b></td>
       <td>31%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-18</td>
@@ -169,6 +183,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好4</span></td>
       <td><b>高4</b></td>
       <td>21%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-19</td>
@@ -178,6 +193,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#dc2626">利空2</span><span class="chip" style="color:#64748b">中性2</span></td>
       <td><b class="vhigh">极高5</b> <b>高6</b></td>
       <td>25%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-20</td>
@@ -187,6 +203,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好2</span><span class="chip" style="color:#64748b">中性2</span></td>
       <td><b class="vhigh">极高2</b> <b>高7</b></td>
       <td>47%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-21</td>
@@ -196,6 +213,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好1</span><span class="chip" style="color:#dc2626">利空1</span><span class="chip" style="color:#64748b">中性2</span></td>
       <td><b class="vhigh">极高1</b> <b>高9</b></td>
       <td>10%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-22</td>
@@ -205,6 +223,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好1</span><span class="chip" style="color:#dc2626">利空1</span><span class="chip" style="color:#64748b">中性2</span></td>
       <td><b>高4</b></td>
       <td>7%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-23</td>
@@ -214,6 +233,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好1</span><span class="chip" style="color:#dc2626">利空1</span><span class="chip" style="color:#64748b">中性2</span></td>
       <td><b class="vhigh">极高1</b> <b>高4</b></td>
       <td>0%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-24</td>
@@ -223,6 +243,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#dc2626">利空3</span><span class="chip" style="color:#64748b">中性1</span></td>
       <td><b class="vhigh">极高8</b> <b>高11</b></td>
       <td>47%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-25</td>
@@ -232,6 +253,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好3</span><span class="chip" style="color:#64748b">中性1</span></td>
       <td><b class="vhigh">极高1</b> <b>高11</b></td>
       <td>42%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-26</td>
@@ -241,6 +263,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好1</span><span class="chip" style="color:#dc2626">利空1</span><span class="chip" style="color:#7c3aed">分化1</span><span class="chip" style="color:#64748b">中性1</span></td>
       <td><b class="vhigh">极高4</b> <b>高8</b></td>
       <td>57%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-27</td>
@@ -250,6 +273,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好4</span></td>
       <td><b class="vhigh">极高3</b> <b>高17</b></td>
       <td>33%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-28</td>
@@ -259,6 +283,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好1</span><span class="chip" style="color:#64748b">中性3</span></td>
       <td><b class="vhigh">极高2</b> <b>高5</b></td>
       <td>35%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-29</td>
@@ -268,6 +293,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#dc2626">利空1</span><span class="chip" style="color:#64748b">中性3</span></td>
       <td><b class="vhigh">极高3</b> <b>高9</b></td>
       <td>28%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-30</td>
@@ -277,6 +303,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#dc2626">利空1</span><span class="chip" style="color:#64748b">中性3</span></td>
       <td><b class="vhigh">极高3</b> <b>高3</b></td>
       <td>27%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-08-31</td>
@@ -286,6 +313,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#dc2626">利空1</span><span class="chip" style="color:#64748b">中性3</span></td>
       <td><b class="vhigh">极高5</b> <b>高9</b></td>
       <td>38%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-09-01</td>
@@ -295,6 +323,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好1</span><span class="chip" style="color:#dc2626">利空1</span><span class="chip" style="color:#64748b">中性2</span></td>
       <td><b class="vhigh">极高3</b> <b>高7</b></td>
       <td>38%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-09-02</td>
@@ -304,6 +333,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好1</span><span class="chip" style="color:#64748b">中性3</span></td>
       <td><b class="vhigh">极高1</b> <b>高5</b></td>
       <td>8%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-09-03</td>
@@ -313,6 +343,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好2</span><span class="chip" style="color:#64748b">中性2</span></td>
       <td><b class="vhigh">极高4</b> <b>高6</b></td>
       <td>24%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-09-04</td>
@@ -322,6 +353,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好1</span><span class="chip" style="color:#7c3aed">分化1</span><span class="chip" style="color:#64748b">中性2</span></td>
       <td><b class="vhigh">极高5</b> <b>高8</b></td>
       <td>40%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-09-05</td>
@@ -331,6 +363,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好1</span><span class="chip" style="color:#dc2626">利空1</span><span class="chip" style="color:#64748b">中性2</span></td>
       <td><b class="vhigh">极高3</b> <b>高4</b></td>
       <td>37%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-09-06</td>
@@ -340,6 +373,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好1</span><span class="chip" style="color:#dc2626">利空1</span><span class="chip" style="color:#64748b">中性2</span></td>
       <td><b>高2</b></td>
       <td>23%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-09-07</td>
@@ -349,6 +383,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好1</span><span class="chip" style="color:#64748b">中性3</span></td>
       <td><b class="vhigh">极高2</b> <b>高4</b></td>
       <td>30%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-09-08</td>
@@ -358,6 +393,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好1</span><span class="chip" style="color:#dc2626">利空1</span><span class="chip" style="color:#64748b">中性2</span></td>
       <td><b class="vhigh">极高1</b> <b>高4</b></td>
       <td>20%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-09-10</td>
@@ -367,6 +403,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好1</span><span class="chip" style="color:#dc2626">利空1</span><span class="chip" style="color:#64748b">中性2</span></td>
       <td><b class="vhigh">极高3</b> <b>高6</b></td>
       <td>27%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-09-10</td>
@@ -376,6 +413,7 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好3</span><span class="chip" style="color:#64748b">中性1</span></td>
       <td><b class="vhigh">极高3</b> <b>高9</b></td>
       <td>19%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-09-12</td>
@@ -385,16 +423,18 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td><span class="chip" style="color:#16a34a">利好1</span><span class="chip" style="color:#64748b">中性3</span></td>
       <td><b class="vhigh">极高4</b> <b>高6</b></td>
       <td>33%</td>
+      <td><span style="color:#64748b">—</span></td>
     </tr>
 <tr>
       <td>2026-09-12</td>
-      <td><span class="badge-ai">AI</span></td>
-      <td>8</td>
+      <td><span class="badge-kw">关键词</span></td>
+      <td>7</td>
       <td><span class="warn">缺 创新药</span></td>
-      <td><span class="chip" style="color:#16a34a">利好1</span><span class="chip" style="color:#64748b">中性3</span></td>
+      <td><span class="chip" style="color:#64748b">中性4</span></td>
       <td><b>高1</b></td>
-      <td>0%</td>
+      <td>29%</td>
+      <td><span class="bad" title="当日仅 7 条新闻(下限 10)；API 源无数据: 财联社">异常</span></td>
     </tr>
 </table>
-<div class="note">信号命中率 = 简讯中命中评分引擎信号(非「未命中明显信号」)的比例。</div>
+<div class="note">信号命中率 = 简讯中命中评分引擎信号(非「未命中明显信号」)的比例。源健康取自当日构建的抓取判定(悬停可看具体问题);2026-09-13 之前的存档无此字段。</div>
 </div></body></html>
