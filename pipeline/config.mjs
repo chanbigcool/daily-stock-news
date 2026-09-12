@@ -83,7 +83,11 @@ export const CONFIG = {
     { name: '新浪财经', url: 'https://zhibo.sina.com.cn/api/zhibo/feed?page=1&page_size=100&zhibo_id=152&tag_id=0&type=0', pages: 3, enabled: true },
     { name: '华尔街见闻', url: 'https://api-one.wallstcn.com/apiv1/content/lives?channel=global-channel&limit=100', enabled: true },
     // 华尔街见闻医药频道 — 专门的创新药新闻源（礼来/百济/诺和诺德/药明康德等）
-    { name: '华尔街见闻医药', url: 'https://api-one.wallstcn.com/apiv1/content/information-flow?channel=medicine&client=pc&limit=100', enabled: true },
+    // 2026-09-12 停用：该频道返回 HTTP 200 + 100 条,但最新一条停在 4 天前(半年前的
+    // 存量池),当日产出一直是 0 —— 创新药板块实际靠其他 API 与 RSS 供量。它每天都会
+    // 命中 health 的「源内容陈旧」判 degraded,进而每次构建发一条微信告警。找到替代
+    // 的医药专用源后改回 true 即可(抓取器 fetchWallStreetCNInfoFlow 一并保留)。
+    { name: '华尔街见闻医药', url: 'https://api-one.wallstcn.com/apiv1/content/information-flow?channel=medicine&client=pc&limit=100', enabled: false },
   ],
   // 单源总量兜底(不是每页上限):新浪 3 页 ×100 是当前最大的一源,取 300 留余量。
   apiSourceMaxItems: 300,
@@ -92,7 +96,7 @@ export const CONFIG = {
   // analyzed 条数分布(14~95,中位约 40)取的保守下限,先观察再收紧。
   health: {
     minKept: 10,        // 当日(北京时间)可用新闻下限,低于此判 failed
-    minApiSources: 3,   // 直连 API 成功源数下限(共 6 个),低于此判 degraded
+    minApiSources: 3,   // 直连 API 成功源数下限(apiSources 里 enabled 的共 5 个),低于此判 degraded
     // 源内最新条目的最大年龄(小时),超过判 degraded。防「返回 200 的存量池」
     // 这类假绿灯:见闻医药频道 09-12 实测返回 100 条、HTTP 200,最新一条却停在
     // 4 天前,只数条数的健康判定判它 ok。48 小时是折中——足够放过周末的自然清淡,
