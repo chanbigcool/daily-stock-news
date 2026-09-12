@@ -180,7 +180,7 @@
 <div class="header">
   <h1>📡 行业板块日报</h1>
   <div class="subtitle">2026-09-12 · 9 条精选 · 半导体 / 光模块 / 创新药 / 黄金</div>
-  <div class="subtitle">⏱ 最后更新: 2026-09-12 11:42:48（北京时间）</div>
+  <div class="subtitle">⏱ 最后更新: 2026-09-12 11:51:14（北京时间）</div>
   <div class="badge-row">
     <span class="chip chip">关键词引擎</span>
     
@@ -197,13 +197,6 @@
   </select>
   <button id="today-btn" class="active" onclick="goToday()">今天</button>
   <a class="db-link" onclick="location.href=(window.BASE||'')+'/db.html'">📊 数据查询</a>
-  <a class="db-link" onclick="location.href=(window.BASE||'')+'/quality/index.html'">🩺 数据质量</a>
-</div>
-
-<div style="background:#fef2f2;border:1px solid #dc2626;border-left:4px solid #dc2626;color:#991b1b;border-radius:8px;padding:10px 14px;margin:12px 0;font-size:13px;line-height:1.6">
-  <b>🚨 今日抓取异常</b> — 精选 <b>9</b> 条 · 当日可用 9 条 · RSS 43/43 源 · 直连 API 6/6 源
-  <div style="margin-top:4px">当日仅 9 条新闻(下限 10)</div>
-  <div style="margin-top:4px"><a style="color:#991b1b;text-decoration:underline;cursor:pointer" onclick="location.href=(window.BASE||'')+'/quality/index.html'">查看数据质量详情 →</a></div>
 </div>
 
 <div class="stats-mini">
@@ -640,7 +633,7 @@ const REFRESH_SECRET = "87vBu0o-PR89DWTVf8Eqko2j";
 const BASE = window.BASE || '';
 // 页面自身构建时间(UTC ISO)。auto-check 用它和 history/build-state.json 的
 // generatedAt 比较:定时/推送构建完成后,停留在首页的用户会自动刷新到最新版。
-const PAGE_GENERATED_AT = "2026-09-12T03:42:48.882Z";
+const PAGE_GENERATED_AT = "2026-09-12T03:51:14.178Z";
 const PHASE_CN = { fetch: '抓取新闻', analyze: 'AI 分析', 'analyze-kw': '关键词引擎', chart: '图表数据', write: '写入文件', commit: '提交 git', push: '推送 git', cloud: '云端构建', done: '完成', error: '失败' };
 let refreshStartedAt = 0;
 let refreshTimer = null;
