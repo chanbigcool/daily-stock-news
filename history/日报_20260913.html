@@ -213,8 +213,8 @@
 
 <div class="header">
   <h1>📡 行业板块日报</h1>
-  <div class="subtitle">2026-09-13 · 15 条精选 · 半导体 / 光模块 / 创新药 / 黄金</div>
-  <div class="subtitle">⏱ 最后更新: 2026-09-13 13:00:30（北京时间）</div>
+  <div class="subtitle">2026-09-13 · 17 条精选 · 半导体 / 光模块 / 创新药 / 黄金</div>
+  <div class="subtitle">⏱ 最后更新: 2026-09-13 13:29:16（北京时间）</div>
   <div class="badge-row">
     <span class="chip chip-ai">AI 分析</span>
     <span class="chip chip-ai">中文翻译</span>
@@ -234,10 +234,10 @@
 </div>
 
 <div class="stats-mini">
-  <div class="st">📈利好 <b style="color:#15803d">5</b></div>
+  <div class="st">📈利好 <b style="color:#15803d">4</b></div>
   <div class="st">📉利空 <b style="color:#dc2626">1</b></div>
-  <div class="st">⚡极高 <b style="color:#dc2626">1</b></div>
-  <div class="st">🔥高影响 <b style="color:#ea580c">5</b></div>
+  <div class="st">⚡极高 <b style="color:#dc2626">2</b></div>
+  <div class="st">🔥高影响 <b style="color:#ea580c">4</b></div>
   <div class="st">📊板块 <b>4</b></div>
 </div>
 
@@ -257,6 +257,15 @@
     <span class="sc-stat">
       <span class="badge badge-neutral">中性</span>
       <span class="impact-tag impact-vhigh">强冲击</span>
+      <br><strong>7</strong> 条新闻
+    </span>
+  </button>
+
+  <button type="button" class="sc" data-sector="黄金" data-cat="gold" aria-pressed="false">
+    <span class="sc-name">黄金</span>
+    <span class="sc-stat">
+      <span class="badge badge-neutral">中性</span>
+      <span class="impact-tag impact-vhigh">强冲击</span>
       <br><strong>6</strong> 条新闻
     </span>
   </button>
@@ -267,15 +276,6 @@
       <span class="badge badge-neutral">中性</span>
       <span class="impact-tag impact-vhigh">强冲击</span>
       <br><strong>4</strong> 条新闻
-    </span>
-  </button>
-
-  <button type="button" class="sc" data-sector="黄金" data-cat="gold" aria-pressed="false">
-    <span class="sc-name">黄金</span>
-    <span class="sc-stat">
-      <span class="badge badge-neutral">中性</span>
-      <span class="impact-tag impact-mid">中冲击</span>
-      <br><strong>5</strong> 条新闻
     </span>
   </button>
 
@@ -291,7 +291,7 @@
 </div>
 
 
-<div class="market-summary">💡 半导体行业呈现分化格局，台积电业绩强劲增长带来积极信号，同时现代汽车自动驾驶技术合作也有利于芯片需求。；创新药板块技术合作与临床进展并存，个股表现分化</div>
+<div class="market-summary">💡 创新药板块当日技术合作与临床研究取得突破，产业化进程推进。</div>
 
 
 <div class="sec-title">📊 市场数据可视化</div>
@@ -321,20 +321,53 @@
 </div>
 
 
-<div class="sec-title" id="newsSection">新闻列表（按时间从近到远）<span class="news-count" id="newsCountText">共 15 条</span></div>
+<div class="sec-title" id="newsSection">新闻列表（按时间从近到远）<span class="news-count" id="newsCountText">共 17 条</span></div>
 <div class="news-filter" id="newsFilter" role="group" aria-label="按板块筛选新闻">
-  <button type="button" class="fchip active" data-sector="" aria-pressed="true">全部<b>15</b></button>
+  <button type="button" class="fchip active" data-sector="" aria-pressed="true">全部<b>17</b></button>
   
-  <button type="button" class="fchip" data-sector="半导体" data-cat="semi" aria-pressed="false"><span class="fchip-dot"></span>半导体<b>6</b></button>
+  <button type="button" class="fchip" data-sector="半导体" data-cat="semi" aria-pressed="false"><span class="fchip-dot"></span>半导体<b>7</b></button>
+
+  <button type="button" class="fchip" data-sector="黄金" data-cat="gold" aria-pressed="false"><span class="fchip-dot"></span>黄金<b>6</b></button>
 
   <button type="button" class="fchip" data-sector="创新药" data-cat="pharma" aria-pressed="false"><span class="fchip-dot"></span>创新药<b>4</b></button>
-
-  <button type="button" class="fchip" data-sector="黄金" data-cat="gold" aria-pressed="false"><span class="fchip-dot"></span>黄金<b>5</b></button>
 
   <button type="button" class="fchip" data-sector="光模块" data-cat="optics" aria-pressed="false"><span class="fchip-dot"></span>光模块<b>0</b></button>
 
 </div>
 <div class="news-grid" id="newsGrid">
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-semi">半导体</div>
+<div class="fresh-badge">新</div>
+</div>
+<div class="card-right">
+<div class="card-title">【现代汽车将于2029年推出自研驾驶辅助系统】9月13日消息，现代汽车集团称其正在开发以Atria AI为核心的自研自动驾驶技术。Atria AI是一种端到端人工智能模型，旨在感知周围环境并做出驾驶决策。现代汽车表示，搭载Atria AI的Level 2++车辆量产目标定于2029年下半年。与此同时，该集团计划利用真实道路驾驶数据持续训练和改进其Atria AI，并逐步将该技术推广至量产车辆，长期目标是向Level 4自动驾驶迈进。此外，现代汽车正与美国芯片制造商英伟达合作，以加速高级驾驶辅助和自动驾驶系统的商业化部署。现代汽车表示，计划于2028年上半年在首款量产软件定义汽车（SDV）中引入与英伟达合作开发的Level 2+自动驾驶技术；Level 2++量产车辆目标则定于2028年下半年。</div>
+
+<div class="card-summary"></div>
+<div class="card-meta">
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-vhigh">极高</span>
+<span>新浪财经</span>
+<span>09-13 11:19</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-09-13/detail-inirrxsh4699994.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>极高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>扩产信号·利好(+40分)</li><li>技术信号·利好(+40分)</li><li>传闻信号·中性(±10分)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“量产”</li><li>“首款”</li><li>“计划”</li></ul></div>
+<div class="verify-note">📝 评分引擎:扩产·利好(40)+技术·利好(40)+传闻·中性(10)</div>
+
+
+</div>
+</div></div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
 <div class="card-left">
 <div class="card-cat cat-gold">黄金</div>
@@ -389,47 +422,14 @@
 <div class="detail-grid">
 <div><span class="dl">方向</span>利好</div>
 <div><span class="dl">程度</span>高</div>
-<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">确定性</span>中</div>
 <div><span class="dl">窗口</span>中期</div>
 </div>
 
-<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%</span></div>
-<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>自动驾驶技术推进</li></ul></div>
-<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“现代汽车正与美国芯片制造商英伟达合作，以加速高级驾驶辅助和自动驾驶系统的商业化部署”</li></ul></div>
-<div class="verify-note">📝 AI研判:自动驾驶技术推进</div>
-
-
-</div>
-</div></div>
-<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
-<div class="card-left">
-<div class="card-cat cat-semi">半导体</div>
-<div class="fresh-badge">新</div>
-</div>
-<div class="card-right">
-<div class="card-title">【现代汽车将于2029年推出自研驾驶辅助系统】9月13日消息，现代汽车集团称其正在开发以Atria AI为核心的自研自动驾驶技术。Atria AI是一种端到端人工智能模型，旨在感知周围环境并做出驾驶决策。现代汽车表示，搭载Atria AI的Level 2++车辆量产目标定于2029年下半年。与此同时，该集团计划利用真实道路驾驶数据持续训练和改进其Atria AI，并逐步将该技术推广至量产车辆，长期目标是向Level 4自动驾驶迈进。此外，现代汽车正与美国芯片制造商英伟达合作，以加速高级驾驶辅助和自动驾驶系统的商业化部署。现代汽车表示，计划于2028年上半年在首款量产软件定义汽车（SDV）中引入与英伟达合作开发的Level 2+自动驾驶技术；Level 2++量产车辆目标则定于2028年下半年。</div>
-
-<div class="card-summary"></div>
-<div class="card-meta">
-<span class="badge badge-bull">利好</span>
-<span class="impact-tag impact-high">高</span>
-<span>新浪财经</span>
-<span>09-13 11:19</span>
-
- <a href="https://finance.sina.cn/7x24/2026-09-13/detail-inirrxsh4699994.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文</a>
-</div>
-<div class="card-detail">
-<div class="detail-grid">
-<div><span class="dl">方向</span>利好</div>
-<div><span class="dl">程度</span>高</div>
-<div><span class="dl">确定性</span>高</div>
-<div><span class="dl">窗口</span>中期</div>
-</div>
-
-<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%</span></div>
-<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>重复利好消息</li></ul></div>
-<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“现代汽车正与美国芯片制造商英伟达合作，以加速高级驾驶辅助和自动驾驶系统的商业化部署”</li></ul></div>
-<div class="verify-note">📝 AI研判:重复利好消息</div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">60%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>扩产信号·利好(+20分)</li><li>技术信号·利好(+20分)</li><li>传闻信号·中性(±5分)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“量产”</li><li>“首款”</li><li>“计划”</li></ul></div>
+<div class="verify-note">📝 评分引擎:扩产·利好(20)+技术·利好(20)+传闻·中性(5)</div>
 
 
 </div>
@@ -456,13 +456,46 @@
 <div><span class="dl">方向</span>利好</div>
 <div><span class="dl">程度</span>高</div>
 <div><span class="dl">确定性</span>高</div>
-<div><span class="dl">窗口</span>中期</div>
+<div><span class="dl">窗口</span>短期</div>
 </div>
 <div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">沃格光电、艾玮得生物</span></div>
-<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">90%（项目产业化进度存在不确定性）</span></div>
-<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
-<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“此次全球首发的全玻璃基器官芯片系统AWA-HT系列产品，由艾玮得生物与沃格光电共同发布。该产品能够输出更贴近人体生理特征的体外模型与可溯源评价数据，赋能新药筛选、临床药敏检测、精准医疗、化妆品及化学品功效与安全性评价、毒理学研究等多个应用场景”</li></ul></div>
-<div class="verify-note">📝 评分引擎:技术·利好(40)</div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">90%（市场接受度和商业化进程仍存在不确定性）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>产品首发</li><li>产业化推进</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“此次全球首发的全玻璃基器官芯片系统AWA-HT系列产品，由艾玮得生物与沃格光电共同发布。”</li></ul></div>
+<div class="verify-note">📝 AI研判:产品首发；产业化推进</div>
+
+
+</div>
+</div></div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-semi">半导体</div>
+<div class="fresh-badge">新</div>
+</div>
+<div class="card-right">
+<div class="card-title">黄仁勋执锹现身！英伟达投资的磷化铟工厂奠基了 - 财联社</div>
+
+<div class="card-summary">黄仁勋执锹现身！英伟达投资的磷化铟工厂奠基了&amp;nbsp;&amp;nbsp; 财联社</div>
+<div class="card-meta">
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+<span>财联社</span>
+<span>09-13 11:41</span>
+
+ <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTE9VYkhxSVo1czFHMFV0TWdHT3pnU01Hd09mNGNqR3hJcVNiRnV1LXhoNGhLRDg5R3NrczF3RkVsMnZhNFc0Vy0wcA?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">📝 评分引擎:未命中明显信号,中性</div>
 
 
 </div>
@@ -488,14 +521,14 @@
 <div class="detail-grid">
 <div><span class="dl">方向</span>中性</div>
 <div><span class="dl">程度</span>低</div>
-<div><span class="dl">确定性</span>中</div>
-<div><span class="dl">窗口</span>短期</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
 </div>
-<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">昌红科技</span></div>
-<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">70%（相关产品导入及订单情况存在一定不确定性）</span></div>
-<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>新客户订单</li></ul></div>
-<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“公司半导体晶圆载具产品已获得多家晶圆厂客户订单”</li></ul></div>
-<div class="verify-note">📝 AI研判:新客户订单</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">📝 评分引擎:未命中明显信号,中性</div>
 
 
 </div>
@@ -525,10 +558,10 @@
 <div><span class="dl">窗口</span>长期</div>
 </div>
 
-<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">70%（技术转化到临床应用仍需时间）</span></div>
-<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li><li>重复新闻</li></ul></div>
-<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“英国曼彻斯特大学研究人员近日在《英国癌症杂志》发表论文说，利用生物材料在实验室构建接近人体真实肿瘤环境的三维肿瘤模型，有助于加快抗癌药物研发。”</li></ul></div>
-<div class="verify-note">📝 AI研判:同意关键词预判；重复新闻</div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">70%（尚不明确该技术何时能商业化）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>技术进步</li><li>影响有限</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“利用生物材料在实验室构建接近人体真实肿瘤环境的三维肿瘤模型，有助于加快抗癌药物研发。”</li></ul></div>
+<div class="verify-note">📝 AI研判:技术进步；影响有限</div>
 
 
 </div>
@@ -558,10 +591,43 @@
 <div><span class="dl">窗口</span>长期</div>
 </div>
 
-<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">70%（技术转化到临床应用仍需时间）</span></div>
-<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
-<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“英国曼彻斯特大学研究人员近日在《英国癌症杂志》发表论文说，利用生物材料在实验室构建接近人体真实肿瘤环境的三维肿瘤模型，有助于加快抗癌药物研发。”</li></ul></div>
-<div class="verify-note">📝 评分引擎:未命中明显信号,中性</div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">70%（尚不明确该技术何时能商业化）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>技术进步</li><li>影响有限</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“利用生物材料在实验室构建接近人体真实肿瘤环境的三维肿瘤模型，有助于加快抗癌药物研发。”</li></ul></div>
+<div class="verify-note">📝 AI研判:技术进步；影响有限</div>
+
+
+</div>
+</div></div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-gold">黄金</div>
+<div class="fresh-badge">新</div>
+</div>
+<div class="card-right">
+<div class="card-title">尽管美联储可能加息，但黄金仍保持其长期上涨趋势。 - Vietnam.vn</div>
+
+<div class="card-summary">尽管美联储可能加息，但黄金仍保持其长期上涨趋势。&amp;nbsp;&amp;nbsp; Vietnam.vn</div>
+<div class="card-meta">
+<span class="badge badge-mixed">分化</span>
+<span class="impact-tag impact-high">高</span>
+<span>Vietnam.vn</span>
+<span>09-13 10:06</span>
+
+ <a href="https://news.google.com/rss/articles/CBMijgFBVV95cUxOek40RzA2M0xfSEx3eVBlYzduZ05NU091c1ZoX1hwX1ptM1NfcjlXQUk5NVZnODZwaXZhNDh1Y1Fua2pCOV94eTVKN3RwZjZtU3ZxWkY3bm14R3pMeF9hZEpIa2NjQmlGa1Foemg3eFlHU0MxbXI2cVFrVXdQYnR5SU1NNW9hX3lwSzFwQXVR?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>分化</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>宏观信号·利空(-40分)</li><li>行情信号·利好(+15分·板块行情上涨)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“加息”</li><li>“上涨”</li></ul></div>
+<div class="verify-note">📝 评分引擎:宏观·利空(40)+行情·利好(15·板块行情上涨)</div>
 
 
 </div>
@@ -588,13 +654,13 @@
 <div><span class="dl">方向</span>利好</div>
 <div><span class="dl">程度</span>高</div>
 <div><span class="dl">确定性</span>高</div>
-<div><span class="dl">窗口</span>中期</div>
+<div><span class="dl">窗口</span>短期</div>
 </div>
 <div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">翰森制药</span></div>
-<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">95%（期中数据不代表最终结果）</span></div>
-<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>修正关键词预判</li><li>III期临床成功</li></ul></div>
-<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“此次WCLC 2026披露的ARTEMIS-008研究期中分析结果显示：瑞康立伏妥塔单抗在复发性小细胞肺癌患者中展现出具有统计学意义和临床意义的OS改善。”</li></ul></div>
-<div class="verify-note">📝 AI研判:修正关键词预判；III期临床成功</div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">90%（后续监管审批和市场表现仍有不确定性）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>III期成功</li><li>全球首创</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“基于该结果，ARTEMIS-008成为全球首个在随机对照III期临床研究中证实B7-H3靶向ADC可带来OS获益的阳性研究。”</li></ul></div>
+<div class="verify-note">📝 AI研判:III期成功；全球首创</div>
 
 
 </div>
@@ -620,14 +686,14 @@
 <div class="detail-grid">
 <div><span class="dl">方向</span>中性</div>
 <div><span class="dl">程度</span>低</div>
-<div><span class="dl">确定性</span>中</div>
-<div><span class="dl">窗口</span>长期</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
 </div>
 
-<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">60%（方案细节和实施情况存在不确定性）</span></div>
-<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>国际供应链调整</li></ul></div>
-<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“覆盖能源、人工智能、电池与半导体所需关键矿产”</li></ul></div>
-<div class="verify-note">📝 AI研判:国际供应链调整</div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">📝 评分引擎:未命中明显信号,中性</div>
 
 
 </div>
@@ -671,13 +737,13 @@
 <div class="fresh-badge">新</div>
 </div>
 <div class="card-right">
-<div class="card-title">金市前瞻：黄金真正的大考来了！美联储三大看点齐聚，4400美元附近迎关键一战 - FX168财经</div>
+<div class="card-title">金市前瞻：黄金真正的大考来了！美联储三大看点齐聚，4400美元附近迎关键一战 - fx168news.com</div>
 
-<div class="card-summary">金市前瞻：黄金真正的大考来了！美联储三大看点齐聚，4400美元附近迎关键一战&amp;nbsp;&amp;nbsp; FX168财经</div>
+<div class="card-summary">金市前瞻：黄金真正的大考来了！美联储三大看点齐聚，4400美元附近迎关键一战&amp;nbsp;&amp;nbsp; fx168news.com</div>
 <div class="card-meta">
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
-<span>FX168财经</span>
+<span>fx168news.com</span>
 <span>09-13 07:42</span>
 
  <a href="https://news.google.com/rss/articles/CBMihAFBVV95cUxOUXRnMmRwY0JTU29iSnpjV01sUkZxcW9HMXBnSE9CTE9MbEF6MkxPdmxrdWtDb2x6eGRpcWMwdlM4MzhyUFh3UE96UDI2VWMtX3lXeEpVN1JxS1VhQW1VRFBzOE1SeldYeHJOVGhZeUdILXMtQkJ1MHhMUzN6aGRoRDdyemQ?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文</a>
@@ -705,11 +771,11 @@
 </div>
 <div class="card-right">
 <div class="card-title">台积电 营收 Hits 纪录 NT$514.8B, Up 53.3% [2026] - tech-insider.org</div>
-
+<div class="card-original-title">原文: TSMC Revenue Hits Record NT$514.8B, Up 53.3% [2026] - tech-insider.org</div>
 <div class="card-summary">台积电 营收 Hits 纪录 NT$514.8B, Up 53.3% [2026]&amp;nbsp;&amp;nbsp; tech-insider.org</div>
 <div class="card-meta">
-<span class="badge badge-bull">利好</span>
-<span class="impact-tag impact-high">高</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
 <span>tech-insider.org</span>
 <span>09-13 04:35</span>
 
@@ -717,16 +783,16 @@
 </div>
 <div class="card-detail">
 <div class="detail-grid">
-<div><span class="dl">方向</span>利好</div>
-<div><span class="dl">程度</span>高</div>
-<div><span class="dl">确定性</span>高</div>
-<div><span class="dl">窗口</span>短期</div>
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
 </div>
 
-<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">90%</span></div>
-<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>业绩大幅增长</li></ul></div>
-<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“TSMC Revenue Hits Record NT$514.8B, Up 53.3%”</li></ul></div>
-<div class="verify-note">📝 AI研判:业绩大幅增长</div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">📝 评分引擎:未命中明显信号,中性</div>
 
 
 </div>
@@ -738,7 +804,7 @@
 </div>
 <div class="card-right">
 <div class="card-title">英特尔 Xeon 6+ Launch Overshadowed by 英伟达 PC 芯片 - tech-insider.org</div>
-
+<div class="card-original-title">原文: Intel Xeon 6+ Launch Overshadowed by Nvidia PC Chip - tech-insider.org</div>
 <div class="card-summary">英特尔 Xeon 6+ Launch Overshadowed by 英伟达 PC 芯片&amp;nbsp;&amp;nbsp; tech-insider.org</div>
 <div class="card-meta">
 <span class="badge badge-neutral">中性</span>
@@ -752,14 +818,14 @@
 <div class="detail-grid">
 <div><span class="dl">方向</span>中性</div>
 <div><span class="dl">程度</span>低</div>
-<div><span class="dl">确定性</span>中</div>
-<div><span class="dl">窗口</span>短期</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
 </div>
 
-<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">70%</span></div>
-<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>市场竞争影响</li></ul></div>
-<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“Intel Xeon 6+ Launch Overshadowed by Nvidia PC Chip”</li></ul></div>
-<div class="verify-note">📝 AI研判:市场竞争影响</div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">📝 评分引擎:未命中明显信号,中性</div>
 
 
 </div>
@@ -812,7 +878,7 @@
 <span>Barchart.com</span>
 <span>09-13 00:18</span>
 
- <a href="https://news.google.com/rss/articles/CBMi9wFBVV95cUxQRkpMWXBvbFdMbVVrcXJ5cGUxSWttZDVMQzBKLXlHZUFvQ1JFamJEOUxhT3hTdkVOOHM4LTNLSE5JMV9sZU15ZXZqTllSRkIwS2U5SmxLZnBZMWNqeVlSdWVWV09HWWNIR1dLbnBuODJnSFZfMzVZY0ZzYlFmSmJfQTdUZVN6VEZGY2VRTUVnMldpZlFUaEVKREtjYnVDekRnVEJDM0VWOER5Y3FfMm5FaU5GSXNHd1NUUTBENF92dFlPd2EtS1lpNWJNZXlIaldlN0JYZWlnZ1otR3Y5bTRmVk5feHY4Z3VTUk1xTzY5Q0ZWVmp5MkJN?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文</a>
+ <a href="https://news.google.com/rss/articles/CBMi9wFBVV95cUxOd3lmdEZaSEN3WVNDMFB6NkFIbzQ2UXZuVW40dDVGY3M1SWR5dnFtZ2k5d1VJU2xZaW15QUdpNHhicGs0Q2d2NnE5MkdWSXlhWEw3ZUdKZl96YzlwU1hrYlZ0NWhnYzJpYjByUjNfMEtBX0NteEZwNTNOMU9JRG5fSFdGQzdpaDdLc2FTekRpSmZPNFY0VWhGZHlqOTljLXpIZkNOem9pVDNrR2JsT3NJR3o2VXFxWGdsVE5MUE1wdFRURW5pY0ZNaXhCU2dRNjRHTFhfb0VXdEdLNG83NEV0S2Mwa0NLWDVESnIzOUpoZTM5U1hGaVdZ?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文</a>
 </div>
 <div class="card-detail">
 <div class="detail-grid">
@@ -828,13 +894,13 @@
 <div class="verify-note">📝 评分引擎:未命中明显信号,中性</div>
 
       <div class="detail-extra event-sources">
-        <span class="dl">来源聚合（6 家）</span>
-        <span class="ev-src-badges"><span class="ev-src-badge">Yahoo Finance</span><span class="ev-src-badge">Tekedia</span><span class="ev-src-badge">Barchart.com</span><span class="ev-src-badge">FinancialContent</span><span class="ev-src-badge">Outlook Money</span><span class="ev-src-badge">金十数据</span></span>
+        <span class="dl">来源聚合（5 家）</span>
+        <span class="ev-src-badges"><span class="ev-src-badge">Yahoo Finance</span><span class="ev-src-badge">Tekedia</span><span class="ev-src-badge">Barchart.com</span><span class="ev-src-badge">FinancialContent</span><span class="ev-src-badge">Outlook Money</span></span>
       </div>
 
       <div class="detail-extra event-related">
-        <span class="dl">相关报道（5 篇）</span>
-        <ul class="expl-list related-list"><li><a href="https://news.google.com/rss/articles/CBMiqAFBVV95cUxOSW1iZDdhenZGVXlFYzg0RElwaXVFRE1RM1h4eVRMWEhlRHR3MG1HanllRDMwN2FVM05pY3dMYnU5c01JYzFxVUNEUTV3eHo1MXRWQ1FoR0wxTmdKWloyNGM3UWpuZHJMUDBBTmZTV3ZnemdNaGdhd3pEOXRwSnd1dXJoRFlVTlJucy16ZXhUNXRKdXVCWkNHX182YWtyMXkyVTVfay1JZVQ?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">news.google.com/rss/articles/CBMiqAFBVV95cUxOSW1iZ</a></li><li><a href="https://news.google.com/rss/articles/CBMiswFBVV95cUxQQkdxS2RJc2poTFY1eHZXMFRqRjZLV3Z0bkR6a0xtZTJIT0pFZ3Q1UVVSQjUxU1BLbGZvY1Zsc2dlNThVY1BreUtNVlJuWGswdDNyRmR5WlViS1R6QVl0ejNMRXJ3WGFWdUNFVEQtbEYtN2o3YkIwdGMzWmhuYnZWeUN6SDloeXF6ZUhzNG5kOURyLWJjYi03b1FheVE2aUhpWlVCNjRyazl6SzR4VTYxUGRLYw?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">news.google.com/rss/articles/CBMiswFBVV95cUxQQkdxS</a></li><li><a href="https://news.google.com/rss/articles/CBMivgFBVV95cUxPb3FsaGRqT01zT0pNQk1WTXNPa0xsTl91T3V3R0ZOa1ZqZXBwVnhaQkJPcU8zb0JaTmpadVdGSGR2d3p3MzVhRUNhQUZ6Rkg4NU1lVExVSy11TWphOVoxMDZNZEF4ZlJsWV92NkdLaUlSV3dCSFVYbHlka0xuVWtEaFFlVWQwaFkwWUpoWE5iYTZLcXcyTnFmdkNwWUxoUW1vcHJOa2p5bXNYWjZMeDFXcG9RUU9lU2tXR20tSEx3?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">news.google.com/rss/articles/CBMivgFBVV95cUxPb3Fsa</a></li><li><a href="https://news.google.com/rss/articles/CBMipgFBVV95cUxPN3FIS2FPNkxkX2VETjNmLTJjRWdoeUNFOWw0T19KS3h5THBFRWRUVnhMU3JJYjhEeVVkczRxSjBRcmFkQ3Bkbm5aV0VpRXRmLUVqdk9qUWl4emFRZGMzYThZcEVyaEtzcFhBTW1Ic1AtUGNkRE1GOFUxQWQ0Tmc1OWVMYmlIallaVlJmR0pFT0dyUmhnbkhEc1dQQ0hHTjF3RExfeUdB0gGzAUFVX3lxTE1UVmhwYUl4b2NGb200bUxqX1dnTlo5V1Jfak0tNWc5TjJSMTNaUXN4dUlHdWwwRlFsY1NKWFIzUGNZSm5TX1VPaURxdzVJQTd2V3l4WThwUllEQ3RYVy00MHppcVpOYnZCaUpIMGFpcTZuYWdRTzJjNENIUi1WOXRUZFhYN1Jua1NSQThURm1tdU5raHdUVEcwYmtKUTFHTFE5Uy1HMVQ0YXJRR3daTExrbzQw?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">news.google.com/rss/articles/CBMipgFBVV95cUxPN3FIS</a></li><li><a href="At the 2026 China Compute Power Conference in Lang" target="_blank" rel="noopener" onclick="event.stopPropagation()">At the 2026 China Compute Power Conference in Lang</a></li></ul>
+        <span class="dl">相关报道（4 篇）</span>
+        <ul class="expl-list related-list"><li><a href="https://news.google.com/rss/articles/CBMiqAFBVV95cUxOSW1iZDdhenZGVXlFYzg0RElwaXVFRE1RM1h4eVRMWEhlRHR3MG1HanllRDMwN2FVM05pY3dMYnU5c01JYzFxVUNEUTV3eHo1MXRWQ1FoR0wxTmdKWloyNGM3UWpuZHJMUDBBTmZTV3ZnemdNaGdhd3pEOXRwSnd1dXJoRFlVTlJucy16ZXhUNXRKdXVCWkNHX182YWtyMXkyVTVfay1JZVQ?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">news.google.com/rss/articles/CBMiqAFBVV95cUxOSW1iZ</a></li><li><a href="https://news.google.com/rss/articles/CBMiswFBVV95cUxQQkdxS2RJc2poTFY1eHZXMFRqRjZLV3Z0bkR6a0xtZTJIT0pFZ3Q1UVVSQjUxU1BLbGZvY1Zsc2dlNThVY1BreUtNVlJuWGswdDNyRmR5WlViS1R6QVl0ejNMRXJ3WGFWdUNFVEQtbEYtN2o3YkIwdGMzWmhuYnZWeUN6SDloeXF6ZUhzNG5kOURyLWJjYi03b1FheVE2aUhpWlVCNjRyazl6SzR4VTYxUGRLYw?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">news.google.com/rss/articles/CBMiswFBVV95cUxQQkdxS</a></li><li><a href="https://news.google.com/rss/articles/CBMivgFBVV95cUxPb3FsaGRqT01zT0pNQk1WTXNPa0xsTl91T3V3R0ZOa1ZqZXBwVnhaQkJPcU8zb0JaTmpadVdGSGR2d3p3MzVhRUNhQUZ6Rkg4NU1lVExVSy11TWphOVoxMDZNZEF4ZlJsWV92NkdLaUlSV3dCSFVYbHlka0xuVWtEaFFlVWQwaFkwWUpoWE5iYTZLcXcyTnFmdkNwWUxoUW1vcHJOa2p5bXNYWjZMeDFXcG9RUU9lU2tXR20tSEx3?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">news.google.com/rss/articles/CBMivgFBVV95cUxPb3Fsa</a></li><li><a href="https://news.google.com/rss/articles/CBMipgFBVV95cUxPN3FIS2FPNkxkX2VETjNmLTJjRWdoeUNFOWw0T19KS3h5THBFRWRUVnhMU3JJYjhEeVVkczRxSjBRcmFkQ3Bkbm5aV0VpRXRmLUVqdk9qUWl4emFRZGMzYThZcEVyaEtzcFhBTW1Ic1AtUGNkRE1GOFUxQWQ0Tmc1OWVMYmlIallaVlJmR0pFT0dyUmhnbkhEc1dQQ0hHTjF3RExfeUdB0gGzAUFVX3lxTE1UVmhwYUl4b2NGb200bUxqX1dnTlo5V1Jfak0tNWc5TjJSMTNaUXN4dUlHdWwwRlFsY1NKWFIzUGNZSm5TX1VPaURxdzVJQTd2V3l4WThwUllEQ3RYVy00MHppcVpOYnZCaUpIMGFpcTZuYWdRTzJjNENIUi1WOXRUZFhYN1Jua1NSQThURm1tdU5raHdUVEcwYmtKUTFHTFE5Uy1HMVQ0YXJRR3daTExrbzQw?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">news.google.com/rss/articles/CBMipgFBVV95cUxPN3FIS</a></li></ul>
       </div>
 </div>
 </div></div>
@@ -845,19 +911,17 @@
 <div class="table-wrap">
   <table>
     <thead><tr><th>板块</th><th>冲击</th><th>方向</th><th>新闻</th><th>传导逻辑</th><th>关联标的</th></tr></thead>
-    <tbody><tr><td style="font-weight:700;">半导体</td><td class="shock-strong">强</td><td style="color:#ea580c;">中性</td><td>6</td><td>半导体板块6条新闻，方向以中性为主</td><td>中芯国际、北方华创、中微公司</td></tr>
+    <tbody><tr><td style="font-weight:700;">半导体</td><td class="shock-strong">强</td><td style="color:#ea580c;">中性</td><td>7</td><td>半导体板块7条新闻，方向以中性为主</td><td>中芯国际、北方华创、中微公司</td></tr>
+<tr><td style="font-weight:700;">黄金</td><td class="shock-strong">强</td><td style="color:#ea580c;">中性</td><td>6</td><td>黄金板块6条新闻，方向以中性为主。关注：黄金本周大跌80美元！美联储加息箭在弦上，华尔街为何仍坚定看多？_金市直播 - </td><td>紫金矿业、山东黄金、中金黄金</td></tr>
 <tr><td style="font-weight:700;">创新药</td><td class="shock-strong">强</td><td style="color:#ea580c;">中性</td><td>4</td><td>创新药板块4条新闻，方向以中性为主</td><td>百济神州、药明康德、恒瑞医药</td></tr>
-<tr><td style="font-weight:700;">黄金</td><td class="shock-mid">中</td><td style="color:#ea580c;">中性</td><td>5</td><td>黄金板块5条新闻，方向以中性为主。关注：黄金本周大跌80美元！美联储加息箭在弦上，华尔街为何仍坚定看多？_金市直播 - </td><td>紫金矿业、山东黄金、中金黄金</td></tr>
 <tr><td style="font-weight:700;">光模块</td><td class="shock-weak">弱</td><td style="color:#ea580c;">中性</td><td>0</td><td></td><td>—</td></tr></tbody>
   </table>
 </div>
 
 
 <div class="sec-title">今日要点</div>
-<div class="key-points"><div class="kp-card">【半导体】台积电2026年营收创纪录达NT$514.8B，同比增长53.3%</div>
-<div class="kp-card">【半导体】现代汽车计划2029年推出自研驾驶辅助系统，将与英伟达合作加速技术商业化</div>
-<div class="kp-card">【创新药】翰森制药瑞康立伏妥塔单抗Ⅲ期临床达主要终点</div>
-<div class="kp-card">【创新药】沃格光电与艾玮得生物合作推进玻璃基器官芯片产业化</div></div>
+<div class="key-points"><div class="kp-card">【创新药】翰森制药瑞康立伏妥塔单抗在复发性小细胞肺癌患者中Ⅲ期临床试验达到主要终点，成为全球首个B7-H3靶向ADC带来OS获益的阳性研究</div>
+<div class="kp-card">【创新药】沃格光电与艾玮得生物合作落地玻璃基器官芯片项目，全球首发AWA-HT系列产品</div></div>
 
 
 <div class="footer">
@@ -878,7 +942,7 @@ const REFRESH_SECRET = "87vBu0o-PR89DWTVf8Eqko2j";
 const BASE = window.BASE || '';
 // 页面自身构建时间(UTC ISO)。auto-check 用它和 history/build-state.json 的
 // generatedAt 比较:定时/推送构建完成后,停留在首页的用户会自动刷新到最新版。
-const PAGE_GENERATED_AT = "2026-09-13T05:00:30.150Z";
+const PAGE_GENERATED_AT = "2026-09-13T05:29:16.638Z";
 const PHASE_CN = { fetch: '抓取新闻', analyze: 'AI 分析', 'analyze-kw': '关键词引擎', chart: '图表数据', write: '写入文件', commit: '提交 git', push: '推送 git', cloud: '云端构建', done: '完成', error: '失败' };
 let refreshStartedAt = 0;
 let refreshTimer = null;
@@ -1202,8 +1266,8 @@ new Chart(document.getElementById('etfTrendChart'), {
 new Chart(document.getElementById('sentimentChart'), {
   type: 'doughnut',
   data: {
-    labels: ["利好","利空","中性"],
-    datasets: [{"data":[5,1,9],"backgroundColor":["#16a34a","#dc2626","#9ca0af","#ea580c"],"borderWidth":0}],
+    labels: ["利好","利空","中性","分化"],
+    datasets: [{"data":[4,1,11,1],"backgroundColor":["#16a34a","#dc2626","#9ca0af","#ea580c"],"borderWidth":0}],
   },
   options: {
     responsive: true, maintainAspectRatio: false, cutout: '55%',
@@ -1218,7 +1282,7 @@ new Chart(document.getElementById('timeWindowChart'), {
   type: 'doughnut',
   data: {
     labels: ["短期","中期","长期"],
-    datasets: [{"data":[4,8,3],"backgroundColor":["#2563eb","#ea580c","#16a34a"],"borderWidth":0}],
+    datasets: [{"data":[5,10,2],"backgroundColor":["#2563eb","#ea580c","#16a34a"],"borderWidth":0}],
   },
   options: {
     responsive: true, maintainAspectRatio: false, cutout: '55%',
@@ -1233,7 +1297,7 @@ new Chart(document.getElementById('directionChart'), {
   type: 'bar',
   data: {
     labels: ["半导体","光模块","创新药","黄金"],
-    datasets: [{"label":"利好","data":[3,0,2,0],"backgroundColor":"#16a34a"},{"label":"利空","data":[0,0,0,1],"backgroundColor":"#dc2626"},{"label":"中性","data":[3,0,2,4],"backgroundColor":"#9ca0af"}],
+    datasets: [{"label":"利好","data":[2,0,2,0],"backgroundColor":"#16a34a"},{"label":"利空","data":[0,0,0,1],"backgroundColor":"#dc2626"},{"label":"中性","data":[5,0,2,4],"backgroundColor":"#9ca0af"},{"label":"分化","data":[0,0,0,1],"backgroundColor":"#ea580c"}],
   },
   options: {
     responsive: true, maintainAspectRatio: false,
@@ -1252,7 +1316,7 @@ new Chart(document.getElementById('heatmapChart'), {
   type: 'bar',
   data: {
     labels: ["半导体","光模块","创新药","黄金"],
-    datasets: [{"label":"低","data":[3,0,2,4],"backgroundColor":"#16a34a"},{"label":"中","data":[0,0,0,0],"backgroundColor":"#facc15"},{"label":"高","data":[3,0,2,0],"backgroundColor":"#ea580c"},{"label":"极高","data":[0,0,0,1],"backgroundColor":"#dc2626"}],
+    datasets: [{"label":"低","data":[5,0,2,4],"backgroundColor":"#16a34a"},{"label":"中","data":[0,0,0,0],"backgroundColor":"#facc15"},{"label":"高","data":[1,0,2,1],"backgroundColor":"#ea580c"},{"label":"极高","data":[1,0,0,1],"backgroundColor":"#dc2626"}],
   },
   options: {
     responsive: true, maintainAspectRatio: false,
