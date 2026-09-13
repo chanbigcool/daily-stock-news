@@ -10,13 +10,15 @@
 //   exclude 命中 → veto:该板块分数强制归零,除非命中该板块的 excludeContext
 //              白名单(金属语境词)。解决「黄金时代」「黄金周」「golden age」
 //              「Goldman Sachs」等假阳性。
+// 另有 config.mjs 的 GENRE_EXCLUDE:早报/收评/荐股/日历/大盘综述等面向全市场的
+// 体裁,标题命中即整条否决(先于下述打分),因为它们不属于任何单一板块。
 // 取各板块分数最高者;低于该板块 threshold 则返回 ''(未分类)。
 //
 // 复用 sectors.mjs 的 matchKw 做字符串/词组匹配;exclude 额外支持 RegExp
 // (供 golden\s+(age|era) 这类多词模式)。
 
 import { SECTORS } from './sectors.mjs';
-import { SECTOR_RULES } from './config.mjs';
+import { SECTOR_RULES, GENRE_EXCLUDE } from './config.mjs';
 import { matchKw } from './sectors.mjs';
 
 function hits(field, kw) {
@@ -42,6 +44,12 @@ function scoreField(field, core, context) {
 export function classifyWithScores(title = '', description = '') {
   const t = String(title).toLowerCase();
   const d = String(description || '').toLowerCase();
+
+  // 全市场体裁(早报/收评/荐股/日历/大盘综述)先整条否决 —— 这类新闻天生面向
+  // 全市场,归给任何单一板块都是错的。见 config.mjs GENRE_EXCLUDE 的说明。
+  if (GENRE_EXCLUDE.some(pat => pat.test(t))) {
+    return { sector: '', score: 0, vetoed: true };
+  }
 
   let best = '';
   let bestScore = -1;

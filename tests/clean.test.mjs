@@ -144,6 +144,44 @@ test('创新药出海类新闻仍能归类(靠核心词命中,不靠「出海」
   assert.deepEqual(out.map(i => i.guessedSector), ['创新药', '创新药']);
 });
 
+test('黄金假阳性被 exclude 拦截(黄金档期 → 不分类)', () => {
+  const items = [
+    { title: '瞄准中秋、国庆黄金档期 多地发放消费券', description: '', sourceType: 'direct_api' },
+  ];
+  assert.equal(dedupAndClean(items).length, 0, '「黄金档期」是消费旺季,不是金价');
+});
+
+// 早报/收评/荐股/日历/大盘综述天生面向全市场,却几乎必然提到板块词(标题罗列板块,
+// 或正文顺带一提),归给任何单一板块都是错的。实测最近 10 天 370 条里 48 条属此类。
+test('全市场体裁被排除(早报/收评/荐股/日历/大盘综述 → 不分类)', () => {
+  const items = [
+    { title: '【早报】美国对伊朗发动打击;油价大涨,黄金跌破4100美元;半导体设备龙头今日复牌', description: '', sourceType: 'direct_api' },
+    { title: '【A股收评:三大股指震荡上升 创业板指大涨近3.5%】', description: '光模块、半导体板块走强', sourceType: 'direct_api' },
+    { title: '光模块,利好!机构力挺,龙头强势涨停!13只绩优潜力股曝光', description: '', sourceType: 'direct_api' },
+    { title: '提醒:日内请重点关注(以下均为北京时间)', description: '台积电、英伟达、新易盛披露财报', sourceType: 'direct_api' },
+    { title: '【MSCI新兴市场股票指数创逾两个月新高 科技股表现最佳】', description: '芯片股领涨', sourceType: 'direct_api' },
+    { title: '本周,标普累跌0.4%,道指跌1.5%,纳指跌0.5%。费城半导体指数涨0.6%', description: '', sourceType: 'direct_api' },
+    // 大写英文token:分类器拿标题小写去匹配,模式漏了 i 标志就会漏掉这条
+    { title: '资金瞄准硬科技 上市公司密集出手做LP', description: '资金加速流入半导体', sourceType: 'direct_api' },
+  ];
+  assert.equal(dedupAndClean(items).length, 0, '市场综述不该归入任何单一板块');
+});
+
+// 体裁排除刻意用市场名/体裁名限定,不用「收盘/盘前/盘后/科创板」这类裸词 ——
+// 下面三条都是真新闻,必须留住。
+test('体裁排除不误伤板块自身的复盘与个股新闻', () => {
+  const items = [
+    // 「黄金收评」是黄金自己的复盘,含「收评」但不是全市场收评
+    { title: '【黄金收评】美联储9月加息概率骤降！金价暴涨近85美元', description: '', sourceType: 'direct_api' },
+    // 「盘后」是裸词,不在排除模式里
+    { title: '阿斯利康股价盘后下跌2%,因三期临床试验结果令人失望', description: '', sourceType: 'direct_api' },
+    // 「科创板」不在排除模式里,冲刺科创板是真新闻
+    { title: '获英特尔投资 江苏半导体设备细分龙头冲刺科创板', description: '', sourceType: 'direct_api' },
+  ];
+  const out = dedupAndClean(items);
+  assert.deepEqual(out.map(i => i.guessedSector), ['黄金', '创新药', '半导体']);
+});
+
 // ── dedupAndClean:漏斗计数(可选参数)────────────────────
 
 test('传入 funnel 时按 stage 名回填各级剩余条数', () => {
