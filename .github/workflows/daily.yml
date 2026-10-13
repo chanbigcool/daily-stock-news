@@ -4,12 +4,15 @@ on:
   # 代码推送即触发构建：本人 push main 立即重建（GITHUB_TOKEN 的自动提交不触发，不会死循环）。
   push:
     branches: [main]
-  schedule:
-    # 三时段兜底：GitHub Actions 的 schedule 会漂移/跳过，多时段互为备份。
-    # 01:00 UTC = 北京 09:00；04:30 UTC = 北京 12:30；12:00 UTC = 北京 20:00。
-    - cron: '0 1 * * *'
-    - cron: '30 4 * * *'
-    - cron: '0 12 * * *'
+  # ⚠️ 定时抓取已停用（2026-10-13 迁移到新账号 chanbigcool 时关闭）：旧账号 cc5207597-hash
+  # 被封的依据正是「在 Actions 里定时抓第三方站点」这个架构形态，不是代码质量。新账号另起一套
+  # 同样的定时抓取会被判为规避封禁并做账号关联。确认要继续跑、且接受这个风险，再取消注释。
+  # schedule:
+  #   # 三时段兜底：GitHub Actions 的 schedule 会漂移/跳过，多时段互为备份。
+  #   # 01:00 UTC = 北京 09:00；04:30 UTC = 北京 12:30；12:00 UTC = 北京 20:00。
+  #   - cron: '0 1 * * *'
+  #   - cron: '30 4 * * *'
+  #   - cron: '0 12 * * *'
   workflow_dispatch:
     inputs:
       # 公网一键刷新标识: 云端代理(SCF 云函数)传入的 runId,前端轮询 build-state.json
@@ -44,11 +47,13 @@ jobs:
           node-version: '22'
 
       # ── 阶段一：手动刷新先发纯关键词简报(无 AI, ~2-3 分钟),用户立刻有东西看 ──
-      # 只对手动触发生效(workflow_dispatch 云端刷新 / push);定时构建直接走阶段二,不白耗 runner。
+      # 只对**手动刷新**生效(workflow_dispatch 云端刷新)。2026-10-13 起 push 触发也不再
+      # 跑阶段一 —— push 的常态来源是桌面定时任务的自动提交,没人盯着看简报,却要为它多
+      # 付一次提交+推送+部署。定时构建同样直接走阶段二。收窄后一次 run 只推一个 commit。
       # best-effort: preview 失败不阻断 AI 正式构建;其 Commit/Deploy 由 outcome 守卫。
       - name: Build preview (关键词简报)
         id: build_preview
-        if: github.event_name != 'schedule'
+        if: github.event_name == 'workflow_dispatch'
         continue-on-error: true
         env:
           BUILD_PHASE: preview
@@ -56,8 +61,21 @@ jobs:
           RUN_ID: ${{ github.event.inputs.run_id || '' }}
         run: node scripts/build-daily.mjs
 
-      - name: Commit preview to main
+      # 推送闸门:空报告不提交、不发布。判定见 scripts/push-gate.mjs(读 build-state.json
+      # 的 funnel)。拦下不判红 —— 那是一次合法结论,只打 notice,别再制造新的假告警。
+      - name: 推送闸门 (预览阶段)
+        id: gate_preview
         if: steps.build_preview.outcome == 'success'
+        run: |
+          if node scripts/push-gate.mjs; then
+            echo "worth_push=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "worth_push=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::预览阶段当日 0 条新闻(空报告),跳过提交与发布"
+          fi
+
+      - name: Commit preview to main
+        if: github.event_name == 'workflow_dispatch' && steps.build_preview.outcome == 'success' && steps.gate_preview.outputs.worth_push == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -73,14 +91,14 @@ jobs:
       # '.' 时会重建工作区 .git 指向 gh-pages,导致阶段二的 AI 提交步骤报
       # "fatal: not in a git directory"。
       - name: Stage preview site for gh-pages
-        if: steps.build_preview.outcome == 'success'
+        if: github.event_name == 'workflow_dispatch' && steps.build_preview.outcome == 'success' && steps.gate_preview.outputs.worth_push == 'true'
         run: |
           rm -rf deploy-stage
           mkdir -p deploy-stage
           cp -r index.html db.html history quality assets deploy-stage/
 
       - name: Deploy preview to gh-pages
-        if: steps.build_preview.outcome == 'success'
+        if: github.event_name == 'workflow_dispatch' && steps.build_preview.outcome == 'success' && steps.gate_preview.outputs.worth_push == 'true'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -89,11 +107,11 @@ jobs:
           force_orphan: true
 
       - name: Clean preview stage
-        if: steps.build_preview.outcome == 'success'
+        if: github.event_name == 'workflow_dispatch' && steps.build_preview.outcome == 'success' && steps.gate_preview.outputs.worth_push == 'true'
         run: rm -rf deploy-stage
 
       - name: Deploy preview to EdgeOne Pages (国内镜像)
-        if: steps.build_preview.outcome == 'success' && env.EDGEONE_PAGES_API_TOKEN != ''
+        if: github.event_name == 'workflow_dispatch' && steps.build_preview.outcome == 'success' && steps.gate_preview.outputs.worth_push == 'true' && env.EDGEONE_PAGES_API_TOKEN != ''
         continue-on-error: true
         env:
           EDGEONE_PAGES_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
@@ -108,7 +126,20 @@ jobs:
           RUN_ID: ${{ github.event.inputs.run_id || '' }}
         run: node scripts/build-daily.mjs
 
+      # 推送闸门:空报告不提交、不发布。放在提交之前 —— 这是全流程唯一按**产出**判定的关卡
+      # (下面的 `git diff --cached --quiet` 只认零字节差异,空报告与好报告在它眼里一样)。
+      - name: 推送闸门 (AI 阶段)
+        id: gate
+        run: |
+          if node scripts/push-gate.mjs; then
+            echo "worth_push=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "worth_push=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::当日 0 条新闻(空报告),跳过提交与发布,线上站点保持上次内容"
+          fi
+
       - name: Commit AI artifacts to main
+        if: steps.gate.outputs.worth_push == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -121,12 +152,14 @@ jobs:
           fi
 
       - name: Stage AI site for gh-pages
+        if: steps.gate.outputs.worth_push == 'true'
         run: |
           rm -rf deploy-stage
           mkdir -p deploy-stage
           cp -r index.html db.html history quality assets deploy-stage/
 
       - name: Deploy AI to gh-pages branch
+        if: steps.gate.outputs.worth_push == 'true'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -141,7 +174,7 @@ jobs:
       # 未配置 EDGEONE_API_TOKEN 前自动跳过,不影响 gh-pages 主部署。
       # 首次部署会自动创建 daily-stock-news 项目并分配默认免费域名。
       - name: Deploy AI to EdgeOne Pages (国内镜像)
-        if: env.EDGEONE_PAGES_API_TOKEN != ''
+        if: steps.gate.outputs.worth_push == 'true' && env.EDGEONE_PAGES_API_TOKEN != ''
         continue-on-error: true
         env:
           EDGEONE_PAGES_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}

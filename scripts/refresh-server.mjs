@@ -17,6 +17,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import http from 'http';
 import { renderHTML, rebuildChartData } from './build-daily.mjs';
+import { decidePush, readStateFile } from './push-gate.mjs';
 import { beijingNowString } from '../pipeline/utils.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -126,6 +127,7 @@ const PHASE_LABELS = {
   commit: '提交 git',
   push: '推送 git',
   done: '完成',
+  skipped: '空报告,已跳过推送',
   error: '失败',
 };
 
@@ -171,44 +173,60 @@ async function runRefresh(runId) {
     updatePhase('fetch');
     await run('node', ['scripts/build-daily.mjs'], { timeout: BUILD_TIMEOUT, onStdout });
 
-    // 构建成功 → git commit(有变更才提交)
-    updatePhase('commit');
-    await run('git', ['add', 'index.html', 'scripts/build-daily.mjs', 'scripts/refresh-server.mjs', 'history/'], { timeout: 15_000 });
-    try {
-      await run('git', ['diff', '--cached', '--quiet'], { timeout: 15_000 });
-      console.log('  ✓ 无变更,跳过提交');
-    } catch {
-      await run('git', ['commit', '-m', `手动刷新: ${beijingNowString()}`], { timeout: 15_000 });
-    }
+    // 推送闸门:当日 0 条新闻就既不提交也不推送(判定见 scripts/push-gate.mjs)。
+    // 本地 index.html 已被这次构建重写,前端照常重载;线上站点保持上次内容。
+    const loaded = readStateFile();
+    const verdict = loaded.ok ? decidePush(loaded.state) : { push: false, reason: loaded.error };
 
-    // 推送 main。失败不浪费一次成功构建:本地 index.html 已是新内容,
-    // 前端照常重载并提示推送失败。重试一次应对临时网络抖动。
-    updatePhase('push');
-    let pushed = false;
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        await run('git', ['push'], { timeout: 60_000 });
-        pushed = true;
-        break;
-      } catch (err) {
-        console.error(`  ⚠ push 失败(第 ${attempt} 次): ${err.message}`);
-        if (attempt === 1) await new Promise(r => setTimeout(r, 2000));
-      }
-    }
-
-    if (pushed) {
+    if (!verdict.push) {
       lastStatus = {
-        state: 'done', phase: 'done', startedAt: lastStatus.startedAt,
-        finishedAt: new Date().toISOString(), runId, error: null, generatedAt: new Date().toISOString(),
-      };
-      console.log(`  ✅ 刷新完成 (${beijingNowString()})`);
-    } else {
-      lastStatus = {
-        state: 'done', phase: 'push_failed', startedAt: lastStatus.startedAt,
+        state: 'done', phase: 'skipped', startedAt: lastStatus.startedAt,
         finishedAt: new Date().toISOString(), runId,
-        error: '推送 main 失败(本地页面已是新内容,线上站点保持上次部署)', generatedAt: new Date().toISOString(),
+        error: verdict.reason, generatedAt: new Date().toISOString(),
       };
-      console.log('  ⚠️ 构建成功但推送 main 失败(本地页面已更新)');
+      console.log(`  ⛔ 推送闸门: ${verdict.reason}`);
+    } else {
+      // 构建成功 → git commit(有变更才提交)
+      updatePhase('commit');
+      // 只提交构建产物 —— 不 add scripts/:那会让"手动刷新"把任何事先 staged 的源码改动
+      // 夹带进同一个 commit(与 CI 两处提交、桌面任务的口径保持一致)。
+      await run('git', ['add', 'index.html', 'history/', 'quality/'], { timeout: 15_000 });
+      try {
+        await run('git', ['diff', '--cached', '--quiet'], { timeout: 15_000 });
+        console.log('  ✓ 无变更,跳过提交');
+      } catch {
+        await run('git', ['commit', '-m', `手动刷新: ${beijingNowString()}`], { timeout: 15_000 });
+      }
+
+      // 推送 main。失败不浪费一次成功构建:本地 index.html 已是新内容,
+      // 前端照常重载并提示推送失败。重试一次应对临时网络抖动。
+      updatePhase('push');
+      let pushed = false;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          await run('git', ['push'], { timeout: 60_000 });
+          pushed = true;
+          break;
+        } catch (err) {
+          console.error(`  ⚠ push 失败(第 ${attempt} 次): ${err.message}`);
+          if (attempt === 1) await new Promise(r => setTimeout(r, 2000));
+        }
+      }
+
+      if (pushed) {
+        lastStatus = {
+          state: 'done', phase: 'done', startedAt: lastStatus.startedAt,
+          finishedAt: new Date().toISOString(), runId, error: null, generatedAt: new Date().toISOString(),
+        };
+        console.log(`  ✅ 刷新完成 (${beijingNowString()})`);
+      } else {
+        lastStatus = {
+          state: 'done', phase: 'push_failed', startedAt: lastStatus.startedAt,
+          finishedAt: new Date().toISOString(), runId,
+          error: '推送 main 失败(本地页面已是新内容,线上站点保持上次部署)', generatedAt: new Date().toISOString(),
+        };
+        console.log('  ⚠️ 构建成功但推送 main 失败(本地页面已更新)');
+      }
     }
   } catch (err) {
     lastStatus = {

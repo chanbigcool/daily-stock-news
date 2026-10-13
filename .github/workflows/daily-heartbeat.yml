@@ -4,11 +4,12 @@ name: Daily Heartbeat
 # 每个北京时段在主时段(09/12:30/20)之后额外检查一次:当天存档缺失才补建,
 # 已构建(含手动刷新)则空转,保证日报当天必出且不重复抢跑。
 on:
-  schedule:
-    # 06:00 UTC = 北京 14:00(兜 09/12:30 那两班)
-    # 14:00 UTC = 北京 22:00(兜 20 点那班)
-    - cron: '0 6 * * *'
-    - cron: '0 14 * * *'
+  # ⚠️ 定时心跳已停用（2026-10-13 迁移到新账号时关闭），原因同 daily.yml 的 schedule。
+  # schedule:
+  #   # 06:00 UTC = 北京 14:00(兜 09/12:30 那两班)
+  #   # 14:00 UTC = 北京 22:00(兜 20 点那班)
+  #   - cron: '0 6 * * *'
+  #   - cron: '0 14 * * *'
   workflow_dispatch:
 
 permissions:
@@ -33,11 +34,20 @@ jobs:
       # 判断"今天是否已构建":当天首次成功构建会把 history/日报_YYYYMMDD.json
       # 提交回 main。该文件在 main 上缺失 ⟺ 当天自动构建还没成功 → 需要补建。
       # 北京时间 = UTC+8,用 GNU date 直接算(与 pipeline/utils.mjs getTodayStr 同语义)。
+      #
+      # 日界宽限:北京 0-6 点不补建。那会儿北京时间刚翻日,当天注定还是空档 ——
+      # 补建出来的日报必然 0 条,而且它走的是 deploy 在前、健康闸门在后的顺序,
+      # 空日报会先被发布出去。阈值与 CONFIG.health.dayStartGraceHours 保持一致。
       - name: Check if today's report exists
         id: check
         run: |
           BJ_DATE=$(date -u -d '+8 hours' +%Y%m%d)
-          if [ -f "history/日报_${BJ_DATE}.json" ]; then
+          BJ_HOUR=$(date -u -d '+8 hours' +%H | sed 's/^0//')
+          BJ_HOUR=${BJ_HOUR:-0}
+          if [ "$BJ_HOUR" -lt 6 ]; then
+            echo "北京 ${BJ_HOUR} 点,处于日界宽限窗口,不补建"
+            echo "missing=false" >> "$GITHUB_OUTPUT"
+          elif [ -f "history/日报_${BJ_DATE}.json" ]; then
             echo "日报 ${BJ_DATE} 已存在,跳过心跳补建"
             echo "missing=false" >> "$GITHUB_OUTPUT"
           else
@@ -58,8 +68,21 @@ jobs:
           ANTHROPIC_MODEL: ${{ secrets.ANTHROPIC_MODEL }}
         run: node scripts/build-daily.mjs
 
-      - name: Commit build artifacts to main
+      # 推送闸门:空报告不提交、不发布。上面的 missing 检查只判「存档在不在」——
+      # 补建出来的仍可能是空报告,这里按产出再拦一道(判定见 scripts/push-gate.mjs)。
+      - name: 推送闸门 (空报告不推)
+        id: gate
         if: steps.check.outputs.missing == 'true'
+        run: |
+          if node scripts/push-gate.mjs; then
+            echo "worth_push=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "worth_push=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::当日 0 条新闻(空报告),跳过提交与发布,线上站点保持上次内容"
+          fi
+
+      - name: Commit build artifacts to main
+        if: steps.check.outputs.missing == 'true' && steps.gate.outputs.worth_push == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -72,7 +95,7 @@ jobs:
           fi
 
       - name: Deploy to gh-pages branch
-        if: steps.check.outputs.missing == 'true'
+        if: steps.check.outputs.missing == 'true' && steps.gate.outputs.worth_push == 'true'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -84,7 +107,7 @@ jobs:
       # 未配置 EDGEONE_API_TOKEN 前自动跳过,不影响 gh-pages 主部署。
       # 首次部署会自动创建 daily-stock-news 项目并分配默认免费域名。
       - name: Deploy to EdgeOne Pages (国内镜像)
-        if: steps.check.outputs.missing == 'true' && env.EDGEONE_PAGES_API_TOKEN != ''
+        if: steps.check.outputs.missing == 'true' && steps.gate.outputs.worth_push == 'true' && env.EDGEONE_PAGES_API_TOKEN != ''
         continue-on-error: true
         env:
           EDGEONE_PAGES_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
