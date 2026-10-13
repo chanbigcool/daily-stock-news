@@ -68,6 +68,14 @@ export function beijingDateKey(date) {
   return `${bj.getUTCFullYear()}${pad2(bj.getUTCMonth() + 1)}${pad2(bj.getUTCDate())}`;
 }
 
+// 任一时间戳落在北京时间的钟点(0-23)。供「北京刚过零点」这类日历判断使用:
+// 那一刻 getTodayStr() 已经翻到新的一天,但这一天只开场了几十分钟,当日新闻量
+// 必然趋近 0 —— 健康判定要能识别这不是「抓取坏了」。
+export function beijingHour(date = new Date()) {
+  const bj = toBeijing(date);
+  return bj ? bj.getUTCHours() : 0;
+}
+
 // 北京钟面的完整字符串 "2026-08-08 17:36:54",用于日志/推送/页面展示。
 // 传入 date 时格式化该时间戳,缺省为当前时间。
 export function beijingNowString(date = new Date()) {

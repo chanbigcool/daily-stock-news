@@ -1,5 +1,5 @@
 // ── Pipeline: 数据抓取层 ────────────────────────────────
-// Fetches from 5 direct Chinese financial APIs + 43 Google News RSS feeds + 12 ETF quotes
+// Fetches from 5 direct Chinese financial APIs + 21 Google News RSS feeds + 12 ETF quotes
 
 import { CONFIG, ETFS } from './config.mjs';
 import { sleep, htmlToText, stripCDATA, parseBeijingTime } from './utils.mjs';
@@ -18,7 +18,7 @@ export async function fetchETFData() {
   try {
     const resp = await fetch(`https://hq.sinajs.cn/list=${sinaCodes.join(',')}`, {
       headers: { 'Referer': 'https://finance.sina.com.cn/' },
-      timeout: 15000,
+      signal: AbortSignal.timeout(CONFIG.apiTimeoutMs),
     });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const text = await resp.text();
@@ -72,21 +72,17 @@ function newestTime(items) {
   return max || null;
 }
 
+// Google News 比直连 API 慢(单次搜索查询要等 Google 聚合),给宽一点的时间。
+const RSS_TIMEOUT_MS = 15000;
+
 export async function fetchGoogleNewsRSS(feed) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
-  let resp;
-  try {
-    resp = await fetch(feed.url, {
-      signal: controller.signal,
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; news-bot/1.0)' },
-      timeout: 15000,
-    });
-  } catch (err) {
-    clearTimeout(timeout);
-    throw new Error('fetch failed');
-  }
-  clearTimeout(timeout);
+  // 与直连 API 同一写法:Node 原生 fetch 不认 timeout 选项,超时只能靠 signal。
+  // 这里不吞异常 —— 让 'HTTP 404' / 超时这几类真实原因冒泡给 fetchAllNews,
+  // 它会记进 sources[].error(泛化成 'fetch failed' 就丢掉了最有用的那部分信息)。
+  const resp = await fetch(feed.url, {
+    signal: AbortSignal.timeout(RSS_TIMEOUT_MS),
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; news-bot/1.0)' },
+  });
   if (!resp.ok) throw new Error('HTTP ' + resp.status);
   const xml = await resp.text();
 
@@ -113,74 +109,71 @@ export async function fetchGoogleNewsRSS(feed) {
 
 // ── 直接 API 抓取器 ──────────────────────────────────────
 
+// 抓取器一律**不吞异常**:失败就让它冒泡到 fetchAllNews 的 allSettled,那里会按
+// 索引记成 ok:false + error。若在这里 catch 成 `return []`,allSettled 看到的是
+// fulfilled,统计里就成了「成功但 0 条」—— 正是要消灭的静默盲区。
 export async function fetchClsNews(source) {
-  try {
-    const resp = await fetch(source.url, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.cls.cn/' },
-      timeout: 10000,
-    });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    const items = (data?.data?.roll_data || data?.data || []);
-    return items.slice(0, CONFIG.apiSourceMaxItems).map(item => ({
-      title: (item.title || '').trim(),
-      description: (item.brief || item.content || '').replace(/<[^>]+>/g, '').trim().substring(0, 600),
-      link: item.shareurl || `https://www.cls.cn/detail/${item.id}`,
-      pubDate: new Date((item.ctime || Math.floor(Date.now()/1000)) * 1000),
-      source: source.name,
-    })).filter(n => n.title);
-  } catch (err) { console.warn(`  [API] ${source.name} ⚠ ${err.message}`); return []; }
+  const resp = await fetch(source.url, {
+    headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.cls.cn/' },
+    signal: AbortSignal.timeout(CONFIG.apiTimeoutMs),
+  });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const data = await resp.json();
+  const items = (data?.data?.roll_data || data?.data || []);
+  return items.slice(0, CONFIG.apiSourceMaxItems).map(item => ({
+    title: (item.title || '').trim(),
+    description: (item.brief || item.content || '').replace(/<[^>]+>/g, '').trim().substring(0, 600),
+    link: item.shareurl || `https://www.cls.cn/detail/${item.id}`,
+    pubDate: new Date((item.ctime || Math.floor(Date.now()/1000)) * 1000),
+    source: source.name,
+  })).filter(n => n.title);
 }
 
 export async function fetchEastMoneyNews(source) {
-  try {
-    const resp = await fetch(source.url, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.eastmoney.com/' },
-      timeout: 10000,
-    });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    const items = (data?.data?.list || data?.data || []);
-    return items.slice(0, CONFIG.apiSourceMaxItems).map(item => ({
-      title: (item.title || item.name || '').trim(),
-      description: (item.digest || item.summary || item.content || '').replace(/<[^>]+>/g, '').trim().substring(0, 600),
-      link: item.url || item.uniqueUrl || '',
-      pubDate: parseBeijingTime(item.pub_time || item.showTime || item.time),
-      source: source.name,
-    })).filter(n => n.title);
-  } catch (err) { console.warn(`  [API] ${source.name} ⚠ ${err.message}`); return []; }
+  const resp = await fetch(source.url, {
+    headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.eastmoney.com/' },
+    signal: AbortSignal.timeout(CONFIG.apiTimeoutMs),
+  });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const data = await resp.json();
+  const items = (data?.data?.list || data?.data || []);
+  return items.slice(0, CONFIG.apiSourceMaxItems).map(item => ({
+    title: (item.title || item.name || '').trim(),
+    description: (item.digest || item.summary || item.content || '').replace(/<[^>]+>/g, '').trim().substring(0, 600),
+    link: item.url || item.uniqueUrl || '',
+    pubDate: parseBeijingTime(item.pub_time || item.showTime || item.time),
+    source: source.name,
+  })).filter(n => n.title);
 }
 
 export async function fetchJin10News(source) {
-  try {
-    const resp = await fetch(source.url, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.jin10.com/' },
-      timeout: 10000,
-    });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const raw = await resp.text();
-    const jsonStr = raw.replace(/^var newest\s*=\s*/, '').replace(/;\s*$/, '').trim();
-    const items = JSON.parse(jsonStr);
-    return items.slice(0, CONFIG.apiSourceMaxItems).map(item => {
-      const data = item.data || {};
-      const content = (data.content || '').replace(/<[^>]+>/g, '').trim();
-      let title = '';
-      const titleMatch = content.match(/^【(.+?)】/);
-      if (titleMatch) {
-        title = titleMatch[0];
-      } else {
-        title = content.substring(0, 50);
-      }
-      return {
-        title,
-        description: content.substring(0, 600),
-        link: data.source_link || '',
-        // Jin10's item.time is a Beijing-time wall-clock string ("YYYY-MM-DD HH:mm:ss")
-        pubDate: parseBeijingTime(item.time),
-        source: source.name,
-      };
-    }).filter(n => n.title);
-  } catch (err) { console.warn(`  [API] ${source.name} ⚠ ${err.message}`); return []; }
+  const resp = await fetch(source.url, {
+    headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://www.jin10.com/' },
+    signal: AbortSignal.timeout(CONFIG.apiTimeoutMs),
+  });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const raw = await resp.text();
+  const jsonStr = raw.replace(/^var newest\s*=\s*/, '').replace(/;\s*$/, '').trim();
+  const items = JSON.parse(jsonStr);
+  return items.slice(0, CONFIG.apiSourceMaxItems).map(item => {
+    const data = item.data || {};
+    const content = (data.content || '').replace(/<[^>]+>/g, '').trim();
+    let title = '';
+    const titleMatch = content.match(/^【(.+?)】/);
+    if (titleMatch) {
+      title = titleMatch[0];
+    } else {
+      title = content.substring(0, 50);
+    }
+    return {
+      title,
+      description: content.substring(0, 600),
+      link: data.source_link || '',
+      // Jin10's item.time is a Beijing-time wall-clock string ("YYYY-MM-DD HH:mm:ss")
+      pubDate: parseBeijingTime(item.time),
+      source: source.name,
+    };
+  }).filter(n => n.title);
 }
 
 export async function fetchSinaNews(source) {
@@ -193,7 +186,7 @@ export async function fetchSinaNews(source) {
       const url = source.url.replace(/([?&]page=)\d+/, `$1${p}`);
       const resp = await fetch(url, {
         headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://finance.sina.com.cn/' },
-        timeout: 10000,
+        signal: AbortSignal.timeout(CONFIG.apiTimeoutMs),
       });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
@@ -211,56 +204,53 @@ export async function fetchSinaNews(source) {
     }
     return out.slice(0, CONFIG.apiSourceMaxItems);
   } catch (err) {
-    // 首页失败=整体失败(源健康会点名);中途某页失败则保住已取到的页。
-    const note = out.length === 0 ? '' : `(已取 ${out.length} 条)`;
-    console.warn(`  [API] ${source.name} ⚠ ${err.message}${note}`);
+    // 首页失败=整体失败,让异常冒泡给 fetchAllNews 点名(在那里记 ok:false);
+    // 中途某页失败则保住已取到的页 —— 这才是下面那句「翻页」设计的本意。
+    if (out.length === 0) throw err;
+    console.warn(`  [API] ${source.name} ⚠ ${err.message}(已取 ${out.length} 条)`);
     return out.slice(0, CONFIG.apiSourceMaxItems);
   }
 }
 
 export async function fetchWallStreetCNNews(source) {
-  try {
-    const resp = await fetch(source.url, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://wallstreetcn.com/' },
-      timeout: 10000,
-    });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    const items = (data?.data?.items || data?.data || []);
-    return items.slice(0, CONFIG.apiSourceMaxItems).map(item => ({
-      title: (item.title || item.content_text || '').replace(/<[^>]+>/g, '').trim(),
-      description: (item.content_text || item.summary || item.content || '').replace(/<[^>]+>/g, '').trim().substring(0, 600),
-      link: item.uri ? `https://wallstreetcn.com/articles/${item.id}` : (item.link || ''),
-      pubDate: new Date(item.display_time ? item.display_time * 1000 : Date.now()),
-      source: source.name,
-    })).filter(n => n.title);
-  } catch (err) { console.warn(`  [API] ${source.name} ⚠ ${err.message}`); return []; }
+  const resp = await fetch(source.url, {
+    headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://wallstreetcn.com/' },
+    signal: AbortSignal.timeout(CONFIG.apiTimeoutMs),
+  });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const data = await resp.json();
+  const items = (data?.data?.items || data?.data || []);
+  return items.slice(0, CONFIG.apiSourceMaxItems).map(item => ({
+    title: (item.title || item.content_text || '').replace(/<[^>]+>/g, '').trim(),
+    description: (item.content_text || item.summary || item.content || '').replace(/<[^>]+>/g, '').trim().substring(0, 600),
+    link: item.uri ? `https://wallstreetcn.com/articles/${item.id}` : (item.link || ''),
+    pubDate: new Date(item.display_time ? item.display_time * 1000 : Date.now()),
+    source: source.name,
+  })).filter(n => n.title);
 }
 
 // WallstreetCN information-flow endpoint — items wrapped as { resource: {...} }
 export async function fetchWallStreetCNInfoFlow(source) {
-  try {
-    const resp = await fetch(source.url, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://wallstreetcn.com/' },
-      timeout: 10000,
-    });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    const items = (data?.data?.items || []);
-    return items
-      .map(item => {
-        const res = item.resource || item;
-        if (!res || item.resource_type === 'ad') return null;
-        return {
-          title: (res.title || res.content_short || '').replace(/<[^>]+>/g, '').trim(),
-          description: (res.content_short || res.title || res.summary || '').replace(/<[^>]+>/g, '').trim().substring(0, 600),
-          link: (res.uri || (res.id ? `https://wallstreetcn.com/articles/${res.id}` : '')),
-          pubDate: new Date(res.display_time ? res.display_time * 1000 : Date.now()),
-          source: source.name,
-        };
-      })
-      .filter(n => n && n.title);
-  } catch (err) { console.warn(`  [API] ${source.name} ⚠ ${err.message}`); return []; }
+  const resp = await fetch(source.url, {
+    headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://wallstreetcn.com/' },
+    signal: AbortSignal.timeout(CONFIG.apiTimeoutMs),
+  });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const data = await resp.json();
+  const items = (data?.data?.items || []);
+  return items
+    .map(item => {
+      const res = item.resource || item;
+      if (!res || item.resource_type === 'ad') return null;
+      return {
+        title: (res.title || res.content_short || '').replace(/<[^>]+>/g, '').trim(),
+        description: (res.content_short || res.title || res.summary || '').replace(/<[^>]+>/g, '').trim().substring(0, 600),
+        link: (res.uri || (res.id ? `https://wallstreetcn.com/articles/${res.id}` : '')),
+        pubDate: new Date(res.display_time ? res.display_time * 1000 : Date.now()),
+        source: source.name,
+      };
+    })
+    .filter(n => n && n.title);
 }
 
 // APU fetcher map

@@ -8,11 +8,22 @@ import assert from 'node:assert/strict';
 import { evaluateHealth, formatSourceSummary } from '../pipeline/health.mjs';
 import { CONFIG } from '../pipeline/config.mjs';
 
+// 北京时间的某个钟点 → 绝对时间戳(北京 = 固定 UTC+8)。规则 1 的日界宽限与
+// 规则 6 的陈旧判定都跟时钟有关,凡受影响的用例都必须显式注入 now —— 否则
+// 「在北京凌晨跑单测」会得到与白天不同的结论,变成按运行时刻翻脸的 flaky 用例。
+const atBeijing = (h, mi = 0) => Date.UTC(2026, 9, 13, h, mi) - 8 * 3600000;
+const BJ_NOON = atBeijing(10); // 宽限窗口外,规则 1 照常生效
+
+// 源总数从配置推导,不写死 —— 2026-10-13 删掉 22 条海外源后,写死的 43 会让下个
+// 读到这里的人以为统计坏了。
+const RSS_TOTAL = CONFIG.feeds.length + (CONFIG.extraFeeds || []).length;
+const API_TOTAL = CONFIG.apiSources.length;
+
 // 默认「一切正常」的统计,各用例按需覆盖
 const mkStats = (over = {}) => ({
   rssEnabled: true,
-  rss: { total: 43, okFeeds: 43, failFeeds: 0, items: 500 },
-  api: { total: 6, okSources: 6, failSources: 0, items: 120 },
+  rss: { total: RSS_TOTAL, okFeeds: RSS_TOTAL, failFeeds: 0, items: 500 },
+  api: { total: API_TOTAL, okSources: API_TOTAL, failSources: 0, items: 120 },
   sources: CONFIG.apiSources.map(s => ({ name: s.name, kind: 'api', ok: true, count: 20, error: null })),
   ...over,
 });
@@ -27,16 +38,16 @@ test('evaluateHealth:全部正常 → ok,无 issues', () => {
 });
 
 test('evaluateHealth:当日条数低于下限 → failed(复现 09-12 只剩 8 条)', () => {
-  const h = evaluateHealth(mkStats(), { kept: 8, analyzed: 8 });
+  const h = evaluateHealth(mkStats(), { kept: 8, analyzed: 8, now: BJ_NOON });
   assert.equal(h.level, 'failed');
   assert.ok(h.issues.some(i => i.code === 'low-volume'));
   assert.match(h.summary, /抓取异常/);
 });
 
-test('evaluateHealth:RSS 全部失败 → failed(CI 上 43 源被 Google 挡掉的情形)', () => {
+test('evaluateHealth:RSS 全部失败 → failed(CI 上 Google News 被整层挡掉的情形)', () => {
   const h = evaluateHealth(mkStats({
-    rss: { total: 43, okFeeds: 0, failFeeds: 43, items: 0 },
-  }), { kept: 50, analyzed: 40 });
+    rss: { total: RSS_TOTAL, okFeeds: 0, failFeeds: RSS_TOTAL, items: 0 },
+  }), { kept: 50, analyzed: 40, now: BJ_NOON });
   assert.equal(h.level, 'failed');
   assert.ok(h.issues.some(i => i.code === 'rss-all-failed'));
 });
@@ -44,23 +55,23 @@ test('evaluateHealth:RSS 全部失败 → failed(CI 上 43 源被 Google 挡掉�
 test('evaluateHealth:本地按设计跳过 RSS(rssEnabled=false) → 不判失败', () => {
   const h = evaluateHealth(mkStats({
     rssEnabled: false,
-    rss: { total: 43, okFeeds: 0, failFeeds: 0, items: 0 },
-  }), { kept: 50, analyzed: 40 });
+    rss: { total: RSS_TOTAL, okFeeds: 0, failFeeds: 0, items: 0 },
+  }), { kept: 50, analyzed: 40, now: BJ_NOON });
   assert.equal(h.level, 'ok', '本地跳过 RSS 是设计行为,不能误报');
 });
 
 test('evaluateHealth:RSS 通了但 0 条 → degraded(非 failed)', () => {
   const h = evaluateHealth(mkStats({
-    rss: { total: 43, okFeeds: 43, failFeeds: 0, items: 0 },
-  }), { kept: 50, analyzed: 40 });
+    rss: { total: RSS_TOTAL, okFeeds: RSS_TOTAL, failFeeds: 0, items: 0 },
+  }), { kept: 50, analyzed: 40, now: BJ_NOON });
   assert.equal(h.level, 'degraded');
   assert.ok(h.issues.some(i => i.code === 'rss-no-items'));
 });
 
 test('evaluateHealth:直连 API 成功源过少 → degraded', () => {
   const h = evaluateHealth(mkStats({
-    api: { total: 6, okSources: 2, failSources: 4, items: 10 },
-  }), { kept: 50, analyzed: 40 });
+    api: { total: API_TOTAL, okSources: 2, failSources: API_TOTAL - 2, items: 10 },
+  }), { kept: 50, analyzed: 40, now: BJ_NOON });
   assert.equal(h.level, 'degraded');
   assert.ok(h.issues.some(i => i.code === 'api-few-sources'));
 });
@@ -90,16 +101,50 @@ test('evaluateHealth:单个 API 源报错 → degraded 并点名', () => {
 
 test('evaluateHealth:多条规则同时命中 → 取最重档(failed)', () => {
   const h = evaluateHealth(mkStats({
-    rss: { total: 43, okFeeds: 0, failFeeds: 43, items: 0 },
-    api: { total: 6, okSources: 1, failSources: 5, items: 3 },
-  }), { kept: 5, analyzed: 5 });
+    rss: { total: RSS_TOTAL, okFeeds: 0, failFeeds: RSS_TOTAL, items: 0 },
+    api: { total: API_TOTAL, okSources: 1, failSources: API_TOTAL - 1, items: 3 },
+  }), { kept: 5, analyzed: 5, now: BJ_NOON });
   assert.equal(h.level, 'failed');
   assert.ok(h.issues.length >= 3);
 });
 
+// ── 规则 1:日界宽限 ────────────────────────────────────
+// kept 统计的是「北京今天 00:00 以来」,而 minKept 是「一整天」的下限 —— 构建落在
+// 北京凌晨时,这天才开场几十分钟,当日量必然趋近 0。09-12 起 266 次构建的 22 次
+// CI 红灯里,19 次就是这么来的(raw 792~1006、板块过滤后 33~70,只有 dayFilter 塌成
+// 0~5,管线本身是对的)。宽限窗口内规则 1 整条跳过。
+
+test('evaluateHealth:北京凌晨 kept=0 → 宽限窗口内不判 failed', () => {
+  const h = evaluateHealth(mkStats(), { kept: 0, analyzed: 0, now: atBeijing(1) });
+  assert.equal(h.level, 'ok');
+  assert.ok(!h.issues.some(i => i.code === 'low-volume'));
+  assert.equal(h.counts.dayStartGrace, true);
+  assert.match(h.summary, /日界宽限中/);
+});
+
+test('evaluateHealth:同一组 kept=0 放到北京白天 → 仍然 failed', () => {
+  const h = evaluateHealth(mkStats(), { kept: 0, analyzed: 0, now: atBeijing(10) });
+  assert.equal(h.level, 'failed', '宽限只对日界前几小时成立,不能变成全天放行');
+  assert.ok(h.issues.some(i => i.code === 'low-volume'));
+  assert.equal(h.counts.dayStartGrace, false);
+});
+
+test('evaluateHealth:宽限边界 —— 北京 5 点跳过,6 点起照判', () => {
+  assert.equal(evaluateHealth(mkStats(), { kept: 0, now: atBeijing(5, 59) }).level, 'ok');
+  assert.equal(evaluateHealth(mkStats(), { kept: 0, now: atBeijing(6, 0) }).level, 'failed');
+});
+
+test('evaluateHealth:宽限窗口内真故障照判(RSS 全灭仍 failed)', () => {
+  const h = evaluateHealth(mkStats({
+    rss: { total: RSS_TOTAL, okFeeds: 0, failFeeds: RSS_TOTAL, items: 0 },
+  }), { kept: 0, analyzed: 0, now: atBeijing(1) });
+  assert.equal(h.level, 'failed', '宽限只放过「日界」这一条,别的规则必须照常生效');
+  assert.ok(h.issues.some(i => i.code === 'rss-all-failed'));
+});
+
 test('formatSourceSummary:默认输出 RSS 汇总 + 逐个 API 源', () => {
   const out = formatSourceSummary(mkStats());
-  assert.match(out, /^RSS 43 源 → 500 条/);
+  assert.match(out, new RegExp(`^RSS ${RSS_TOTAL} 源 → 500 条`));
   assert.match(out, /财联社 → 20 条/);
   assert.equal(out.split('\n').length, 1 + CONFIG.apiSources.length);
 });
@@ -119,7 +164,7 @@ test('formatSourceSummary:onlyProblems 只留有问题的行(告警正文不刷�
 test('formatSourceSummary:本地跳过 RSS 时明确说明,不写成失败', () => {
   const out = formatSourceSummary(mkStats({
     rssEnabled: false,
-    rss: { total: 43, okFeeds: 0, failFeeds: 0, items: 0 },
+    rss: { total: RSS_TOTAL, okFeeds: 0, failFeeds: 0, items: 0 },
   }));
   assert.match(out, /按设计跳过/);
 });

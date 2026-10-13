@@ -39,11 +39,38 @@ test('fetchGoogleNewsRSS:网络异常 → 抛错(fetch 失败)', async () => {
   delete global.fetch;
 });
 
-test('fetchClsNews:坏 JSON / 字段缺失 → 返回空数组(单源失败不中断)', async () => {
+test('fetchClsNews:响应 200 但结构不符 → 返回空数组(由 health 规则 4 点名)', async () => {
   global.fetch = async () => ({ ok: true, json: async () => ({ broken: true }) });
   const items = await fetchClsNews({ name: '财联社', url: 'http://fake/cls' });
   assert.ok(Array.isArray(items));
   assert.equal(items.length, 0);
+  delete global.fetch;
+});
+
+test('fetchClsNews:请求失败 → 抛错冒泡(不吞成「成功但 0 条」)', async () => {
+  global.fetch = async () => { throw new Error('cls down'); };
+  await assert.rejects(() => fetchClsNews({ name: '财联社', url: 'http://fake/cls' }), /cls down/);
+  delete global.fetch;
+});
+
+test('fetchClsNews:HTTP 503 → 抛错(不是静默返回空数组)', async () => {
+  global.fetch = async () => ({ ok: false, status: 503 });
+  await assert.rejects(() => fetchClsNews({ name: '财联社', url: 'http://fake/cls' }), /HTTP 503/);
+  delete global.fetch;
+});
+
+// Node 原生 fetch(undici)不认 timeout 选项,只认 signal —— 修之前这里传的
+// `timeout: 10000` 是空转,一个挂住的源会让整次构建无限等下去。这条锁住 signal
+// 确实被挂上:mock 的 fetch 永不 resolve,只在 signal abort 时 reject。
+test('fetchClsNews:卡住的源在 apiTimeoutMs 后被 abort', async () => {
+  const orig = CONFIG.apiTimeoutMs;
+  CONFIG.apiTimeoutMs = 20;
+  global.fetch = (url, opts) => new Promise((_, reject) => {
+    assert.ok(opts && opts.signal, '必须传 signal,否则没有超时可言');
+    opts.signal.addEventListener('abort', () => reject(opts.signal.reason));
+  });
+  await assert.rejects(() => fetchClsNews({ name: '财联社', url: 'http://fake/cls' }));
+  CONFIG.apiTimeoutMs = orig;
   delete global.fetch;
 });
 
@@ -99,10 +126,13 @@ test('fetchSinaNews:中途某页失败 → 保住已取到的页', async () => {
   delete global.fetch;
 });
 
-test('fetchSinaNews:首页就失败 → 返回空数组(由源健康点名)', async () => {
+test('fetchSinaNews:首页就失败 → 抛错(由源健康点名)', async () => {
   global.fetch = async () => { throw new Error('down'); };
-  const items = await fetchSinaNews({ name: '新浪财经', url: 'https://x/feed?page=1', pages: 3 });
-  assert.deepEqual(items, []);
+  await assert.rejects(
+    () => fetchSinaNews({ name: '新浪财经', url: 'https://x/feed?page=1', pages: 3 }),
+    /down/,
+    '一条都没取到时必须冒泡,否则会被记成「成功但 0 条」',
+  );
   delete global.fetch;
 });
 
@@ -168,8 +198,8 @@ test('fetchAllNews:单源失败不中断,返回 {items, stats} 且逐源留痕',
     { name: '财联社', url: 'http://fake/cls', enabled: true },
     { name: '金十数据', url: 'http://fake/jin10', enabled: true },
   ];
-  // 两个 API:一个成功(财联社),一个内部抛错被 fetcher 吞掉 → 成功但 0 条
-  // (金十)。probe 的 RSS fetch 全失败 → 跳过 RSS。
+  // 两个 API:财联社成功,金十抛错并冒泡到 allSettled。probe 的 RSS fetch 全失败
+  // → 跳过 RSS。
   const apiOk = async (url) => {
     if (url.includes('cls')) return { ok: true, json: async () => ({ data: { roll_data: [{ id: 9, title: '英伟达业绩超预期', brief: '营收创新高', ctime: Math.floor(Date.now() / 1000) }] } }) };
     if (url.includes('jin10')) throw new Error('jin10 down');
@@ -187,9 +217,10 @@ test('fetchAllNews:单源失败不中断,返回 {items, stats} 且逐源留痕',
   assert.equal(stats.rss.okFeeds, 0);
   assert.equal(stats.rss.failFeeds, 0, '未尝试 ≠ 失败,不应计入 failFeeds');
 
-  // 直连 API:逐源留痕 —— 本次要消灭的就是「静默失败」
+  // 直连 API:逐源留痕 —— 失败源必须是 ok:false,而不是伪装成「成功但 0 条」
   assert.equal(stats.api.total, 2);
-  assert.equal(stats.api.okSources, 2);
+  assert.equal(stats.api.okSources, 1);
+  assert.equal(stats.api.failSources, 1);
   assert.equal(stats.sources.length, 2);
   const cls = stats.sources.find(s => s.name === '财联社');
   assert.equal(cls.ok, true);
@@ -198,9 +229,10 @@ test('fetchAllNews:单源失败不中断,返回 {items, stats} 且逐源留痕',
   assert.ok(Number.isFinite(cls.newest), '成功源应记录最新条目时间戳');
   assert.ok(cls.newest <= Date.now(), '最新条目时间不应在未来');
   const jin10 = stats.sources.find(s => s.name === '金十数据');
-  assert.equal(jin10.ok, true);
-  assert.equal(jin10.count, 0, 'fetcher 内部吞掉的失败表现为「成功但 0 条」,由 health 规则点名');
-  assert.equal(jin10.newest, null, '没有条目时 newest 为 null');
+  assert.equal(jin10.ok, false, '抛错的源必须显式标失败');
+  assert.equal(jin10.count, 0);
+  assert.equal(jin10.error, 'jin10 down', 'error 要留住真实原因,供健康告警点名');
+  assert.equal(jin10.newest, null);
 
   // 清理:恢复 CONFIG
   CONFIG.feeds = origFeeds;

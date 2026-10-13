@@ -1,26 +1,29 @@
 // ── Pipeline: 抓取健康判定 ──────────────────────────────
 // fetch 层按源统计 → 这里判定当日数据是否可信。纯函数、无 I/O,便于单测。
 //
-// 背景:抓取失败在 fetch 层是静默的(per-source try/catch → []),CI 照跑、状态
-// 全绿,直到有人打开页面才发现某天只剩 8 条。这里把「源 → 条数」变成可判定的
-// 等级,供构建脚本告警、quality 回看页展示、CI 判红。
+// 背景:抓取失败在 fetch 层曾经是静默的(per-source try/catch → [],allSettled 于是
+// 记成「成功但 0 条」),CI 照跑、状态全绿,直到有人打开页面才发现某天只剩 8 条。
+// 2026-10-13 起 fetch 层不再吞异常,失败源会以 ok:false + error 落到 stats.sources;
+// 这里仍负责把「源 → 条数」变成可判定的等级,供构建脚本告警、quality 回看页展示、CI 判红。
 //
 // 刻意**不在日报页面展示**:站点是对外作品集,「今日抓取异常」横幅容易被访客
 // 误读成项目本身坏了。降级对外的可见性只保留 CI 判红 + Server酱 微信告警。
 
 import { CONFIG } from './config.mjs';
+import { beijingHour } from './utils.mjs';
 
 // 由轻到重;level 取所有命中规则里最重的一档
 const SEVERITY = { ok: 0, degraded: 1, failed: 2 };
 
 // stats 来自 fetchAllNews();kept/analyzed 由构建脚本在清洗后回填。
-// now 可注入,便于单测「源内容陈旧」这条与时钟相关的规则。
+// now 可注入,便于单测两条与时钟相关的规则:规则 1 的日界宽限、规则 6 的源内容陈旧。
 // 返回 { level, issues, summary, counts }。
 export function evaluateHealth(stats = {}, { kept = 0, analyzed = 0, now = Date.now() } = {}) {
   const cfg = CONFIG.health || {};
   const minKept = cfg.minKept ?? 10;
   const minApiSources = cfg.minApiSources ?? 3;
   const maxStaleHours = cfg.maxStaleHours ?? 48;
+  const dayStartGraceHours = cfg.dayStartGraceHours ?? 6;
 
   const rss = stats.rss || { total: 0, okFeeds: 0, failFeeds: 0, items: 0 };
   const api = stats.api || { total: 0, okSources: 0, failSources: 0, items: 0 };
@@ -36,12 +39,17 @@ export function evaluateHealth(stats = {}, { kept = 0, analyzed = 0, now = Date.
     if (SEVERITY[lv] > SEVERITY[level]) level = lv;
   };
 
-  // 1. 当日可用新闻总量 —— 09-12 那天只有 8 条,由这条抓到
-  if (kept < minKept) {
+  // 1. 当日可用新闻总量 —— 09-12 那天只有 8 条,由这条抓到。
+  // 但 minKept 是「一整天」口径的下限,kept 统计的却是「北京今天 00:00 以来」:
+  // 构建落在北京 0-6 点时,这天才开场几十分钟,当日量必然趋近 0 —— 09-12 起 266 次
+  // 构建的 22 次红灯里有 19 次就是这么来的(raw 792~1006、板块过滤后 33~70,只有
+  // dayFilter 塌成 0~5,管线本身是对的)。宽限窗口内整条跳过,不产 issue、不改 level。
+  const inDayStartGrace = beijingHour(now) < dayStartGraceHours;
+  if (kept < minKept && !inDayStartGrace) {
     flag('failed', 'low-volume', `当日仅 ${kept} 条新闻(下限 ${minKept})`);
   }
 
-  // 2. RSS 全灭(43 个源一个都没通),或通了但一条都没返回
+  // 2. RSS 全灭(一个源都没通),或通了但一条都没返回
   if (rssEnabled && rss.okFeeds === 0) {
     flag('failed', 'rss-all-failed', `RSS ${rss.total} 个源全部失败`);
   } else if (rssEnabled && rss.items === 0) {
@@ -90,17 +98,20 @@ export function evaluateHealth(stats = {}, { kept = 0, analyzed = 0, now = Date.
     rssTotal: rss.total || 0,
     apiOk: api.okSources || 0,
     apiTotal: api.total || 0,
+    // 宽限窗口内 kept 天然趋近 0,展示层要能说清「这不是异常」而不是干看着 0。
+    dayStartGrace: inDayStartGrace,
   };
 
+  const graceNote = inDayStartGrace ? `(北京 ${beijingHour(now)} 点,日界宽限中)` : '';
   const summary = level === 'ok'
-    ? `抓取正常(原始 ${counts.fetched} 条 / 当日 ${kept} 条 / 精选 ${analyzed} 条)`
+    ? `抓取正常(原始 ${counts.fetched} 条 / 当日 ${kept} 条 / 精选 ${analyzed} 条)${graceNote}`
     : `${level === 'failed' ? '抓取异常' : '抓取降级'}:${issues.map(i => i.message).join(';')}`;
 
   return { level, issues, summary, counts };
 }
 
 // 控制台/推送用的可读摘要:RSS 汇总一行 + 逐个直连 API 一行。
-// onlyProblems=true 时只留有问题的行(告警正文用,避免把 43 个 RSS 源刷屏)。
+// onlyProblems=true 时只留有问题的行(告警正文用,避免把 RSS 各行刷屏)。
 // 陈旧源(count>0 但最新条目很老)也按「有问题」处理并标注年龄 —— 否则它会被
 // 打印成「✓ 100 条」,正是要消灭的假绿灯。
 export function formatSourceSummary(stats = {}, { onlyProblems = false, now = Date.now() } = {}) {
