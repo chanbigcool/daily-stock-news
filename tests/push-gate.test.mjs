@@ -6,11 +6,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'child_process';
-import { mkdtempSync, writeFileSync, rmSync } from 'fs';
+import { mkdtempSync, writeFileSync, rmSync, existsSync } from 'fs';
 import { join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { tmpdir } from 'os';
-import { decidePush, readStateFile, decideRepeat, countUnpushedCommitsToday, localDate } from '../scripts/push-gate.mjs';
+import { decidePush, readStateFile, decideRepeat, countUnpushedCommitsToday, localDate, tryClaim, claimFile, CLAIM_WINDOW_MS } from '../scripts/push-gate.mjs';
 
 const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), '..', 'scripts', 'push-gate.mjs');
 
@@ -281,6 +281,95 @@ test('CLI:不带 --dedup-today 时不碰 git(CI 走这条,行为与之前一致)
   try {
     const r = runCli(p, { PUSH_GATE_REPO: repo });
     assert.equal(r.status, 0, '今天已提交也照样放行 —— CI 靠它发布,不能被去重拦住');
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// ── 原子占位(2026-10-14 双推事故的对策)──────────────────
+// 事故:两个桌面任务同时补跑,两边在**各自提交之前**都读到"今天 0 个未推送提交",
+// 于是判据 1 双双放行 → 推了 993e7cc / 79c1227 两个相隔 29 秒的重复 commit。
+// 下面第一组测原子性本身,第二组是端到端的回归(先跑旧判据能过、再跑必须被拦)。
+
+const T0 = 1_700_000_000_000;
+
+test('tryClaim:第一次抢位成功', () => {
+  const repo = makeRepo(false);
+  try {
+    const r = tryClaim(T0, claimFile(repo));
+    assert.equal(r.claimed, true);
+  } finally { rmSync(repo, { recursive: true, force: true }); }
+});
+
+test('tryClaim:紧接着的第二次抢位失败 —— 这就是同时补跑的那个瞬间', () => {
+  const repo = makeRepo(false);
+  try {
+    assert.equal(tryClaim(T0, claimFile(repo)).claimed, true);
+    const second = tryClaim(T0 + 184, claimFile(repo)); // 两个任务启动相差 184ms
+    assert.equal(second.claimed, false, 'O_EXCL 保证只有一个能拿到,不再依赖"谁先读"');
+    assert.match(second.reason, /重复 commit/);
+  } finally { rmSync(repo, { recursive: true, force: true }); }
+});
+
+test('tryClaim:超过窗口的占位可以接管 —— 不误伤早盘→午盘这一对(相隔约 3.5 小时)', () => {
+  const repo = makeRepo(false);
+  try {
+    assert.equal(tryClaim(T0, claimFile(repo)).claimed, true);
+    const later = tryClaim(T0 + CLAIM_WINDOW_MS + 1000, claimFile(repo));
+    assert.equal(later.claimed, true);
+    assert.match(later.reason, /过期/);
+  } finally { rmSync(repo, { recursive: true, force: true }); }
+});
+
+test('tryClaim:占位文件损坏 → 当过期接管,不会把当天永久锁死', () => {
+  const repo = makeRepo(false);
+  try {
+    writeFileSync(claimFile(repo), '{ 这不是 JSON', 'utf-8');
+    assert.equal(tryClaim(T0, claimFile(repo)).claimed, true);
+  } finally { rmSync(repo, { recursive: true, force: true }); }
+});
+
+test('tryClaim:时间戳离谱地落在未来 → 同样当过期接管(自愈)', () => {
+  const repo = makeRepo(false);
+  try {
+    writeFileSync(claimFile(repo), JSON.stringify({ at: T0 * 100 }), 'utf-8');
+    assert.equal(tryClaim(T0, claimFile(repo)).claimed, true);
+  } finally { rmSync(repo, { recursive: true, force: true }); }
+});
+
+test('tryClaim:.git 不存在(不是仓库)→ 按「可以推」处理,不 fail-closed', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'push-gate-norepo-'));
+  try {
+    const r = tryClaim(T0, claimFile(dir));
+    assert.equal(r.claimed, true);
+    assert.match(r.reason, /可以推/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('CLI --dedup-today:同一轮连跑两次,第二次必须被拦(2026-10-14 双推的回归)', () => {
+  const repo = makeRepo(false); // 关键:HEAD == origin/main,判据 1 在这里会**双双放行**
+  const { dir, p } = tmpState(mkState());
+  try {
+    const first = runCli(['--dedup-today', p], { PUSH_GATE_REPO: repo });
+    const second = runCli(['--dedup-today', p], { PUSH_GATE_REPO: repo });
+    assert.equal(first.status, 0, '第一个任务正常放行');
+    assert.equal(second.status, 1, '期间没有任何提交发生,只有原子占位拦得住它');
+    assert.match(second.stdout, /重复 commit/);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('CLI --dedup-today:被判据 1 拦下时不消耗占位 —— 否则一次误拦会锁死 30 分钟', () => {
+  const repo = makeRepo(true); // 今天已有未推送的提交 → 判据 1 直接拦
+  const { dir, p } = tmpState(mkState());
+  try {
+    const r = runCli(['--dedup-today', p], { PUSH_GATE_REPO: repo });
+    assert.equal(r.status, 1);
+    assert.match(r.stdout, /未推送提交/);
+    assert.equal(existsSync(claimFile(repo)), false, '占位必须留到真正要推的那一刻才写');
   } finally {
     rmSync(repo, { recursive: true, force: true });
     rmSync(dir, { recursive: true, force: true });

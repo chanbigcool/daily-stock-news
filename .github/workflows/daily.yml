@@ -41,6 +41,19 @@ jobs:
           # 拉取完整 git 历史，构建产物提交回 main 时不会触发深层 clone 限制
           fetch-depth: 0
 
+      # 并发 run 由 concurrency 组串行（group: daily-build），但每个 run 仍从**触发它的那个
+      # SHA** 检出。2026-10-14 实测：双推触发出两班 run，各自基于旧 tip 提交，后跑完的那个
+      # `git push origin main` 必然 non-fast-forward 被拒 → run 变红、站点拿不到这一版。
+      # 构建前对齐到 main 当前 tip 即可 —— 此时 concurrency 已把本 run 排在前一个之后，
+      # origin/main 就是最新的。**必须放在构建之前**：提交之后再 rebase，是把我们的 commit
+      # 重放到别人的 commit 上，而两边改的是同一批产物文件（index.html / history/），必然冲突。
+      # 用 `checkout -B` 而不是 `reset --hard`：checkout 动作可能落在 detached HEAD 上，
+      # 那样后面 `git push origin main` 推的是陈旧的本地 main 引用。
+      - name: 对齐到 main 最新提交
+        run: |
+          git fetch origin main
+          git checkout -B main origin/main
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:

@@ -31,6 +31,14 @@ jobs:
           # 构建产物提交回 main 需要全量历史,与 daily.yml 一致
           fetch-depth: 0
 
+      # 对齐到 main 最新提交,理由同 daily.yml:本 run 可能从旧 SHA 检出,直接提交再 push
+      # 会被 non-fast-forward 拒掉。这里更要紧的一点是 —— 下面的「今天是否已构建」是拿
+      # **工作区文件**判断的,若不先对齐,它看到的是触发 SHA 那一刻的旧内容,会误判成缺失而重复补建。
+      - name: 对齐到 main 最新提交
+        run: |
+          git fetch origin main
+          git checkout -B main origin/main
+
       # 判断"今天是否已构建":当天首次成功构建会把 history/日报_YYYYMMDD.json
       # 提交回 main。该文件在 main 上缺失 ⟺ 当天自动构建还没成功 → 需要补建。
       # 北京时间 = UTC+8,用 GNU date 直接算(与 pipeline/utils.mjs getTodayStr 同语义)。
