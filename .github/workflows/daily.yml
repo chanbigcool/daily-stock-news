@@ -63,9 +63,17 @@ jobs:
       # 是「构建产物有没有变化」,而那对代码回归完全无感。测试不过就不构建、不部署,
       # 避免把回归带上线。真正的产出闸门仍是下面的 push-gate(空报告不推),两者各管一头。
       #
-      # 钉 --test-concurrency=1 是实测结论,不是保守:默认并发下 analyze.test.mjs 必然
-      # 把测试运行器的 IPC 弄坏(Unable to deserialize cloned data,4/4 复现,该文件单独
-      # 跑 32/32 全过),串行则 200/200 全绿(~12s)。本地同口径跑法见 package.json 的 npm test。
+      # 用 --experimental-test-isolation=none 关掉测试运行器的子进程隔离,是实测结论:
+      # 默认每个测试文件起一个子进程、靠 IPC 回传结果,子进程的 stdout 与二进制结果帧
+      # 挤同一根管道,输出量一大就脱同步 → 'Unable to deserialize cloned data'
+      # (上游 nodejs/node#64061),届时整个文件算失败,看着像真回归。这条 bug 是时序敏感的
+      # 间歇性问题 —— 本机 Node 22/24 各跑数遍都全绿,但 CI 上两次都撞上。
+      # 关掉隔离后没有 IPC 通道,该 bug 在原理上不可能发生;代价是所有文件共用一个进程
+      # (用例里的 global.fetch / CONFIG 改动都自行还原,实测两种 Node 版本均 200/200)。
+      # 本地同口径跑法见 package.json 的 npm test。
+      #
+      # 注意 Node 22 只认 --experimental-test-isolation,Node 24 才有 --test-isolation
+      # 别名;这里写的是两个版本都接受的那个名字。
       - name: Run unit tests
         run: npm test
 

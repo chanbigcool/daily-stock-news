@@ -7,6 +7,6 @@
   "scripts": {
     "build": "node scripts/build-daily.mjs",
     "start": "node scripts/refresh-server.mjs",
-    "test": "node --test --test-concurrency=1"
+    "test": "node --test --experimental-test-isolation=none"
   }
 }
