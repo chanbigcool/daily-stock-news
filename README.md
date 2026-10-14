@@ -14,7 +14,7 @@ flowchart LR
         A3["东方财富 API"]
         A4["新浪财经 API"]
         A5["华尔街见闻 API"]
-        A6["Google News RSS<br/>(43 条 Feed)"]
+        A6["Google News RSS<br/>(21 条 Feed)"]
     end
 
     subgraph Pipeline["ETL 流水线 (pipeline/)"]
@@ -55,8 +55,8 @@ flowchart LR
 | 渲染 | 纯字符串拼接 HTML, 内联 CSS + 原生 JS |
 | 图表 | Chart.js 4.4 (CDN), 无构建时依赖 |
 | 数据库 | `node:sqlite`（构建期生成真 SQLite）+ sql.js (WebAssembly，浏览器内跑完整真 SQL) |
-| 定时调度 | GitHub Actions (`0 1`/`30 4`/`0 12 * * *`, 北京时间 09/12:30/20, 每天含周末) + 心跳兜底 (`0 6/14 * * *`, 北京 14/22, 当天存档缺失才补建) |
-| 部署 | `peaceiris/actions-gh-pages@v4` → GitHub Pages（国内可直连）；EdgeOne Pages 备用；jsDelivr 仅作静态资源 CDN（其对 `.html` 返回 text/plain，不能托管页面） |
+| 定时调度 | GitHub Actions（`daily.yml` + `daily-heartbeat.yml`）。**`schedule:` 已于 2026-10-13 停用**，当前仅 `push` 与 `workflow_dispatch` 触发 |
+| 部署 | `peaceiris/actions-gh-pages@v4` → GitHub Pages（国内可直连）；EdgeOne Pages 备用；jsDelivr 仅作静态资源 CDN（其对 `.html` 返回 text/plain，不能托管页面）。CI 里所有 `uses:` 均固定到 40 位 commit SHA，`npx edgeone` 固定到 `@1.6.41`——可变的 tag / `latest` 会让同一份 workflow 跑出不同行为 |
 | 推送通知 | Server酱3 (微信消息推送) |
 | 本地服务 | 原生 `http` 模块, 端口 `3456`, 监听 `0.0.0.0`（容器就绪） |
 
@@ -72,7 +72,9 @@ flowchart LR
 - ~~jsDelivr 镜像~~：jsDelivr 对仓库内 `.html` 文件强制返回 `text/plain`（防钓鱼的安全设计），浏览器只会显示源代码而不会渲染成网页，因此不能作为页面入口；仅作 Chart.js 等静态资源 CDN 使用
 - ~~Zeabur~~：免费档已关停（2026/3 起共享集群停止接受新项目），不再作为主链接
 
-每天（含周末）北京时间 09:00 / 12:30 / 20:00 自动构建更新；另有心跳兜底（北京 14:00 / 22:00），主时段被 GitHub cron 漂移/跳过时当天存档缺失会自动补建，保证日报当天必出。公网一键刷新通过云端代理触发，不消耗本机资源。
+> **定时构建已停用（2026-10-13）**：迁移到新账号 `chanbigcool` 时，两个工作流里的 `schedule:` 都被注释掉了。旧账号被封的依据正是「在 Actions 里定时抓第三方站点」这个架构形态，新账号另起一套同样的定时抓取会被判为规避封禁并做账号关联。**当前日报只在 `push main` 或点网页刷新按钮（`workflow_dispatch`）时构建**，不再自动出报。确认要恢复定时、且接受这个风险，再去 `.github/workflows/` 里取消注释——两处代码里都写了同样的说明。
+
+公网一键刷新通过云端代理触发，不消耗本机资源。
 
 ---
 
@@ -102,10 +104,10 @@ node scripts/refresh-server.mjs
 | `ANTHROPIC_MODEL` | 可选，覆盖 AI 研判模型（默认 `glm-4.5-flash`，免费） |
 | `SERVERCHAN_SENDKEY` | Server酱3 SendKey，配置后自动推送微信通知 |
 | `EDGEONE_API_TOKEN` | EdgeOne Pages API Token（国内加速，待绑定备案域名后配置启用；未配置时自动跳过） |
-| `REFRESH_URL` | 公网一键刷新代理地址（腾讯云 SCF 函数 URL），构建时注入前端按钮；未配置时使用代码内置默认值 |
-| `REFRESH_SECRET` | 与云函数 `SHARED_SECRET` 相同的共享密钥，构建时注入前端；未配置时使用代码内置默认值 |
+| `REFRESH_URL` | 公网一键刷新代理地址（腾讯云 SCF 函数 URL），构建时注入前端按钮；未配置时用 `scripts/build-daily.mjs` 里的内置默认值 |
+| `REFRESH_SECRET` | 与云函数 `SHARED_SECRET` 相同的共享密钥，构建时注入前端；未配置时**注入空串**（不内置默认值——该值会被内联进公开页面，写死等于直接发布），前端按钮将不带 `X-Refresh-Secret` 头 |
 
-> 主链接 GitHub Pages 为纯静态托管，**无需任何环境变量**：构建/推送全部在 GitHub Actions 完成，每次构建后自动部署，构建完即可看到最新日报。公网一键刷新的代理地址与密钥已内置在代码中（见 `scripts/cloud-refresh.mjs` 头部注释），无需额外配置。
+> 主链接 GitHub Pages 为纯静态托管，**无需任何环境变量**：构建/推送全部在 GitHub Actions 完成，每次构建后自动部署，构建完即可看到最新日报。公网一键刷新的**代理地址**有内置默认值（见 `scripts/build-daily.mjs`），**密钥没有**——`REFRESH_SECRET` 未配置时注入空串，云函数侧比对不上就会返回 401。要让刷新按钮在公网可用，必须在仓库 Secret 里配 `REFRESH_SECRET`，并与云函数的 `SHARED_SECRET` 保持一致（部署与轮换步骤见 [cloud/README.md](cloud/README.md)）。
 
 ---
 
@@ -114,18 +116,28 @@ node scripts/refresh-server.mjs
 ```
 daily-stock-news/
 ├── .github/workflows/
-│   ├── daily.yml               # 主构建:定时(北京 09/12:30/20) + 手动触发,构建/提交/部署
-│   └── daily-heartbeat.yml     # 心跳自愈:北京 14/22 兜底,当天存档缺失才补建
+│   ├── daily.yml               # 主构建:push main / 手动触发,构建/提交/部署(schedule 已停用)
+│   └── daily-heartbeat.yml     # 心跳自愈:当天存档缺失才补建(schedule 已停用)
+├── cloud/                      # 公网一键刷新代理(腾讯云 SCF;部署与密钥轮换见 cloud/README.md)
+│   ├── index.js                # 云函数本体(CommonJS,SCF 的 index.handler 入口)
+│   ├── tc-call.mjs             # 腾讯云 API v3 签名调用
+│   └── deploy.mjs              # 打包上传 index.js + 创建/更新函数 + 写环境变量
 ├── scripts/
 │   ├── build-daily.mjs            # 构建入口（编排 ETL 流水线 + 渲染 + 推送）
 │   ├── db-build.mjs               # 数据库构建（node:sqlite 聚合 history/ → db.sqlite）
+│   ├── cloud-refresh.mjs          # 云函数的 ESM 孪生版（本地调试用，线上跑 cloud/index.js）
 │   └── refresh-server.mjs         # 本地刷新服务（端口 3456，含历史 API，仅本机）
 ├── pipeline/
 │   ├── config.mjs                 # 配置中心（API 源、RSS Feed、ETF 列表、关键词规则）
 │   ├── utils.mjs                  # 工具函数（HTML 清洗、日期格式化）
-│   ├── fetch.mjs                  # 数据抓取层（5 API + 43 RSS + 12 ETF 行情）
+│   ├── sectors.mjs                # 板块常量与共享工具（名称/CSS class/颜色/impact 排序）
+│   ├── fetch.mjs                  # 数据抓取层（5 API + 21 RSS + 12 ETF 行情）
+│   ├── health.mjs                 # 抓取健康判定（纯函数：ok / degraded / failed）
+│   ├── classifier.mjs             # 板块分类规则引擎（clean 与 analyze 共用的唯一分类出口）
 │   ├── clean.mjs                  # 清洗层（去重、事件聚类、板块分类、时效性过滤）
 │   ├── events.mjs                 # 事件级去重（三层漏斗 + 可插拔 Embedding 钩子）
+│   ├── sentiment.mjs              # 利好/利空 + 冲击评分引擎（可配置权重语义信号）
+│   ├── companies.mjs              # 四赛道 A 股公司词典（名称 → ticker）
 │   ├── analyze.mjs                # AI 分析层（Claude 兼容 API 逐条研判 + 关键词引擎兜底）
 │   └── charts.mjs                 # 图表数据层（ETF 历史累积、情绪/冲击/方向数据集）
 ├── assets/                        # 前端静态资源（vendored，无 CDN 依赖）
@@ -137,14 +149,26 @@ daily-stock-news/
 │   ├── 股市热点日报_20260804.json
 │   ├── etf_history.json           # ETF 价格历史（趋势图数据源）
 │   └── ...
-├── history/                       # 历史存档（按天 JSON + 静态 HTML + 事件存档 + 数据库）
+├── history/                       # 历史存档（按天 JSON + 静态 HTML + 事件存档 + 状态）
 │   ├── 日报_YYYYMMDD.json         # 当日全量数据
 │   ├── 日报_YYYYMMDD.html         # 静态历史页
 │   ├── events_YYYYMMDD.json       # 当日事件级去重结果（含多来源聚合）
+│   ├── build-state.json           # 本次构建状态（阶段/funnel/health/时间戳），前端据此判断是否自动刷新
 │   ├── dates.json                 # 日期索引
-│   └── db.sqlite                  # 全量真 SQLite 数据库（数据查询页数据源）
-├── tests/                         # 单元测试（node --test 自动发现）
-│   └── db-build.test.mjs          # 数据库构建测试（归一化 + 端到端导入断言）
+│   └── db.sqlite                  # 全量真 SQLite（数据查询页数据源）—— 构建产物，不入库
+├── quality/                       # 产出质量校验报告（quality/index.html + report.json）
+├── tests/                         # 单元测试（11 个文件 / 206 个用例，node --test 自动发现）
+│   ├── analyze.test.mjs           # AI 研判 + 关键词兜底引擎
+│   ├── clean.test.mjs             # 清洗层（去重、板块分类、时效过滤）
+│   ├── cloud-deploy.test.mjs      # 云函数打包（手写 zip 的字节结构 + CRC32）
+│   ├── db-build.test.mjs          # 数据库构建（归一化 + 端到端导入断言）
+│   ├── events.test.mjs            # 事件级去重（三层相似度漏斗）
+│   ├── fetch.test.mjs             # 抓取层（超时、降级、并发）
+│   ├── health.test.mjs            # 抓取健康判定（ok / degraded / failed）
+│   ├── push-gate.test.mjs         # 空报告闸门
+│   ├── quality.test.mjs           # 产出质量校验
+│   ├── render-html.test.mjs       # HTML 渲染（板块矩阵 + 卡片 + 图表）
+│   └── sentiment.test.mjs         # 情绪/方向推导与可解释性字段契约
 ├── index.html                     # 当日日报（部署入口）
 ├── db.html                        # 数据查询页（表单筛选 + SQL 控制台，根级静态页）
 ├── package.json
@@ -155,8 +179,8 @@ daily-stock-news/
 
 ## 核心功能
 
-- **模块化 ETL 流水线** — `pipeline/` 目录 6 个模块，职责分离：`fetch`（数据抓取）→ `clean`（去重分类）→ `analyze`（AI 分析）→ `charts`（图表数据），`scripts/build-daily.mjs` 负责编排 + HTML 渲染 + 推送
-- **多源聚合** — 5 个中文财经 API 直连 + 43 条 Google News RSS Feed，8 路并行分批抓取。直接 API 源优先于 RSS 源去重
+- **模块化 ETL 流水线** — `pipeline/` 目录 12 个模块，职责分离：`fetch`（数据抓取）→ `clean`（去重分类）→ `analyze`（AI 分析）→ `charts`（图表数据），另有 `health`（抓取健康判定）、`sentiment`（情绪评分）、`classifier`（分类规则）、`companies`（公司词典）、`sectors`（板块常量）等支撑模块，`scripts/build-daily.mjs` 负责编排 + HTML 渲染 + 推送
+- **多源聚合** — 5 个中文财经 API 直连 + 21 条 Google News RSS Feed，8 路并行分批抓取。直接 API 源优先于 RSS 源去重
 - **事件级去重** — 同一财经事件被不同媒体以不同标题报道（如财联社「现货黄金站上4600美元」与华尔街见闻「现货黄金突破4600美元」）→ 自动聚合为单个 Event：加权字符 Jaccard（实体词满权重、泛财经词降权）+ bigram overlap + 信号类别加成三层相似度判定，共享具体价格点位等数字时强合并；聚合结果收敛为代表条目继续走 AI 研判，卡片展示来源聚合徽标（N 家）与相关报道列表；事件存档至 `history/events_YYYYMMDD.json`
 - **AI 智能分析** — Claude 兼容 API（默认智谱 GLM 免费模型）对新闻逐条研判，输出中文标题、板块归类、方向判断（利好/利空/中性/分化）、影响评级（极高/高/中/低），附带确定性评分和时间窗口，每条简讯关联 A 股标的；AI 不可用时自动降级为本地关键词引擎
 - **板块方向硬校准** — 板块方向看行情、单条新闻看内容：板块最终方向以当日 ETF 实际涨跌为准（±3% 硬阈值）：跌超 3% 强制利空、涨超 3% 强制利好、±1%~3% 强制中性、±1% 内由板块内新闻加权投票决定；单条新闻方向完全按自身内容判断，不被板块行情强制翻转，避免大跌日整版利空
@@ -166,7 +190,7 @@ daily-stock-news/
 - **历史数据浏览** — 每日输出 JSON 结构化数据，前端下拉框按日期回溯，刷新服务动态渲染（含图表）
 - **微信推送** — Server酱3 每日推送 Markdown 摘要（板块 ETF + 核心数据 + TOP 3 + 要点）
 - **一键刷新** — 网页按钮触发完整管线：重建 → git commit → git push，前端轮询状态，完成后自动重载。公网走云端代理（腾讯云 SCF 触发 Actions 重建），本机走 refresh-server（/refresh → 重建 → push）
-- **GitHub Actions 全自动** — 每日北京时间 09/12:30/20 构建并部署到 GitHub Pages，心跳兜底 14/22 防漏
+- **GitHub Actions 自动化** — 构建并部署到 GitHub Pages；单元测试前置为 CI 门槛，不过测试不构建、不部署。定时 `schedule:` 已于 2026-10-13 停用（原因见上方「在线访问」），现由 `push` / 手动刷新 / `workflow_dispatch` 触发
 
 ---
 
@@ -182,9 +206,11 @@ daily-stock-news/
 | 新浪财经 (sina.com.cn) | 财经直播流 | JSON API |
 | 华尔街见闻 (wallstreetcn.com) | 全球宏观 + 中国市场 | RESTful JSON API |
 
-### Google News RSS（43 条 Feed）
+### Google News RSS（21 条 Feed）
 
-覆盖中/英/日/韩多语种，按来源细分为 Reuters、Bloomberg、CNBC、WSJ、FT、Nikkei Asia、财联社、金十数据、新浪财经、华尔街见闻等。每条 Feed 按关键词精确匹配四大赛道。
+全部为 Google News 关键词检索（`hl=zh-CN`），按赛道（四板块 / 创新药 / 黄金）与来源细分：财联社、金十数据、新浪财经、华尔街见闻、21 世纪经济、经济观察报、第一财经，以及各赛道龙头与业绩词条。每条 Feed 按关键词精确匹配四大赛道。
+
+> 说明：这里**只做中文检索**。历史版本的 README 曾写「覆盖中/英/日/韩多语种，含 Reuters、Bloomberg、CNBC、WSJ、FT、Nikkei Asia」，但 `pipeline/config.mjs` 里 21 条 Feed 的 `hl` 全是 `zh-CN`，URL 中也没有任何海外媒体域名——那些来源从未存在过。
 
 ### ETF 行情数据
 

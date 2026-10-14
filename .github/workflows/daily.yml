@@ -36,7 +36,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        # 固定到 commit,不用会漂移的 @v4 大版本 tag:tag 是可变引用,上游一推新
+        # 提交,同样的 workflow 文件就会跑出不同的行为。注释里的 v4 是给人看的。
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           # 拉取完整 git 历史，构建产物提交回 main 时不会触发深层 clone 限制
           fetch-depth: 0
@@ -55,7 +57,7 @@ jobs:
           git checkout -B main origin/main
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
 
@@ -130,7 +132,7 @@ jobs:
 
       - name: Deploy preview to gh-pages
         if: github.event_name == 'workflow_dispatch' && steps.build_preview.outcome == 'success' && steps.gate_preview.outputs.worth_push == 'true'
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: 'deploy-stage'
@@ -146,7 +148,7 @@ jobs:
         continue-on-error: true
         env:
           EDGEONE_PAGES_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
-        run: npx edgeone makers deploy . --name daily-stock-news --area global --json
+        run: npx --yes edgeone@1.6.41 makers deploy . --name daily-stock-news --area global --json
 
       # ── 阶段二：AI 研判正式构建(AI_BUDGET_MS 预算封顶),完成后覆盖部署,前端自动刷新 ──
       - name: Build AI report
@@ -191,7 +193,7 @@ jobs:
 
       - name: Deploy AI to gh-pages branch
         if: steps.gate.outputs.worth_push == 'true'
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: 'deploy-stage'
@@ -204,12 +206,17 @@ jobs:
       # 国内镜像:EdgeOne Pages(腾讯,国内节点)。
       # 未配置 EDGEONE_API_TOKEN 前自动跳过,不影响 gh-pages 主部署。
       # 首次部署会自动创建 daily-stock-news 项目并分配默认免费域名。
+      #
+      # 版本固定用 edgeone@1.6.41,不写裸 `npx edgeone` —— 裸写法每次跑都去拉
+      # dist-tags.latest,上游一发新版,同样的 workflow 就会跑出不同的 CLI 行为
+      # (该包 237 个版本、含 beta 预发布)。升级时改这里的版本号并重跑一次部署。
+      # --yes 免掉 npx 的交互确认。上面的「预览阶段」那处同理。
       - name: Deploy AI to EdgeOne Pages (国内镜像)
         if: steps.gate.outputs.worth_push == 'true' && env.EDGEONE_PAGES_API_TOKEN != ''
         continue-on-error: true
         env:
           EDGEONE_PAGES_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
-        run: npx edgeone makers deploy . --name daily-stock-news --area global --json
+        run: npx --yes edgeone@1.6.41 makers deploy . --name daily-stock-news --area global --json
 
       # ── 抓取健康闸门：放在 Deploy 之后，先发布再判红 ──
       # 坏数据日照常更新站点(不整站冻结,心跳工作流照常补建),但 run 变红 →
