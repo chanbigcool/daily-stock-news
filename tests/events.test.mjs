@@ -1,5 +1,5 @@
 // ── 事件级去重单测 ──────────────────────────────────────
-// 零 npm 依赖,运行: node --test tests/
+// 零 npm 依赖,运行: npm test
 // 验证 events.mjs 的标题归一、bigram 相似度、跨媒体事件聚合、
 // eventId 确定性、sources/relatedArticles 完整性、不误并。
 

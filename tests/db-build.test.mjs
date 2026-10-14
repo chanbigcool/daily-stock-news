@@ -1,5 +1,5 @@
 // ── 静态数据库构建逻辑单测 ──────────────────────────────
-// 零 npm 依赖,运行: node --test tests/
+// 零 npm 依赖,运行: npm test
 // 验证 flattenPayload 归一化 + buildDatabase 端到端(真 node:sqlite 打开断言)。
 
 import { test, before, after } from 'node:test';

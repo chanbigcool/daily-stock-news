@@ -1,5 +1,5 @@
 // ── 评分引擎单测 ────────────────────────────────────────
-// 零 npm 依赖,运行: node --test tests/
+// 零 npm 依赖,运行: npm test
 // 验证 sentiment.mjs 的方向/冲击/certainty/time_window/板块冲击判定。
 
 import { test } from 'node:test';

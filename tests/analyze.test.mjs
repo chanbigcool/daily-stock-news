@@ -1,5 +1,5 @@
 // ── 分析层降级路径单测 ──────────────────────────────────
-// 零 npm 依赖,运行: node --test tests/
+// 零 npm 依赖,运行: npm test
 // 验证 analyze.mjs 的关键词引擎兜底:无 key / proxy 不可达 / 翻译失败 / 板块矩阵完整性。
 // 注意:这些测试走纯本地引擎路径,不触发真实网络请求(本地无 ANTHROPIC_API_KEY,
 // CONFIG.apiBase 指向 127.0.0.1 proxy,proxyReachable 探测失败即降级)。

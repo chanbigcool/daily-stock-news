@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build-daily.mjs",
-    "start": "node scripts/refresh-server.mjs"
+    "start": "node scripts/refresh-server.mjs",
+    "test": "node --test --test-concurrency=1"
   }
 }

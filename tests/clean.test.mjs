@@ -1,5 +1,5 @@
 // ── 清洗层单测 ───────────────────────────────────────────
-// 零 npm 依赖,运行: node --test tests/
+// 零 npm 依赖,运行: npm test
 // 验证 clean.mjs 的去重 key、direct_api 优先替换、去噪、板块分类联动。
 
 import { test } from 'node:test';

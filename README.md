@@ -66,7 +66,7 @@ flowchart LR
 
 ## 在线访问
 
-- **主链接（GitHub Pages）**：<https://cc5207597-hash.github.io/daily-stock-news/> —— 国内实测可直连（0.5~1.5s），正确渲染为网页；每次构建后由 Actions 自动部署，构建完即可看到最新日报（页面带 no-cache 控制，普通刷新即更新）
+- **主链接（GitHub Pages）**：<https://chanbigcool.github.io/daily-stock-news/> —— 本机实测可直连（2026-10-14 三次探测均 HTTP 200，1.5~2.0s），正确渲染为网页；每次构建后由 Actions 自动部署，构建完即可看到最新日报（页面带 no-cache 控制，普通刷新即更新）
 - **公网一键刷新**：网页顶部「🔄 刷新日报」按钮在公网也可用 —— 点击后经腾讯云 SCF 云函数触发 GitHub Actions 重建，约 2~6 分钟后页面自动更新到最新版（无需本机运行任何服务）
 - **辅助（EdgeOne Pages 预览，国内节点）**：构建后 3 小时内可通过 EdgeOne 预览链接查看最新版（免 CDN 缓存延迟），每次构建后去 [EdgeOne 控制台](https://edgeone.cloud.tencent.com/pages) → `daily-stock-news` 项目 → 部署列表 → 预览获取。长期稳定访问需绑定已备案自定义域名
 - ~~jsDelivr 镜像~~：jsDelivr 对仓库内 `.html` 文件强制返回 `text/plain`（防钓鱼的安全设计），浏览器只会显示源代码而不会渲染成网页，因此不能作为页面入口；仅作 Chart.js 等静态资源 CDN 使用
@@ -80,7 +80,7 @@ flowchart LR
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/cc5207597-hash/daily-stock-news.git
+git clone https://github.com/chanbigcool/daily-stock-news.git
 cd daily-stock-news
 
 # 2. 无需 npm install（零依赖）

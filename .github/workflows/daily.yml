@@ -59,6 +59,16 @@ jobs:
         with:
           node-version: '22'
 
+      # 单元测试前置门槛(2026-10-14)。此前全仓 200 个用例从未在 CI 跑过 —— 唯一的检查
+      # 是「构建产物有没有变化」,而那对代码回归完全无感。测试不过就不构建、不部署,
+      # 避免把回归带上线。真正的产出闸门仍是下面的 push-gate(空报告不推),两者各管一头。
+      #
+      # 钉 --test-concurrency=1 是实测结论,不是保守:默认并发下 analyze.test.mjs 必然
+      # 把测试运行器的 IPC 弄坏(Unable to deserialize cloned data,4/4 复现,该文件单独
+      # 跑 32/32 全过),串行则 200/200 全绿(~12s)。本地同口径跑法见 package.json 的 npm test。
+      - name: Run unit tests
+        run: npm test
+
       # ── 阶段一：手动刷新先发纯关键词简报(无 AI, ~2-3 分钟),用户立刻有东西看 ──
       # 只对**手动刷新**生效(workflow_dispatch 云端刷新)。2026-10-13 起 push 触发也不再
       # 跑阶段一 —— push 的常态来源是桌面定时任务的自动提交,没人盯着看简报,却要为它多

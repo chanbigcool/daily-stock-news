@@ -1,5 +1,5 @@
 // ── 数据质量回看页逻辑单测 ──────────────────────────────
-// 零 npm 依赖,运行: node --test tests/
+// 零 npm 依赖,运行: npm test
 // 用临时目录注入 history/ + etf_history,验证 computeDays 的覆盖率/一致性/缺板块检测。
 
 import { test, before, after } from 'node:test';
