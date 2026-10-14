@@ -6,3 +6,8 @@ output/
 refresh-state.json
 .edgeone/
 .scf-deploy/
+
+# 构建产物:每次构建 db-build.mjs 都会 rmSync 后重建,入库毫无意义。
+# 入库的代价是它在 git 历史里攒了 202 个版本、包里占 16.8M —— 全仓最大单一来源。
+# 线上照常可用:CI 在构建时生成,gh-pages 部署走的是工作区目录拷贝,不经过 git。
+history/db.sqlite
