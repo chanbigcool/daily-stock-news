@@ -62,12 +62,24 @@ test('fetchClsNews:HTTP 503 → 抛错(不是静默返回空数组)', async () =
 // Node 原生 fetch(undici)不认 timeout 选项,只认 signal —— 修之前这里传的
 // `timeout: 10000` 是空转,一个挂住的源会让整次构建无限等下去。这条锁住 signal
 // 确实被挂上:mock 的 fetch 永不 resolve,只在 signal abort 时 reject。
+//
+// 必须自带一个 ref 的定时器撑住事件循环:`AbortSignal.timeout` 内部的定时器是
+// **unref** 的(实测:只挂它、不干别的,进程 1ms 就退出、abort 根本不触发),所以
+// 若此刻没有别的待办,Node 先判定循环已空 → promise 永不 settle → node:test 报
+// 'Promise resolution is still pending but the event loop has already resolved'。
+// 本地全量跑是被其他用例的待办侥幸撑着才没暴露,CI 上必挂(cancelledByParent
+// 级联把该文件后续用例全带崩)。giveUp 既撑住循环,也在 signal 没 abort 时给出
+// 明确失败原因,而不是含糊的「循环空了」。
 test('fetchClsNews:卡住的源在 apiTimeoutMs 后被 abort', async () => {
   const orig = CONFIG.apiTimeoutMs;
   CONFIG.apiTimeoutMs = 20;
   global.fetch = (url, opts) => new Promise((_, reject) => {
     assert.ok(opts && opts.signal, '必须传 signal,否则没有超时可言');
-    opts.signal.addEventListener('abort', () => reject(opts.signal.reason));
+    const giveUp = setTimeout(() => reject(new Error('signal 未在 apiTimeoutMs 后 abort')), 2000);
+    opts.signal.addEventListener('abort', () => {
+      clearTimeout(giveUp);
+      reject(opts.signal.reason);
+    });
   });
   await assert.rejects(() => fetchClsNews({ name: '财联社', url: 'http://fake/cls' }));
   CONFIG.apiTimeoutMs = orig;
