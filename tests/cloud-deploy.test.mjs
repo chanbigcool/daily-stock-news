@@ -5,9 +5,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join, basename } from 'node:path';
-import { zipSingle, zipFiles, bundleManifest, PIPELINE_FILES } from '../cloud/deploy.mjs';
+import { zipSingle, zipFiles, bundleManifest, PIPELINE_FILES, TIMER_SPECS } from '../cloud/deploy.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = readFileSync(join(ROOT, 'cloud', 'index.js'));
@@ -131,4 +132,54 @@ test('bundleManifest:清单里每个文件都真实存在且内容非空', () =>
   const eocdAt = zip.length - 22;
   const stored = zip.readUInt16LE(eocdAt + 10);
   assert.ok(stored >= bundleManifest(here).length, 'zip 里的条目数不应少于清单文件数');
+});
+
+// ── 定时触发器:7 段 cron 的坑 ────────────────────────────
+// SCF 定时触发器的 cron 是 **7 段**(秒 分 时 日 月 星期 年),Linux crontab 是 5 段。
+// 照抄旧 Actions 的 `0 1 * * *` 去建触发器会被平台判非法 —— 而 deploy.mjs 的设计是
+// 「触发器建失败不让整个部署失败」(函数已经用上了,只是不会自动出报),于是它会安静地
+// 降级成「请去控制台手动建」,那个非法表达式到不了任何人的眼前。所以段数在这里钉死。
+
+test('TIMER_SPECS:默认三个时段 = 旧 cron 的北京 09:00 / 12:30 / 20:00', () => {
+  assert.deepEqual(TIMER_SPECS.map((s) => s.time), ['09:00', '12:30', '20:00']);
+  assert.deepEqual(TIMER_SPECS.map((s) => s.name), ['daily-0900', 'daily-1230', 'daily-2000']);
+  assert.deepEqual(TIMER_SPECS.map((s) => s.cron),
+    ['0 0 9 * * * *', '0 30 12 * * * *', '0 0 20 * * * *']);
+});
+
+test('TIMER_SPECS:每个 cron 都是 7 段,且分/时与 time 对得上', () => {
+  for (const s of TIMER_SPECS) {
+    const f = s.cron.split(/\s+/);
+    assert.equal(f.length, 7,
+      `${s.name} 的 cron「${s.cron}」应是 7 段(秒 分 时 日 月 星期 年);5 段会被 SCF 判非法`);
+    assert.equal(f[0], '0', '第 1 段是秒');
+    const [hh, mm] = s.time.split(':');
+    assert.equal(f[1], String(Number(mm)), `${s.name} 第 2 段(分)应等于 time 里的 ${mm}`);
+    assert.equal(f[2], String(Number(hh)), `${s.name} 第 3 段(时)应等于 time 里的 ${hh}`);
+    assert.deepEqual(f.slice(3), ['*', '*', '*', '*'],
+      '日/月/星期/年 留空 —— 填了就成了「一年只触发一次」');
+  }
+});
+
+// TIMER_SPECS 在模块加载时就算好了,所以覆盖项与非法项都得另起一个进程才看得见。
+const DEPLOY_URL = pathToFileURL(join(ROOT, 'cloud', 'deploy.mjs')).href;
+function timerSpecsWith(crons) {
+  const code = `const m = await import(${JSON.stringify(DEPLOY_URL)});`
+    + ' console.log(JSON.stringify(m.TIMER_SPECS));';
+  const out = execFileSync(process.execPath, ['--input-type=module', '-e', code], {
+    env: { ...process.env, TC_TIMER_CRONS: crons },
+    encoding: 'utf8',
+  });
+  return JSON.parse(out.trim().split('\n').pop());
+}
+
+test('TIMER_SPECS:TC_TIMER_CRONS 可覆盖,补零与触发器名由时段推导', () => {
+  assert.deepEqual(timerSpecsWith('7:05'), [{ time: '07:05', name: 'daily-0705', cron: '0 5 7 * * * *' }]);
+  assert.deepEqual(timerSpecsWith(' 09:00 , 12:30 ').map((s) => s.name), ['daily-0900', 'daily-1230']);
+});
+
+test('TIMER_SPECS:非法时段在模块加载时就抛(而不是等建触发器时才失败)', () => {
+  for (const bad of ['25:00', '09:60', '0900', '09:0x']) {
+    assert.throws(() => timerSpecsWith(bad), /TC_TIMER_CRONS/, `「${bad}」应当被拒`);
+  }
 });

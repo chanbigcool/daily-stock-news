@@ -149,6 +149,75 @@ async function waitActive(scf, name, tries = 30) {
   throw new Error(`等待函数回到 Active 超时 (${tries * 2}s)`);
 }
 
+// ── 定时触发器 ────────────────────────────────────────────
+// 三个时段照搬旧 Actions cron 的意图:北京 09:00 / 12:30 / 20:00。SCF 定时器的
+// cron 是 **7 段**(秒 分 时 日 月 星期 年),与 Linux 的 5 段不同 —— 写成 5 段会
+// 被当成非法表达式。用 TC_TIMER_CRONS='09:00,12:30,20:00' 可覆盖。
+//
+// ⚠️ **时区未核实**:腾讯云文档说定时器按北京时间,但没在这条链路上量过。
+// 建完必须观察一次真实触发时刻(控制台 → 函数 → 触发管理 有「上次触发时间」),
+// 别假定。若发现晚/早了 8 小时,把时段整体平移 8 小时即可,别改 cron 段数。
+export const TIMER_SPECS = (process.env.TC_TIMER_CRONS || '09:00,12:30,20:00')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+  .map((hm) => {
+    const [h, m] = hm.split(':').map((n) => Number(n));
+    if (!Number.isInteger(h) || !Number.isInteger(m) || h > 23 || m > 59) {
+      throw new Error(`TC_TIMER_CRONS 里有不合法的时段: ${hm}`);
+    }
+    const pad = (n) => String(n).padStart(2, '0');
+    return { time: `${pad(h)}:${pad(m)}`, name: `daily-${pad(h)}${pad(m)}`, cron: `0 ${m} ${h} * * * *` };
+  });
+
+// 建/改定时触发器。**失败不让整个部署失败**:函数本身已经用上了,触发器没建上
+// 只是「不会自动出报」,这时最该做的是把控制台的操作步骤打清楚,而不是丢一个
+// 部署失败让人以为函数也没上去。
+async function ensureTimerTriggers(scf, fnName, log = console.log) {
+  const list = (await scf('ListTriggers', { FunctionName: fnName })).Response || {};
+  if (list.Error) {
+    log(`  ⚠ 读不到现有触发器(${list.Error.Code}),跳过:请到控制台手动建。`);
+    return { created: [], updated: [], existing: [], failed: true };
+  }
+  const byName = new Map((list.Triggers || []).filter((t) => t.Type === 'timer').map((t) => [t.TriggerName, t]));
+
+  const created = [];
+  const updated = [];
+  const existing = [];
+  for (const spec of TIMER_SPECS) {
+    const cur = byName.get(spec.name);
+    if (cur && cur.TriggerDesc === spec.cron) { existing.push(spec.name); continue; }
+    try {
+      if (cur) {
+        const r = (await scf('UpdateTrigger', {
+          FunctionName: fnName, TriggerName: spec.name, Type: 'timer', TriggerDesc: spec.cron,
+        })).Response || {};
+        if (r.Error) throw new Error(`${r.Error.Code} ${r.Error.Message}`);
+        updated.push(spec.name);
+      } else {
+        let r = (await scf('CreateTrigger', {
+          FunctionName: fnName, TriggerName: spec.name, Type: 'timer',
+          TriggerDesc: spec.cron, Qualifier: '$DEFAULT', Enable: 'OPEN',
+        })).Response || {};
+        // Enable 这个字段在各版本 API 里出现过 String/Boolean 两种口径;
+        // 报参数错时去掉它再试一次(默认值本就是启用)。
+        if (r.Error && /Enable/i.test(r.Error.Code || '') ) {
+          r = (await scf('CreateTrigger', {
+            FunctionName: fnName, TriggerName: spec.name, Type: 'timer',
+            TriggerDesc: spec.cron, Qualifier: '$DEFAULT',
+          })).Response || {};
+        }
+        if (r.Error) throw new Error(`${r.Error.Code} ${r.Error.Message}`);
+        created.push(spec.name);
+      }
+    } catch (err) {
+      log(`  ⚠ 定时器 ${spec.name}(${spec.time} 北京)建失败: ${err.message}`);
+      return { created, updated, existing, failed: true };
+    }
+  }
+  return { created, updated, existing, failed: false };
+}
+
 export async function deploy() {
   const REGION = process.env.TC_REGION || 'ap-guangzhou';
   const FUNC_NAME = 'daily-stock-refresh';
@@ -205,7 +274,7 @@ export async function deploy() {
   const exists = (list.Functions || []).some((f) => f.FunctionName === FUNC_NAME);
 
   if (!exists) {
-    console.log('[1/3] 函数不存在,创建 ...');
+    console.log('[1/4] 函数不存在,创建 ...');
     unwrap(await scf('CreateFunction', {
       FunctionName: FUNC_NAME,
       Type: 'Event',
@@ -219,12 +288,12 @@ export async function deploy() {
       Environment: { Variables: envVars },
     }), 'CreateFunction');
   } else {
-    console.log('[1/3] 函数已存在,更新代码 ...');
+    console.log('[1/4] 函数已存在,更新代码 ...');
     unwrap(await scf('UpdateFunctionCode', {
       FunctionName: FUNC_NAME, Handler: 'index.handler', ZipFile: zip.toString('base64'),
     }), 'UpdateFunctionCode');
     await waitActive(scf, FUNC_NAME);
-    console.log('[2/3] 更新配置(运行时 + 内存/超时 + 环境变量) ...');
+    console.log('[2/4] 更新配置(运行时 + 内存/超时 + 环境变量) ...');
     unwrap(await scf('UpdateFunctionConfiguration', {
       FunctionName: FUNC_NAME,
       Runtime: RUNTIME,
@@ -234,12 +303,27 @@ export async function deploy() {
     }), 'UpdateFunctionConfiguration');
   }
 
-  console.log('[3/3] 读取函数 URL ...');
+  console.log('[3/4] 读取函数 URL ...');
   const url = await readFunctionUrl(scf, FUNC_NAME);
+
+  console.log('[4/4] 配置定时触发器 ...');
+  const timer = await ensureTimerTriggers(scf, FUNC_NAME);
 
   console.log('\n=== 部署完成 ===');
   console.log('账号     :', OWNER, '/', REPO);
   console.log('运行时   :', RUNTIME, `· 内存 ${MEMORY_MB}MB · 超时 ${TIMEOUT_S}s`);
+  if (timer.failed) {
+    console.log('定时器   : ⚠ 没配全,自动出报这条链现在是断的');
+    console.log('  去控制台手动建,三步:');
+    console.log('  ① 云函数 → daily-stock-refresh → 「触发管理」→ 新建触发器');
+    console.log('  ② 触发方式选「定时触发」,时间选北京时间,分别填:');
+    for (const s of TIMER_SPECS) console.log(`       ${s.time}   触发器名 ${s.name}`);
+    console.log('  ③ 建完在同一个页面看「上次触发时间」,核对时区对不对(见 deploy.mjs 顶部注释)');
+  } else {
+    console.log('定时器   :', TIMER_SPECS.map((s) => `${s.time}(北京)`).join(' / '),
+      `· 新建 ${timer.created.length} 改 ${timer.updated.length} 已存在 ${timer.existing.length}`);
+    console.log('  ⚠ 时区未核实:过一两天回控制台看「上次触发时间」,确认真的是北京时间那三个点。');
+  }
   if (url) {
     console.log('函数 URL :', url);
     console.log('\n把这个 URL 换成 scripts/build-daily.mjs 里的内置默认值,');
@@ -252,7 +336,7 @@ export async function deploy() {
     console.log('  若那里显示「未启用」,先启用并选**免认证** —— 浏览器带不了腾讯云签名,');
     console.log('  选「需认证」按钮必然失败。');
   }
-  return { owner: OWNER, runtime: RUNTIME, url };
+  return { owner: OWNER, runtime: RUNTIME, url, timer };
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);

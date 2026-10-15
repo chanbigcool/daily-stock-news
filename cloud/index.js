@@ -1,10 +1,14 @@
-// 公网一键刷新 —— 腾讯云 SCF 云函数 (CommonJS, 兼容 SCF Node 运行时)
+// 公网一键刷新 + 定时抓取 —— 腾讯云 SCF 云函数 (CommonJS, 兼容 SCF Node 运行时)
 // 环境变量: GITHUB_PAT / SHARED_SECRET / GITHUB_OWNER / GITHUB_REPO / GITHUB_WORKFLOW / GITHUB_REF
 //
 // 职责(2026-10-15 起):**抓取搬到这里**。旧架构里抓取发生在 GitHub Actions,
 // 而旧账号被封的依据正是「在 Actions 里定时抓第三方站点」这个形态 —— 所以现在
 // 由云函数抓完,把结果写成 payload 推到孤儿分支 fetch-cache,再 dispatch Actions
 // 只做清洗/研判/渲染/部署。Actions 侧禁止现场抓取(见 daily.yml 的 FETCH_PAYLOAD)。
+//
+// 两个入口,同一条流水线(runRefresh):
+//   ① 公网 POST /refresh —— 网页上的「🔄 刷新日报」按钮,校验 SHARED_SECRET + 内存限流
+//   ② SCF 定时触发器    —— 北京 09:00 / 12:30 / 20:00(触发器由 deploy.mjs 建)
 //
 // 抓取逻辑不另写副本:pipeline/*.mjs 用动态 import() 直接加载(它们是 ESM,
 // 云函数本体是 CJS,Node 两者都支持)。同一份源码两边跑,不会出现「改了 A 忘了 B」。
@@ -177,6 +181,53 @@ async function dispatchGitHub(runId) {
   return res.status;
 }
 
+// ── 刷新主流程:抓取 → 写 payload → dispatch ───────────────
+// 顺序不能反:Actions 一起来就要 git show FETCH_HEAD 读 payload,
+// 先 dispatch 会出现「跑得比写还快」的窗口。
+// 出错时带上 stage,调用方才能分辨是抓取还是发布出的问题(HTTP 200 与 502 的差别)。
+async function runRefresh(runId) {
+  let payload;
+  try {
+    payload = Object.assign({ runId, generatedAt: new Date().toISOString() }, await scrapeAll());
+  } catch (e) {
+    console.error('[refresh] 抓取失败:', e.message);
+    throw Object.assign(new Error(e.message), { stage: 'scrape' });
+  }
+  try {
+    const written = await writePayload(payload);
+    const ghStatus = await dispatchGitHub(runId);
+    return { payload, written, ghStatus };
+  } catch (e) {
+    console.error('[refresh] 发布失败:', e.message);
+    throw Object.assign(new Error(e.message), { stage: 'publish' });
+  }
+}
+
+// 定时触发走的是**内部 Invoke**,不是 HTTP 请求:event 是
+//   { Type: 'Timer', TriggerName: 'daily-0900', Time: '...', Message: '...' }
+// 所以这里没有 headers、没有浏览器、也没有地方放 X-Refresh-Secret —— 定时路径
+// **不校验密钥**是对的。安全性来自「这个 event 形状只有 SCF 平台能造」:
+// 公网经函数 URL 进来的是 HTTP 事件(带 httpMethod/rawPath),那段 body 里的
+// Type 字段只是数据,到不了顶层。所以判定必须**同时**要求「没有 HTTP 事件特征」。
+//
+// 导出只为单测(见 tests/cloud-handler.test.mjs):这条判定的错误形态是
+// 「把公网请求当成定时任务」——那等于免密钥开放刷新入口,值得一个用例钉住。
+// SCF 只用 exports.handler,多一个导出不影响部署。
+function isTimerEvent(event) {
+  if (!event || typeof event !== 'object') return false;
+  if (event.httpMethod || event.rawPath || event.requestContext) return false;
+  return String(event.Type || event.type || '').toLowerCase() === 'timer';
+}
+exports.isTimerEvent = isTimerEvent;
+
+// 定时任务的 runId:北京时间的紧凑时间戳(如 timer-20261016090000)。
+// 两个 cron 相隔数小时,不可能撞进同一分钟。它会被写进 payload 并被 Actions
+// 断言,所以必须与 dispatch 时传的 inputs.run_id 是同一个值。
+function timerRunId() {
+  const bj = new Date(Date.now() + 8 * 3600 * 1000).toISOString();
+  return `timer-${bj.replace(/[-:T]/g, '').slice(0, 14)}`;
+}
+
 exports.handler = async (event) => {
   const send = (statusCode, obj, extraHeaders = {}) => ({
     statusCode,
@@ -194,6 +245,21 @@ exports.handler = async (event) => {
 
   const method = (event.httpMethod || event.method || 'GET').toUpperCase();
   const path = (event.path || event.rawPath || '/').split('?')[0];
+
+  // ── 定时触发(北京 09:00 / 12:30 / 20:00,由 SCF 定时器建,见 deploy.mjs)──
+  // 失败时**抛出**而不是返回一个 ok:SCF 会把这次调用记成失败,云函数监控/告警能看见。
+  // 返回成功就等于把「日报今天没出」静默掉。
+  if (isTimerEvent(event)) {
+    const runId = timerRunId();
+    console.log(`[timer] 定时刷新开始 runId=${runId} 触发器=${event.TriggerName || '?'} 平台时间=${event.Time || '?'}`);
+    const { payload, written, ghStatus } = await runRefresh(runId);
+    console.log(`[timer] 完成 runId=${runId} 抓取 ${payload.items.length} 条 / `
+      + `源 ${payload.stats && payload.stats.api ? `${payload.stats.api.okSources}/${payload.stats.api.total}` : '?'} / `
+      + `ETF ${payload.etfData.length} 只 / K线 ${payload.etfHistory ? payload.etfHistory.dates.length : 0} 天 / `
+      + `payload ${written.bytes} B / dispatch HTTP ${ghStatus} / 云函数侧耗时 ${payload.elapsedMs}ms`);
+    if (payload.notes.length) for (const n of payload.notes) console.warn(`[timer] 笔记: ${n}`);
+    return { ok: true, runId, items: payload.items.length, ghStatus };
+  }
 
   if (method === 'OPTIONS') {
     return { statusCode: 204, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, GET, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, X-Refresh-Secret' }, body: '' };
@@ -215,20 +281,8 @@ exports.handler = async (event) => {
     } catch (e) { /* ignore malformed body */ }
     if (rateLimited()) return send(429, { status: 'rate_limited', message: '触发过于频繁,请 10 分钟后再试' });
 
-    // ① 抓取。这是本函数最慢的一步(数十秒),函数超时设 60s 就是为它留的。
-    let payload;
     try {
-      payload = Object.assign({ runId, generatedAt: new Date().toISOString() }, await scrapeAll());
-    } catch (e) {
-      console.error('[refresh] 抓取失败:', e.message);
-      return send(502, { status: 'error', stage: 'scrape', error: e.message });
-    }
-
-    // ② 写 payload → ③ dispatch。顺序不能反:Actions 一起来就要 git show
-    // FETCH_HEAD 读 payload,先 dispatch 会出现「跑得比写还快」的窗口。
-    try {
-      const written = await writePayload(payload);
-      const ghStatus = await dispatchGitHub(runId);
+      const { payload, written, ghStatus } = await runRefresh(runId);
       return send(202, {
         status: 'accepted',
         runId,
@@ -246,8 +300,7 @@ exports.handler = async (event) => {
         message: '已在云端抓取并触发构建,完成后自动刷新',
       });
     } catch (e) {
-      console.error('[refresh] 发布失败:', e.message);
-      return send(502, { status: 'error', stage: 'publish', error: e.message });
+      return send(502, { status: 'error', stage: e.stage || 'unknown', error: e.message });
     }
   }
   return send(404, { status: 'error', error: 'Not found' });

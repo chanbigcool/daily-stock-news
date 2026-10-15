@@ -122,10 +122,10 @@ node scripts/refresh-server.mjs
 daily-stock-news/
 ├── .github/workflows/
 │   └── daily.yml               # push main:测试 + 重新部署已有产物;workflow_dispatch:读云端 payload 构建并部署
-├── cloud/                      # 云端抓取 + 公网一键刷新（腾讯云 SCF；架构与密钥轮换见 cloud/README.md）
-│   ├── index.js                # 云函数本体（CommonJS，SCF 的 index.handler 入口）：抓取 → 写 payload → dispatch
+├── cloud/                      # 云端抓取 + 公网一键刷新 + 定时出报（腾讯云 SCF；架构、定时器与密钥轮换见 cloud/README.md）
+│   ├── index.js                # 云函数本体（CommonJS，SCF 的 index.handler 入口）：两个入口 → 抓取 → 写 payload → dispatch
 │   ├── tc-call.mjs             # 腾讯云 API v3 签名调用
-│   └── deploy.mjs              # 打包（index.js + pipeline/*.mjs）上传 + 创建/更新函数 + 写环境变量
+│   └── deploy.mjs              # 打包（index.js + pipeline/*.mjs）上传 + 创建/更新函数 + 写环境变量 + 建定时触发器
 ├── scripts/
 │   ├── build-daily.mjs            # 构建入口（编排 ETL 流水线 + 渲染 + 推送）
 │   ├── db-build.mjs               # 数据库构建（node:sqlite 聚合 history/ → db.sqlite）
@@ -161,10 +161,11 @@ daily-stock-news/
 │   ├── dates.json                 # 日期索引
 │   └── db.sqlite                  # 全量真 SQLite（数据查询页数据源）—— 构建产物，不入库
 ├── quality/                       # 产出质量校验报告（quality/index.html + report.json）
-├── tests/                         # 单元测试（12 个文件 / 212 个用例，node --test 自动发现）
+├── tests/                         # 单元测试（13 个文件 / 221 个用例，node --test 自动发现）
 │   ├── analyze.test.mjs           # AI 研判 + 关键词兜底引擎
 │   ├── clean.test.mjs             # 清洗层（去重、板块分类、时效过滤）
-│   ├── cloud-deploy.test.mjs      # 云函数打包（手写 zip 的字节结构 + CRC32 + 打包清单 = import 闭包）
+│   ├── cloud-deploy.test.mjs      # 云函数打包（手写 zip 的字节结构 + CRC32 + 打包清单 = import 闭包 + 定时器 cron 段数）
+│   ├── cloud-handler.test.mjs     # 云函数入口（定时事件 vs 公网 HTTP 事件——认错等于免密钥开放）
 │   ├── db-build.test.mjs          # 数据库构建（归一化 + 端到端导入断言）
 │   ├── events.test.mjs            # 事件级去重（三层相似度漏斗）
 │   ├── fetch.test.mjs             # 抓取层（翻页、超时信号、重试、单源失败不中断）

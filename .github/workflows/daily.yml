@@ -18,8 +18,10 @@ on:
   #   - cron: '0 12 * * *'
   workflow_dispatch:
     inputs:
-      # 公网一键刷新标识: 云端代理(SCF 云函数)传入的 runId,前端轮询 build-state.json
-      # 用该值精确匹配"这一次"构建完成。定时构建无此 input → 写空串,不误配。
+      # 本次抓取的标识。云函数的两个入口都会传:网页按钮传前端的 runId,
+      # SCF 定时器传 timer-<北京时间戳>(见 cloud/index.js 的 timerRunId)。
+      # 仅当有人从 Actions 页面点「Run workflow」时才为空 —— 那种情况没有对应 payload,
+      # 会在「校验抓取结果」那步失败(这是有意的,见 README「在线访问」)。
       run_id:
         description: 'Cloud refresh run id (internal)'
         required: false
