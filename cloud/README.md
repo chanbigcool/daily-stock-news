@@ -50,3 +50,36 @@ TC_SECRET_ID=AKID... TC_SECRET_KEY=... GITHUB_PAT=github_pat_... SHARED_SECRET=.
 
 轮换前请先确认 `REFRESH_SECRET` 这个 Secret 是否真的在仓库里配着——
 没配的话新页面会渲染成空值，前端按钮不会带 `X-Refresh-Secret` 头。
+
+## 实测：本函数能部署在哪、运行时怎么选
+
+（2026-10-14/15 实测。当时用「临时函数 + 一次性探针」把这些问题在容器内部量清楚了，
+探针脚本、以及围绕它的「函数是不是在别的账号里」的误判，都已作废删除；
+结论留在本节，免得以后重测。）
+
+**谁部署谁**：线上函数 `daily-stock-refresh` 属于用户自己的腾讯云主账号
+（APPID `1384887796` / UIN `100044815351`），`cloud/deploy.mjs` 直接更新即可。
+**不需要迁移**。拿不准密钥对应哪个账号时，一次 `cam:GetUserAppId` 看 `AppId` 是不是
+`1384887796` 最快——函数 URL 的前缀就是这个数。
+
+**运行时名**：腾讯云每条 Node 大版本线**只挂一个**运行时名，用的是他们发镜像时的那个小版本——
+不是真实 Node 版本号。已确认存在：`Nodejs22.21` / `20.19` / `18.15` / `16.13` / `14.18`；
+`Nodejs22.15`、`Nodejs20.15`、`Nodejs22.11` 都报 `InvalidParameterValue.Runtime`。
+**要 `node:sqlite` 必须显式选 `Nodejs22.21`**（它实测是 Node v22.21.1）。`deploy.mjs` 默认
+`Nodejs18.15` 只是为了对齐线上现状；哪天要把构建搬进函数，得同时把运行时改到 22 线
+（`TC_RUNTIME` 可覆盖）。新出一条 Node 线想看名字，拿 `CreateFunction` 试即可，但
+**必须不传 `Role`**：传了 `Role` 校验顺序变成先角色后运行时，角色不存在就直接
+`ResourceNotFound.Role`，所有候选都会「通过」，等于没测。
+
+**`UpdateFunctionConfiguration` 是整体覆盖 `Environment.Variables`**：本地没有
+`GITHUB_PAT` / `SHARED_SECRET` 的副本时，任何只想去改代码/运行时的调用都别顺手带上它，
+否则会把线上密钥清空、刷新按钮立刻 401。要改就整组一起推（`deploy.mjs` 走的就是这条）。
+
+**建新函数才需要 `Role`**：本账号没有 `SCF_QcsRole`，但更新线上函数不需要它。
+另注意 `DeleteFunction` 是异步的，删完同名函数会短暂占着名字（`ResourceInUse.Function`）。
+
+**出口网络**（决定「要不要把抓取搬进云函数」的既有事实）：`api.github.com` 通、19 个
+国内财经源基本全通、`news.google.com` 不可达（本机同样不可达）。`hq.sinajs.cn` 带 `Referer`
+连打 5 次，云函数 4 成 5 成功、1 次 403——**间歇性**失败，搬进来必须带重试/退避，
+换 header 没用。另外：在云函数里做网络探测时并发要压到 4 左右，并一定在本机跑同一份
+清单做对照，否则「太挤了」的 `ETIMEDOUT` 会被读成「连不上」。
