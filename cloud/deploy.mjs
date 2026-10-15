@@ -293,15 +293,31 @@ export async function deploy() {
       FunctionName: FUNC_NAME, Handler: 'index.handler', ZipFile: zip.toString('base64'),
     }), 'UpdateFunctionCode');
     await waitActive(scf, FUNC_NAME);
-    console.log('[2/4] 更新配置(运行时 + 内存/超时 + 环境变量) ...');
-    unwrap(await scf('UpdateFunctionConfiguration', {
+    console.log('[2/4] 更新配置(内存/超时 + 环境变量) ...');
+    const conf = {
       FunctionName: FUNC_NAME,
-      Runtime: RUNTIME,
       MemorySize: MEMORY_MB,
       Timeout: TIMEOUT_S,
       Environment: { Variables: envVars },
-    }), 'UpdateFunctionConfiguration');
+    };
+    // 先照常带上 Runtime。**但本账号这个函数的 Runtime 锁死了** —— 2026-10-15 实测:
+    // 连只带 FunctionName + Runtime 的调用都被拒(FailedOperation.UpdateFunctionConfiguration
+    // 「函数Runtime不支持修改（Nodejs18.15）」)。带上它会让**整条**更新失败,内存/超时/
+    // 环境变量跟着全不生效 —— 而抓取搬进函数后 30s 超时是必然不够的,那才是真故障。
+    // 所以撞到这个错就摘掉 Runtime 重试:代码与配置先落地,运行时保持原值。
+    // 换运行时只能重建函数,要 SCF_QcsRole(本账号没有)且函数 URL 会变,不值当。
+    let r = (await scf('UpdateFunctionConfiguration', { ...conf, Runtime: RUNTIME })).Response || {};
+    if (r.Error && /Runtime/i.test(`${r.Error.Code} ${r.Error.Message}`)) {
+      console.warn(`⚠ 这个函数的 Runtime 改不了(${String(r.Error.Message).trim()})`);
+      console.warn('  改为只更新内存/超时/环境变量 —— 运行时保持原值,功能不受影响。');
+      r = (await scf('UpdateFunctionConfiguration', conf)).Response || {};
+    }
+    if (r.Error) throw new Error(`UpdateFunctionConfiguration 失败: ${r.Error.Code} ${r.Error.Message}`);
   }
+
+  // 运行时以**云端实际值**为准:上面可能因为平台限制没能改成 RUNTIME,
+  // 别把「想设的值」当成「已经生效的值」报出去。
+  const actualRuntime = ((await scf('GetFunction', { FunctionName: FUNC_NAME })).Response || {}).Runtime || RUNTIME;
 
   console.log('[3/4] 读取函数 URL ...');
   const url = await readFunctionUrl(scf, FUNC_NAME);
@@ -311,7 +327,12 @@ export async function deploy() {
 
   console.log('\n=== 部署完成 ===');
   console.log('账号     :', OWNER, '/', REPO);
-  console.log('运行时   :', RUNTIME, `· 内存 ${MEMORY_MB}MB · 超时 ${TIMEOUT_S}s`);
+  console.log('运行时   :', actualRuntime, `· 内存 ${MEMORY_MB}MB · 超时 ${TIMEOUT_S}s`);
+  if (actualRuntime !== RUNTIME) {
+    console.log(`  ⚠ 想设的是 ${RUNTIME},云端仍是 ${actualRuntime} —— 函数的 Runtime 不支持修改(平台报的)。`);
+    console.log('    不影响功能(抓取/定时/刷新在两条运行时上都能跑);要换只有重建函数一条路,');
+    console.log('    而那需要 SCF_QcsRole,且函数 URL 会变 —— 见 cloud/README.md「运行时名」一节。');
+  }
   if (timer.failed) {
     console.log('定时器   : ⚠ 没配全,自动出报这条链现在是断的');
     console.log('  去控制台手动建,三步:');
@@ -336,7 +357,7 @@ export async function deploy() {
     console.log('  若那里显示「未启用」,先启用并选**免认证** —— 浏览器带不了腾讯云签名,');
     console.log('  选「需认证」按钮必然失败。');
   }
-  return { owner: OWNER, runtime: RUNTIME, url, timer };
+  return { owner: OWNER, runtime: actualRuntime, url, timer };
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);

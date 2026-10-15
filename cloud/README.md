@@ -71,8 +71,19 @@ TC_SECRET_ID=AKID... TC_SECRET_KEY=... GITHUB_PAT=github_pat_... SHARED_SECRET=.
 `创建 blob 失败: HTTP 403` 报错。
 
 `TC_RUNTIME` / `TC_MEMORY_MB` / `TC_TIMEOUT_S` 可覆盖默认值（`Nodejs22.21` / 256 / 60）。
-抓取要等 6 个源 + 12 只 ETF + 4 条 K 线请求，本机实测约 5s，云上按出口延迟估 20~40s
-——60s 是给它的余量。
+抓取要等 6 个源 + 12 只 ETF + 4 条 K 线请求，云函数内实测约 3.5s（HTTP 往返总计 11.8s，
+含冷启动与两次 GitHub 调用）——60s 是给它的余量。
+
+> ⚠️ **线上函数的 Runtime 锁死了改不动（2026-10-15 实测）。** `UpdateFunctionConfiguration`
+> 只要带上 `Runtime` 就被拒：`FailedOperation.UpdateFunctionConfiguration 函数Runtime不支持修改
+> （Nodejs18.15）` —— 连只带 `FunctionName` + `Runtime` 两个字段的调用也一样，所以不是被别的
+> 字段连累，是这个函数的运行时字段本身不可变。**带上 Runtime 会让整条配置更新失败**，内存 /
+> 超时 / 环境变量跟着全不生效 —— 而抓取搬进函数后 30s 超时必然不够，那才是真故障。
+> 所以 `deploy.mjs` 撞到这个错会摘掉 `Runtime` 重试，并打印「云端实际值」而不是「想设的值」。
+> 要换运行时只有**重建函数**一条路：需要 `SCF_QcsRole`（本账号没有），且函数 URL 会变
+> （而 URL 是内联进已部署页面和 `scripts/build-daily.mjs` 的），不值当。**先记着函数跑在
+> Node 18 上**：改 `pipeline/` 时别用 Node 20+ 才有的 API（`import.meta.dirname`、
+> `Object.groupBy`、`Array.prototype.toSorted`、`Promise.withResolvers` 等）。
 
 函数 URL 也可以用仓库 Secret `REFRESH_URL` 覆盖（构建时注入前端）；
 不配的话 `scripts/build-daily.mjs` 里有一个内置默认值。
@@ -149,9 +160,12 @@ TC_SECRET_ID=AKID... TC_SECRET_KEY=... GITHUB_PAT=github_pat_... SHARED_SECRET=.
 不是真实 Node 版本号。已确认存在：`Nodejs22.21` / `20.19` / `18.15` / `16.13` / `14.18`；
 `Nodejs22.15`、`Nodejs20.15`、`Nodejs22.11` 都报 `InvalidParameterValue.Runtime`。
 `Nodejs22.21` 实测是 Node v22.21.1。抓取搬进函数后 `deploy.mjs` 的默认运行时已从
-`Nodejs18.15`（线上旧值）改成 **`Nodejs22.21`**，与本地/CI 对齐。新出一条 Node 线想看名字，
-拿 `CreateFunction` 试即可，但**必须不传 `Role`**：传了 `Role` 校验顺序变成先角色后运行时，
-角色不存在就直接 `ResourceNotFound.Role`，所有候选都会「通过」，等于没测。
+`Nodejs18.15` 改成 **`Nodejs22.21`**，但**线上那个函数并没有跟着变** —— 它的 Runtime
+锁死了（见上文「部署」一节），2026-10-15 实测 deploy 打印的是 `Nodejs18.15`。
+新建的函数才会拿到 `Nodejs22.21`。所以别把 `TC_RUNTIME` 当成一个照抄就能生效的开关。
+新出一条 Node 线想看名字，拿 `CreateFunction` 试即可，但**必须不传 `Role`**：传了 `Role`
+校验顺序变成先角色后运行时，角色不存在就直接 `ResourceNotFound.Role`，所有候选都会
+「通过」，等于没测。
 
 **`UpdateFunctionConfiguration` 是整体覆盖 `Environment.Variables`**：本地没有
 `GITHUB_PAT` / `SHARED_SECRET` 的副本时，任何只想去改代码/运行时的调用都别顺手带上它，
