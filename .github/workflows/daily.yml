@@ -1,15 +1,18 @@
 name: Daily Stock News Report
 
 on:
-  # 代码推送即触发构建：本人 push main 立即重建（GITHUB_TOKEN 的自动提交不触发，不会死循环）。
+  # 代码推送即触发。⚠️ 2026-10-15 起 **push 不再构建日报** —— 抓取已搬去腾讯云 SCF,
+  # 渲染也只能由云端刷新(/ payload → dispatch)驱动。push 这条路现在只做两件事:
+  # 跑单测、把仓库里已有的产物重新部署一遍。理由见下方 workflow_dispatch 段。
   push:
     branches: [main]
-  # ⚠️ 定时抓取已停用（2026-10-13 迁移到新账号 chanbigcool 时关闭）：旧账号 cc5207597-hash
-  # 被封的依据正是「在 Actions 里定时抓第三方站点」这个架构形态，不是代码质量。新账号另起一套
-  # 同样的定时抓取会被判为规避封禁并做账号关联。确认要继续跑、且接受这个风险，再取消注释。
+  # ⚠️ 定时抓取已停用(2026-10-13 迁移到新账号 chanbigcool 时关闭,2026-10-15 彻底不回头):
+  # 旧账号 cc5207597-hash 被封的依据正是「在 Actions 里定时抓第三方站点」这个**架构形态**,
+  # 不是代码质量。所以这里不是简单地重新开 cron —— 定时职责已搬到腾讯云 SCF 的定时触发器
+  # (北京 09:00 / 12:30 / 20:00),由云函数抓取、写 payload、再 dispatch 本工作流。
+  # 换言之:即使以后想恢复定时,也**不要**取消下面这段注释,那是把被判定为规避封禁的
+  # 形态原样搬回来。要改时段去改 SCF 的触发器。
   # schedule:
-  #   # 三时段兜底：GitHub Actions 的 schedule 会漂移/跳过，多时段互为备份。
-  #   # 01:00 UTC = 北京 09:00；04:30 UTC = 北京 12:30；12:00 UTC = 北京 20:00。
   #   - cron: '0 1 * * *'
   #   - cron: '30 4 * * *'
   #   - cron: '0 12 * * *'
@@ -79,6 +82,80 @@ jobs:
       - name: Run unit tests
         run: npm test
 
+      # ══ push 路径到此为止:只重新部署仓库里已有的产物,不构建 ═══════════════
+      # 为什么 push 不构建:构建要先有抓取结果,而抓取已在腾讯云 SCF 里跑。形态上
+      # 「Actions 定时抓第三方站点」正是旧账号被封的依据,所以 CI 里**禁止现场抓取**
+      # (scripts/build-daily.mjs 在 CONFIG.isCi && !FETCH_PAYLOAD 时直接抛错)。
+      # push 触发时拿不到 payload,于是这条路只做「把现有 index.html/history/ 重新
+      # 推一遍」—— 改了渲染模板或样式、想立刻上线时,这才是有用的那部分。
+      - name: Stage site for gh-pages (push)
+        if: github.event_name == 'push'
+        run: |
+          rm -rf deploy-stage
+          mkdir -p deploy-stage
+          cp -r index.html db.html history quality assets deploy-stage/
+
+      - name: Deploy to gh-pages (push)
+        if: github.event_name == 'push'
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: 'deploy-stage'
+          publish_branch: gh-pages
+          force_orphan: true
+
+      - name: Clean stage (push)
+        if: github.event_name == 'push'
+        run: rm -rf deploy-stage
+
+      # EdgeOne 直接部署仓库根目录(与下面 AI 阶段同一口径),不需要暂存目录。
+      - name: Deploy to EdgeOne Pages (push)
+        if: github.event_name == 'push' && env.EDGEONE_PAGES_API_TOKEN != ''
+        continue-on-error: true
+        env:
+          EDGEONE_PAGES_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
+        run: npx --yes edgeone@1.6.41 makers deploy . --name daily-stock-news --area global --json
+
+      # ── 以下全部是 workflow_dispatch(云端刷新)路径 ──────────────────────
+
+      # 从云函数写的孤儿分支取回这次抓取的结果。
+      #
+      # 为什么是 `git show FETCH_HEAD:payload.json` 而不是 checkout 那个分支:我们只是
+      # 要一个文件,把工作区切过去再切回来会动到上面刚对齐好的 main(后面还要提交)。
+      #
+      # 这里**不加 --depth=1**:fetch-cache 上每次都是一个**无父提交**(云函数用
+      # `parents: []` + force 覆盖),整条分支永远只有一个 commit、没有历史可精简;
+      # 而浅取会让仓库带上 shallow 边界,给后面那几次 `git push origin main` 平添变数。
+      - name: 取回云端抓取结果
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          FETCH_PAYLOAD: ${{ runner.temp }}/fetch.json
+        run: |
+          if ! git fetch origin fetch-cache; then
+            echo "::error::取不到 fetch-cache 分支。这个分支由云函数在第一次成功刷新时创建 ——"
+            echo "::error::多半是云函数还没部署/还没跑通过。去腾讯云 SCF 控制台看 daily-stock-refresh"
+            echo "::error::的「日志」，或本地 curl 一次 POST /refresh。"
+            exit 1
+          fi
+          git show FETCH_HEAD:payload.json > "$FETCH_PAYLOAD"
+          ls -l "$FETCH_PAYLOAD"
+
+      # 提前校验,因为下面的 Build preview 是 continue-on-error —— 那里失败会被吞掉,
+      # 一路走到「阶段二」才炸,日志里看不出是哪一步的问题。这里复用构建脚本同一个
+      # 读取层(pipeline/ingest.mjs):runId 对不上、形状不对都在这一步硬失败。
+      - name: 校验抓取结果(形状 + runId)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          FETCH_PAYLOAD: ${{ runner.temp }}/fetch.json
+          RUN_ID: ${{ github.event.inputs.run_id || '' }}
+        run: |
+          node --input-type=module -e '
+            import { loadFetchPayload } from "./pipeline/ingest.mjs";
+            const p = loadFetchPayload(process.env.FETCH_PAYLOAD, { expectRunId: process.env.RUN_ID || "" });
+            console.log(`✓ 抓取结果校验通过: ${p.items.length} 条原始新闻,`
+              + ` 抓于 ${p.meta.beijingTime || p.meta.generatedAt}(云函数侧 ${p.meta.elapsedMs ?? "?"}ms)`);
+          '
+
       # ── 阶段一：手动刷新先发纯关键词简报(无 AI, ~2-3 分钟),用户立刻有东西看 ──
       # 只对**手动刷新**生效(workflow_dispatch 云端刷新)。2026-10-13 起 push 触发也不再
       # 跑阶段一 —— push 的常态来源是桌面定时任务的自动提交,没人盯着看简报,却要为它多
@@ -92,6 +169,8 @@ jobs:
           BUILD_PHASE: preview
           ANTHROPIC_API_KEY: ''
           RUN_ID: ${{ github.event.inputs.run_id || '' }}
+          # 抓取结果由云函数写好放在 fetch-cache 分支,上一节已取到 runner 临时目录。
+          FETCH_PAYLOAD: ${{ runner.temp }}/fetch.json
           # 内联进页面的共享密钥, 必须与云函数的 SHARED_SECRET 一致。
           # 不接上的话页面会内联空串, 前端按钮不带 X-Refresh-Secret 头 → 云函数一律 401。
           REFRESH_SECRET: ${{ secrets.REFRESH_SECRET }}
@@ -154,20 +233,30 @@ jobs:
         run: npx --yes edgeone@1.6.41 makers deploy . --name daily-stock-news --area global --json
 
       # ── 阶段二：AI 研判正式构建(AI_BUDGET_MS 预算封顶),完成后覆盖部署,前端自动刷新 ──
+      # **只在 workflow_dispatch 下跑**:push 路径没有抓取结果(见上面的说明),
+      # 这里没有 `if:` 的话 push 会直接撞上脚本里那句「CI 里没有 FETCH_PAYLOAD」并变红。
       - name: Build AI report
+        if: github.event_name == 'workflow_dispatch'
         env:
           BUILD_PHASE: ai
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_MODEL: ${{ secrets.ANTHROPIC_MODEL }}
           RUN_ID: ${{ github.event.inputs.run_id || '' }}
+          FETCH_PAYLOAD: ${{ runner.temp }}/fetch.json
           # 见上面的 preview 步骤: 少了它, 产出的页面按钮就是 401。
           REFRESH_SECRET: ${{ secrets.REFRESH_SECRET }}
         run: node scripts/build-daily.mjs
 
       # 推送闸门:空报告不提交、不发布。放在提交之前 —— 这是全流程唯一按**产出**判定的关卡
       # (下面的 `git diff --cached --quiet` 只认零字节差异,空报告与好报告在它眼里一样)。
+      #
+      # 必须限定 workflow_dispatch:它读的 build-state.json 在 push 路径下是上一次构建的
+      # 存档,判出来的「值得推」会带着下面那串部署步骤在 push 时又跑一遍(内容一样、
+      # 纯粹重复部署)。本步一跳过,`steps.gate.outputs.worth_push` 就是空串,
+      # 依赖它的提交/部署步骤自动全部跳过 —— 与上面 gate_preview 同一套写法。
       - name: 推送闸门 (AI 阶段)
         id: gate
+        if: github.event_name == 'workflow_dispatch'
         run: |
           if node scripts/push-gate.mjs; then
             echo "worth_push=true" >> "$GITHUB_OUTPUT"
@@ -224,10 +313,14 @@ jobs:
         run: npx --yes edgeone@1.6.41 makers deploy . --name daily-stock-news --area global --json
 
       # ── 抓取健康闸门：放在 Deploy 之后，先发布再判红 ──
-      # 坏数据日照常更新站点(不整站冻结,心跳工作流照常补建),但 run 变红 →
-      # GitHub 邮件告警。判定逻辑见 pipeline/health.mjs,结果写在 build-state.json。
+      # 坏数据日照常更新站点(不整站冻结),但 run 变红 → GitHub 邮件告警。
+      # 判定逻辑见 pipeline/health.mjs,结果写在 build-state.json。
+      #
+      # 只对 workflow_dispatch 生效:push 路径不构建,build-state.json 是**上一次构建
+      # 留下来的存档**。拿旧状态判红会让「上一次是 failed、这一次只是改了个样式」的 push
+      # 无端变红,而且永远没有新构建去把它清掉 —— 那是自锁的假告警。
       - name: Fetch health gate
-        if: always()
+        if: always() && github.event_name == 'workflow_dispatch'
         run: |
           node -e '
             const fs = require("fs");

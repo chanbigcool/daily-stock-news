@@ -22,6 +22,7 @@ import { scoreNewsItem } from '../pipeline/sentiment.mjs';
 import { evaluateHealth, formatSourceSummary } from '../pipeline/health.mjs';
 import { SECTORS, CATEGORY_CLS, IMPACT_RANK, impactCompare } from '../pipeline/sectors.mjs';
 import { loadETFHistory, saveETFHistory, accumulateETF, buildETFChartData, buildSentimentData, buildImpactHeatmap, buildDirectionChart, buildTimeWindowData, fetchETFHistoryKLine } from '../pipeline/charts.mjs';
+import { loadFetchPayload } from '../pipeline/ingest.mjs';
 
 // ── HTML 渲染 ──────────────────────────────────────────
 
@@ -1228,10 +1229,37 @@ async function main() {
   console.log(`  AI 分析: ${CONFIG.apiKey ? 'Claude API' : '未启用 (关键词引擎)'}`);
   console.log(`  直连源: ${CONFIG.apiSources.filter(s => s.enabled !== false).length} 个财经 API + ${ETFS.length} 只 ETF 行情`);
 
-  // 1. Fetch news and ETF data in parallel
-  const [newsResult, etfData] = await Promise.all([fetchAllNews(), fetchETFData()]);
-  const newsItems = newsResult.items;
-  const fetchStats = newsResult.stats;
+  // 1. 取数据。**三种来源,只有一种能在 CI 里跑**:
+  //    · 云端抓取结果(FETCH_PAYLOAD)—— CI 的唯一合法来源。抓取在腾讯云 SCF 里
+  //      完成,云函数把原始条目写成 payload.json 推到分支 fetch-cache 再 dispatch。
+  //    · 本地现场抓取 —— 本机开发链路照旧(`node scripts/build-daily.mjs`)。
+  //    · CI 无 payload —— **直接失败**。回退去抓就等于把「在 Actions 里定时抓第三方
+  //      站点」这个形态又摆回来,而那正是旧账号被封的依据;宁可 run 变红。
+  const FETCH_PAYLOAD = process.env.FETCH_PAYLOAD || '';
+  let newsItems, fetchStats, etfData, payloadHistory = null;
+  if (FETCH_PAYLOAD) {
+    console.log(`  📦 使用云端抓取结果: ${FETCH_PAYLOAD}`);
+    const p = loadFetchPayload(FETCH_PAYLOAD, { expectRunId: process.env.RUN_ID || '' });
+    newsItems = p.items;
+    fetchStats = p.stats;
+    etfData = p.etfData;
+    payloadHistory = p.etfHistory;
+    console.log(`     抓于 ${p.meta.beijingTime || p.meta.generatedAt}(${p.meta.elapsedMs ?? '?'}ms,`
+      + ` ${(p.meta.payloadBytes / 1024).toFixed(0)}KB) · ${newsItems.length} 条原始新闻`);
+    if (p.meta.notes.length) for (const n of p.meta.notes) console.log(`     ⚠ 云函数笔记: ${n}`);
+  } else {
+    if (CONFIG.isCi) {
+      throw new Error(
+        'CI 里没有 FETCH_PAYLOAD —— 抓取已在 2026-10-15 搬到腾讯云 SCF,不再由 Actions 现场抓。\n'
+        + '  正常路径:点网页上的「🔄 刷新日报」按钮 → 云函数抓取并写 payload → dispatch 本工作流。\n'
+        + '  本机开发不受影响:`node scripts/build-daily.mjs` 照旧现场抓取。',
+      );
+    }
+    const [newsResult, etf] = await Promise.all([fetchAllNews(), fetchETFData()]);
+    newsItems = newsResult.items;
+    fetchStats = newsResult.stats;
+    etfData = etf;
+  }
 
   const dateStr = getTodayStr();
 
@@ -1393,14 +1421,25 @@ async function main() {
   // Stamp the build time so the "最后更新" line shows when this report was made.
   result.generatedAt = result.generatedAt || new Date().toISOString();
 
-  // Load & accumulate ETF price history (backfill from Sina K-line first)
+  // Load & accumulate ETF price history (K 线由云函数带回;本地才现场抓)
   console.log('\n📈 回填 ETF 历史数据 (新浪K线)...');
   let history;
-  try {
-    history = await fetchETFHistoryKLine(30);
-  } catch (err) {
-    console.warn(`  K线回填失败，使用本地历史: ${err.message}`);
+  if (payloadHistory) {
+    console.log(`  📦 使用云端抓取的 K 线: ${payloadHistory.dates.length} 个交易日`);
+    history = payloadHistory;
+  } else if (CONFIG.isCi) {
+    // 云端这轮 K 线没拿回来(抓取在云函数里失败,原因写在 payload 的 notes 里)。
+    // CI 里不能自己去补抓 —— 那正是要搬走的形态;退回仓库里的累积历史,
+    // 图会短一截但构建照常。
+    console.warn('  ⚠ 云端未带回 K 线,使用仓库里的累积历史');
     history = loadETFHistory(OUTPUT_DIR);
+  } else {
+    try {
+      history = await fetchETFHistoryKLine(30);
+    } catch (err) {
+      console.warn(`  K线回填失败，使用本地历史: ${err.message}`);
+      history = loadETFHistory(OUTPUT_DIR);
+    }
   }
   history = accumulateETF(history, etfData);
 
