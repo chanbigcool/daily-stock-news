@@ -5,7 +5,7 @@
 // 环境变量:
 //   GITHUB_PAT      fine-grained PAT, 仅 daily-stock-news 仓库 Actions: Read and write
 //   SHARED_SECRET   前端内置共享密钥(防无差别扫描; 真正安全边界是 PAT 最小权限)
-//   GITHUB_OWNER    默认 cc5207597-hash
+//   GITHUB_OWNER    默认 chanbigcool
 //   GITHUB_REPO     默认 daily-stock-news
 //   GITHUB_WORKFLOW 默认 daily.yml
 //   GITHUB_REF      默认 main
@@ -14,7 +14,7 @@
 import { pathToFileURL } from 'node:url';
 
 const PAT = process.env.GITHUB_PAT || '';
-const OWNER = process.env.GITHUB_OWNER || 'cc5207597-hash';
+const OWNER = process.env.GITHUB_OWNER || 'chanbigcool';
 const REPO = process.env.GITHUB_REPO || 'daily-stock-news';
 const WORKFLOW = process.env.GITHUB_WORKFLOW || 'daily.yml';
 const REF = process.env.GITHUB_REF || 'main';

@@ -92,6 +92,9 @@ jobs:
           BUILD_PHASE: preview
           ANTHROPIC_API_KEY: ''
           RUN_ID: ${{ github.event.inputs.run_id || '' }}
+          # 内联进页面的共享密钥, 必须与云函数的 SHARED_SECRET 一致。
+          # 不接上的话页面会内联空串, 前端按钮不带 X-Refresh-Secret 头 → 云函数一律 401。
+          REFRESH_SECRET: ${{ secrets.REFRESH_SECRET }}
         run: node scripts/build-daily.mjs
 
       # 推送闸门:空报告不提交、不发布。判定见 scripts/push-gate.mjs(读 build-state.json
@@ -157,6 +160,8 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_MODEL: ${{ secrets.ANTHROPIC_MODEL }}
           RUN_ID: ${{ github.event.inputs.run_id || '' }}
+          # 见上面的 preview 步骤: 少了它, 产出的页面按钮就是 401。
+          REFRESH_SECRET: ${{ secrets.REFRESH_SECRET }}
         run: node scripts/build-daily.mjs
 
       # 推送闸门:空报告不提交、不发布。放在提交之前 —— 这是全流程唯一按**产出**判定的关卡

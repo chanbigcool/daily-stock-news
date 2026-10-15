@@ -58,11 +58,57 @@ export function zipSingle(name, data) {
   return Buffer.concat([local, central, eocd]);
 }
 
+// 读函数的公网入口。两条路都试:
+//   ① 函数 URL —— SCF **没有**查询它的接口。2026-10-15 用假凭据按错误码实测
+//      scf/2018-04-16: ListFunctionUrls / GetFunctionUrl / CreateFunctionUrl /
+//      UpdateFunctionUrl / DeleteFunctionUrl 等 11 个候选全是 InvalidAction,
+//      而同批的 GetFunction / ListTriggers 正常回 AuthFailure(说明接口名确实不存在)。
+//      所以只能从 GetFunction 的返回里捞。字段名未经实测,因此按「值是 *.tencentscf.com
+//      的字符串」匹配,而不是猜某个具体键名。
+//   ② API 网关触发器 —— ListTriggers 里 Type==='apigw' 的 Source(老路子,仍适用)。
+// 两条都拿不到就返回 null,由调用方提示去控制台复制 —— 别把「没找到」说成「没变化」。
+async function readFunctionUrl(scf, name) {
+  const reach = (r) => {
+    const resp = r.Response || r;
+    if (resp.Error) {
+      console.warn(`⚠ 读函数 URL 时 ${resp.Error.Code},已跳过`);
+      return null;
+    }
+    const m = JSON.stringify(resp).match(/https:\/\/[\w.-]*\.tencentscf\.com/);
+    return m ? m[0] : null;
+  };
+  const own = reach(await scf('GetFunction', { FunctionName: name }));
+  if (own) return own;
+
+  const lt = (await scf('ListTriggers', { FunctionName: name })).Response || {};
+  const apigw = (lt.Triggers || []).find((t) => t.Type === 'apigw');
+  return apigw ? apigw.Source : null;
+}
+
+// 函数改动是异步生效的: UpdateFunctionCode 之后函数会短暂处于 Updating, 此时再调
+// UpdateFunctionConfiguration 必被拒(FailedOperation.UpdateFunctionConfiguration,
+// 「当前函数处于Updating状态」)。2026-10-15 实测撞上过 —— 所以两步之间必须等状态回落。
+async function waitActive(scf, name, tries = 30) {
+  for (let i = 0; i < tries; i++) {
+    const g = (await scf('GetFunction', { FunctionName: name })).Response || {};
+    if (g.Error) throw new Error(`GetFunction 失败: ${g.Error.Code} ${g.Error.Message}`);
+    if (g.Status === 'Active') return;
+    if (String(g.Status).endsWith('Failed')) {
+      const why = (g.StatusReasons || []).map((s) => s.ErrorMessage).join(' / ');
+      throw new Error(`函数状态 ${g.Status}: ${why}`);
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  throw new Error(`等待函数回到 Active 超时 (${tries * 2}s)`);
+}
+
 export async function deploy() {
   const REGION = process.env.TC_REGION || 'ap-guangzhou';
   const FUNC_NAME = 'daily-stock-refresh';
-  // Nodejs16.13 已 EOL;线上 2026-08-19 重建为 Nodejs18.15,这里跟着写死同一个。
-  const RUNTIME = 'Nodejs18.15';
+  // 线上一直是 Nodejs18.15(2026-08-19 从 16.13 升上来),默认跟着它走。
+  // 建/更新两条分支都会传 Runtime,所以这个值会压过控制台里选的版本。
+  // 这个账号实测支持 Nodejs20.19,要升用 TC_RUNTIME=Nodejs20.19,不必改代码。
+  const RUNTIME = process.env.TC_RUNTIME || 'Nodejs18.15';
 
   const OWNER = process.env.GITHUB_OWNER || 'chanbigcool';
   const REPO = process.env.GITHUB_REPO || 'daily-stock-news';
@@ -120,25 +166,32 @@ export async function deploy() {
     unwrap(await scf('UpdateFunctionCode', {
       FunctionName: FUNC_NAME, Handler: 'index.handler', ZipFile: zip.toString('base64'),
     }), 'UpdateFunctionCode');
+    await waitActive(scf, FUNC_NAME);
     console.log('[2/3] 更新配置(运行时 + 环境变量) ...');
     unwrap(await scf('UpdateFunctionConfiguration', {
       FunctionName: FUNC_NAME, Runtime: RUNTIME, Environment: { Variables: envVars },
     }), 'UpdateFunctionConfiguration');
   }
 
-  console.log('[3/3] 读取触发器 URL ...');
-  const lt = unwrap(await scf('ListTriggers', { FunctionName: FUNC_NAME }), 'ListTriggers');
-  const apigw = (lt.Triggers || []).find((t) => t.Type === 'apigw');
+  console.log('[3/3] 读取函数 URL ...');
+  const url = await readFunctionUrl(scf, FUNC_NAME);
 
   console.log('\n=== 部署完成 ===');
   console.log('账号     :', OWNER, '/', REPO);
   console.log('运行时   :', RUNTIME);
-  console.log('函数 URL :', apigw ? apigw.Source : '(未找到 apigw 触发器,函数 URL 未变)');
-  if (apigw) {
-    console.log('\n把该 URL 写进仓库 Secret REFRESH_URL(如果和现值不同):');
-    console.log('  GitHub 仓库 Settings → Secrets and variables → Actions');
+  if (url) {
+    console.log('函数 URL :', url);
+    console.log('\n把这个 URL 换成 scripts/build-daily.mjs 里的内置默认值,');
+    console.log('并同步 index.html 里那一行(它是提交进仓库的部署页)。');
+  } else {
+    console.log('函数 URL : 读不到');
+    console.log('  SCF 没有查询「函数 URL」的接口(实测见 readFunctionUrl 注释),GetFunction');
+    console.log('  的返回里也没捞到 *.tencentscf.com。请去控制台复制:');
+    console.log('  云函数 → daily-stock-refresh → 「函数 URL」标签页');
+    console.log('  若那里显示「未启用」,先启用并选**免认证** —— 浏览器带不了腾讯云签名,');
+    console.log('  选「需认证」按钮必然失败。');
   }
-  return { owner: OWNER, runtime: RUNTIME, url: apigw ? apigw.Source : null };
+  return { owner: OWNER, runtime: RUNTIME, url };
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
