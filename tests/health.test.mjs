@@ -1,7 +1,7 @@
 // ── 抓取健康判定单测 ───────────────────────────────────
 // 零 npm 依赖,运行: node --test tests/health.test.mjs
-// 覆盖 pipeline/health.mjs 的四类告警规则与最关键的一条边界:本地按设计跳过
-// RSS 时不能误报失败(否则本地每次构建都会告警)。
+// 覆盖 pipeline/health.mjs 的五类告警规则与最关键的一条边界:北京凌晨的日界宽限
+// 只放过「当日量」这一条,别的规则必须照常生效。
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -14,15 +14,11 @@ import { CONFIG } from '../pipeline/config.mjs';
 const atBeijing = (h, mi = 0) => Date.UTC(2026, 9, 13, h, mi) - 8 * 3600000;
 const BJ_NOON = atBeijing(10); // 宽限窗口外,规则 1 照常生效
 
-// 源总数从配置推导,不写死 —— 2026-10-13 删掉 22 条海外源后,写死的 43 会让下个
-// 读到这里的人以为统计坏了。
-const RSS_TOTAL = CONFIG.feeds.length + (CONFIG.extraFeeds || []).length;
+// 源总数从配置推导,不写死 —— 加/停源时测试跟着走,不必回来改数字。
 const API_TOTAL = CONFIG.apiSources.length;
 
 // 默认「一切正常」的统计,各用例按需覆盖
 const mkStats = (over = {}) => ({
-  rssEnabled: true,
-  rss: { total: RSS_TOTAL, okFeeds: RSS_TOTAL, failFeeds: 0, items: 500 },
   api: { total: API_TOTAL, okSources: API_TOTAL, failSources: 0, items: 120 },
   sources: CONFIG.apiSources.map(s => ({ name: s.name, kind: 'api', ok: true, count: 20, error: null })),
   ...over,
@@ -33,7 +29,7 @@ test('evaluateHealth:全部正常 → ok,无 issues', () => {
   assert.equal(h.level, 'ok');
   assert.deepEqual(h.issues, []);
   assert.equal(h.counts.kept, 50);
-  assert.equal(h.counts.fetched, 620);
+  assert.equal(h.counts.fetched, 120);
   assert.match(h.summary, /抓取正常/);
 });
 
@@ -42,30 +38,6 @@ test('evaluateHealth:当日条数低于下限 → failed(复现 09-12 只剩 8 �
   assert.equal(h.level, 'failed');
   assert.ok(h.issues.some(i => i.code === 'low-volume'));
   assert.match(h.summary, /抓取异常/);
-});
-
-test('evaluateHealth:RSS 全部失败 → failed(CI 上 Google News 被整层挡掉的情形)', () => {
-  const h = evaluateHealth(mkStats({
-    rss: { total: RSS_TOTAL, okFeeds: 0, failFeeds: RSS_TOTAL, items: 0 },
-  }), { kept: 50, analyzed: 40, now: BJ_NOON });
-  assert.equal(h.level, 'failed');
-  assert.ok(h.issues.some(i => i.code === 'rss-all-failed'));
-});
-
-test('evaluateHealth:本地按设计跳过 RSS(rssEnabled=false) → 不判失败', () => {
-  const h = evaluateHealth(mkStats({
-    rssEnabled: false,
-    rss: { total: RSS_TOTAL, okFeeds: 0, failFeeds: 0, items: 0 },
-  }), { kept: 50, analyzed: 40, now: BJ_NOON });
-  assert.equal(h.level, 'ok', '本地跳过 RSS 是设计行为,不能误报');
-});
-
-test('evaluateHealth:RSS 通了但 0 条 → degraded(非 failed)', () => {
-  const h = evaluateHealth(mkStats({
-    rss: { total: RSS_TOTAL, okFeeds: RSS_TOTAL, failFeeds: 0, items: 0 },
-  }), { kept: 50, analyzed: 40, now: BJ_NOON });
-  assert.equal(h.level, 'degraded');
-  assert.ok(h.issues.some(i => i.code === 'rss-no-items'));
 });
 
 test('evaluateHealth:直连 API 成功源过少 → degraded', () => {
@@ -101,8 +73,11 @@ test('evaluateHealth:单个 API 源报错 → degraded 并点名', () => {
 
 test('evaluateHealth:多条规则同时命中 → 取最重档(failed)', () => {
   const h = evaluateHealth(mkStats({
-    rss: { total: RSS_TOTAL, okFeeds: 0, failFeeds: RSS_TOTAL, items: 0 },
     api: { total: API_TOTAL, okSources: 1, failSources: API_TOTAL - 1, items: 3 },
+    sources: [
+      { name: '财联社', kind: 'api', ok: false, count: 0, error: 'HTTP 503' },
+      { name: '金十数据', kind: 'api', ok: true, count: 0, error: null },
+    ],
   }), { kept: 5, analyzed: 5, now: BJ_NOON });
   assert.equal(h.level, 'failed');
   assert.ok(h.issues.length >= 3);
@@ -134,19 +109,21 @@ test('evaluateHealth:宽限边界 —— 北京 5 点跳过,6 点起照判', () 
   assert.equal(evaluateHealth(mkStats(), { kept: 0, now: atBeijing(6, 0) }).level, 'failed');
 });
 
-test('evaluateHealth:宽限窗口内真故障照判(RSS 全灭仍 failed)', () => {
+test('evaluateHealth:宽限窗口内真故障照判(API 全灭仍 degraded)', () => {
   const h = evaluateHealth(mkStats({
-    rss: { total: RSS_TOTAL, okFeeds: 0, failFeeds: RSS_TOTAL, items: 0 },
+    api: { total: API_TOTAL, okSources: 0, failSources: API_TOTAL, items: 0 },
+    sources: [{ name: '财联社', kind: 'api', ok: false, count: 0, error: 'HTTP 503' }],
   }), { kept: 0, analyzed: 0, now: atBeijing(1) });
-  assert.equal(h.level, 'failed', '宽限只放过「日界」这一条,别的规则必须照常生效');
-  assert.ok(h.issues.some(i => i.code === 'rss-all-failed'));
+  assert.equal(h.level, 'degraded', '宽限只放过「日界」这一条,别的规则必须照常生效');
+  assert.ok(!h.issues.some(i => i.code === 'low-volume'));
+  assert.ok(h.issues.some(i => i.code === 'api-few-sources'));
+  assert.ok(h.issues.some(i => i.code === 'api-error'));
 });
 
-test('formatSourceSummary:默认输出 RSS 汇总 + 逐个 API 源', () => {
+test('formatSourceSummary:默认输出逐个 API 源', () => {
   const out = formatSourceSummary(mkStats());
-  assert.match(out, new RegExp(`^RSS ${RSS_TOTAL} 源 → 500 条`));
   assert.match(out, /财联社 → 20 条/);
-  assert.equal(out.split('\n').length, 1 + CONFIG.apiSources.length);
+  assert.equal(out.split('\n').length, CONFIG.apiSources.length);
 });
 
 test('formatSourceSummary:onlyProblems 只留有问题的行(告警正文不刷屏)', () => {
@@ -158,15 +135,6 @@ test('formatSourceSummary:onlyProblems 只留有问题的行(告警正文不刷�
   }), { onlyProblems: true });
   assert.ok(!out.includes('财联社'), '正常源应被过滤');
   assert.match(out, /金十数据 → 0 条/);
-  assert.ok(!out.includes('RSS'), 'RSS 正常时汇总行也应过滤');
-});
-
-test('formatSourceSummary:本地跳过 RSS 时明确说明,不写成失败', () => {
-  const out = formatSourceSummary(mkStats({
-    rssEnabled: false,
-    rss: { total: RSS_TOTAL, okFeeds: 0, failFeeds: 0, items: 0 },
-  }));
-  assert.match(out, /按设计跳过/);
 });
 
 test('formatSourceSummary:陈旧源不打成 ✓,标出最新条目年龄', () => {

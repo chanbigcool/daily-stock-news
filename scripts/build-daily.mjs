@@ -13,7 +13,7 @@ const OUTPUT_DIR = join(PROJECT_ROOT, 'output');
 // on gh-pages. output/ stays gitignored for local ephemeral artifacts.
 const HISTORY_DIR = join(PROJECT_ROOT, 'history');
 
-import { CONFIG } from '../pipeline/config.mjs';
+import { CONFIG, ETFS } from '../pipeline/config.mjs';
 import { formatTime, getTodayStr, getTodayDisplay, beijingDateKey, beijingNowString } from '../pipeline/utils.mjs';
 import { fetchAllNews, fetchETFData } from '../pipeline/fetch.mjs';
 import { dedupAndClean, dedupKey } from '../pipeline/clean.mjs';
@@ -986,7 +986,6 @@ async function sendHealthAlert(health, fetchStats, dateStr) {
     `- 原始抓取: ${counts.fetched} 条`,
     `- 当日可用: ${counts.kept} 条`,
     `- 精选卡片: ${counts.analyzed} 条`,
-    `- RSS: ${counts.rssEnabled === false ? '未尝试(本地运行)' : counts.rssOk + '/' + counts.rssTotal + ' 源成功'}`,
     `- 直连 API: ${counts.apiOk}/${counts.apiTotal} 源成功`,
     '',
     '---',
@@ -1049,9 +1048,11 @@ export function mergeWithHistory(freshItems, historyPayload) {
     const key = dedupKey(a.title);
     const linkKey = a.link || '';
     // A story already seen via its title OR its link is a duplicate. The link
-    // check catches cross-language dupes: the freshly-fetched RSS item carries
-    // the English original while the archive stored the translated title_cn,
-    // so their title keys differ even though both point at the same article.
+    // check started as a cross-language guard: Google News RSS carried the
+    // English original while the archive stored the translated title_cn, so the
+    // two title keys differed although both pointed at the same article. RSS is
+    // gone (2026-10-15), and today's archive may still hold its items from an
+    // earlier build — the link check is what keeps them from re-entering.
     const dup = (key && seen.has(key)) || (linkKey && seenLinks.has(linkKey));
     if (!dup) {
       if (key) seen.set(key, a);
@@ -1217,21 +1218,6 @@ export function rebuildChartData(payload) {
   return chartData;
 }
 
-// 按北京日期给条目计数,只保留最近 maxDays 天,更早的合并成一项——
-// 原始 RSS 可横跨数周,不合并会把 build-state.json 撑成几百行。
-function dayHistogram(items, maxDays = 5) {
-  const counts = new Map();
-  for (const item of items) {
-    const key = beijingDateKey(item.pubDate) || '日期未知';
-    counts.set(key, (counts.get(key) || 0) + 1);
-  }
-  const sorted = [...counts.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  const out = Object.fromEntries(sorted.slice(0, maxDays));
-  const rest = sorted.slice(maxDays).reduce((n, [, v]) => n + v, 0);
-  if (rest > 0) out['更早'] = rest;
-  return out;
-}
-
 // ── 主流程 ─────────────────────────────────────────────
 
 async function main() {
@@ -1240,7 +1226,7 @@ async function main() {
   console.log('═══════════════════════════════════════');
   console.log(`  时间(北京时间): ${beijingNowString()}`);
   console.log(`  AI 分析: ${CONFIG.apiKey ? 'Claude API' : '未启用 (关键词引擎)'}`);
-  console.log(`  Google News RSS: ${CONFIG.feeds.length} 源`);
+  console.log(`  直连源: ${CONFIG.apiSources.filter(s => s.enabled !== false).length} 个财经 API + ${ETFS.length} 只 ETF 行情`);
 
   // 1. Fetch news and ETF data in parallel
   const [newsResult, etfData] = await Promise.all([fetchAllNews(), fetchETFData()]);
@@ -1260,15 +1246,15 @@ async function main() {
   // (08-07 晚间新闻混进 08-08 日报) and the "两天混一起" complaint recurs.
   // 漏斗计数:把「原始 → 去重 → 清洗 → 聚类 → 分类 → 当日」每级条数落盘,
   // 定位「报告为什么这么薄」时直接看数字,不靠猜是哪一级吃掉的。
-  // RSS/API 分量单独记:合并后 sourceType 仍可区分(直连 API 会被打标)。
+  // 原始池的两个分量单独记:本次现场抓的(直连 API 会打 sourceType)与今天早些
+  // 那次构建留下来的存档(mergeWithHistory 会给它打 archived)。早上的条目有没有
+  // 活到晚上,看这两个数就知道。RSS 层已删(2026-10-15),不再有第三个分量。
   const isApi = item => item.sourceType === 'direct_api';
+  const isArchived = item => item.archived === true;
   const funnel = {
     raw: mergedItems.length,
     rawApi: mergedItems.filter(isApi).length,
-    rawRss: mergedItems.filter(i => !isApi(i)).length,
-    // RSS 条目的发布日分布:验证「Google 返回大量非当日旧文 → 被日界过滤」
-    // 这个假设到底是真是假(此前 2000 条 RSS 只贡献 2~6 条/天,原因未证实)。
-    rawRssByDay: dayHistogram(mergedItems.filter(i => !isApi(i))),
+    rawArchived: mergedItems.filter(isArchived).length,
   };
   const deduped = dedupAndClean(mergedItems, funnel);
   const kept = deduped.filter(item => beijingDateKey(item.pubDate) === dateStr);
@@ -1276,7 +1262,7 @@ async function main() {
   if (dropped > 0) console.log(`  🗓️  丢弃非当日(北京时间 ${dateStr})新闻: ${dropped} 条`);
   funnel.dayFilter = kept.length;
   funnel.keptApi = kept.filter(isApi).length;
-  funnel.keptRss = kept.length - funnel.keptApi;
+  funnel.keptArchived = kept.filter(isArchived).length;
   console.log(`\n✅ 最终 ${kept.length} 条待分析新闻（${dateStr} 当日）\n`);
 
   // 3. Analyze
@@ -1301,9 +1287,9 @@ async function main() {
 
   // 漏斗诊断随 result 一路进存档,落盘在 build-state.json 的 funnel 字段。
   result.funnel = funnel;
-  console.log(`  📉 漏斗: 原始 ${funnel.raw}(API ${funnel.rawApi}/RSS ${funnel.rawRss})`
+  console.log(`  📉 漏斗: 原始 ${funnel.raw}(直连 ${funnel.rawApi}/存档 ${funnel.rawArchived})`
     + ` → 去重 ${funnel.dedup} → 清洗 ${funnel.noise} → 聚类 ${funnel.clusterEvents}`
-    + ` → 分类 ${funnel.filter} → 当日 ${funnel.dayFilter}(API ${funnel.keptApi}/RSS ${funnel.keptRss})`);
+    + ` → 分类 ${funnel.filter} → 当日 ${funnel.dayFilter}(直连 ${funnel.keptApi}/存档 ${funnel.keptArchived})`);
 
   // 3a. 事件级去重:按 eventId 聚合 kept(代表条目已挂事件元数据),
   // 重建当日 events 列表供存档(events_YYYYMMDD.json)。

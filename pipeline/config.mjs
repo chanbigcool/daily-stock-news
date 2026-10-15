@@ -16,43 +16,6 @@ export const CONFIG = {
   apiBase: IS_CI ? (process.env.ANTHROPIC_BASE_URL || 'https://open.bigmodel.cn/api/anthropic') : 'http://127.0.0.1:15721',
   model: IS_CI ? (process.env.ANTHROPIC_MODEL || 'glm-4.5-flash') : 'claude-sonnet-4-20250514',
 
-  // Google News RSS 的时间窗(见 fetch.mjs 的 withRecency)。Google 的搜索 RSS 按
-  // 相关度而非时间排序,实测 2054 条里只有 8 条当日 → 统一在 q 后追加 when:1d 运算符。
-  // 若这个运算符被 Google 停用/失效,把这里改成 null 即可整体关掉(不删代码,便于回滚)。
-  rssRecencyWindow: '1d',
-
-  // Google News RSS feeds —— 只保留中文查询与国内站点的 sites= 限定查询。
-  // 2026-10-13 删掉 22 条真海外源(13 条具名 Reuters/Bloomberg/CNBC/WSJ/FT/Nikkei
-  // + 9 条英/韩文泛 query)。依据是 09-12 起 266 次构建的健康记录:22 次 CI 红灯里
-  // 只有 3 次由「RSS 43 个源全部失败」造成,另外 19 次与海外源无关(见 health.mjs
-  // 的日界宽限规则);而 13 个具名海外源在最近 10 天存档里贡献 0 条。
-  // 本机(大陆网络)本来就整层跳过 RSS,删源只影响 CI。
-  feeds: [
-    { url: 'https://news.google.com/rss/search?q=%E5%8D%8A%E5%AF%BC%E4%BD%93+%E8%8A%AF%E7%89%87+%E5%85%89%E6%A8%A1%E5%9D%97+%E5%88%9B%E6%96%B0%E8%8D%AF+%E9%BB%84%E9%87%91&hl=zh-CN&gl=CN&ceid=CN:zh-Hans', name: '中文-四板块' },
-    { url: 'https://news.google.com/rss/search?q=创新药+生物医药+临床试验+FDA+审批+药明康德+百济神州+恒瑞医药&hl=zh-CN&gl=CN&ceid=CN:zh-Hans', name: '中文-创新药' },
-    { url: 'https://news.google.com/rss/search?q=黄金+金价+COMEX+黄金ETF+央行购金+美联储+利率&hl=zh-CN&gl=CN&ceid=CN:zh-Hans', name: '中文-黄金' },
-  ],
-  extraFeeds: [
-    { url: 'https://news.google.com/rss/search?q=中际旭创+新易盛+天孚通信+光模块+制裁+出口管制+业绩+订单&hl=zh-CN&gl=CN&ceid=CN:zh-Hans', name: '光模块龙头' },
-    { url: 'https://news.google.com/rss/search?q=中芯国际+北方华创+中微公司+海光信息+寒武纪+先进制程+设备+制裁+产能&hl=zh-CN&gl=CN&ceid=CN:zh-Hans', name: '半导体龙头' },
-    { url: 'https://news.google.com/rss/search?q=药明康德+百济神州+恒瑞医药+信达生物+康龙化成+创新药+临床+审批+授权+出海&hl=zh-CN&gl=CN&ceid=CN:zh-Hans', name: '创新药龙头' },
-    { url: 'https://news.google.com/rss/search?q=紫金矿业+山东黄金+中金黄金+赤峰黄金+银泰黄金+黄金股+A股&hl=zh-CN&gl=CN&ceid=CN:zh-Hans', name: '黄金龙头' },
-    { url: 'https://news.google.com/rss/search?q=光模块+800G+1.6T+订单+出货+业绩+关税+贸易战&hl=zh-CN&gl=CN&ceid=CN:zh-Hans', name: '光模块业绩' },
-    { url: 'https://news.google.com/rss/search?q=半导体+芯片+光模块+创新药+黄金&hl=zh-CN&gl=CN&ceid=CN:zh-Hans&sites=cls', name: '财联社-四板块' },
-    { url: 'https://news.google.com/rss/search?q=药明康德+百济神州+恒瑞医药+创新药+临床+审批&hl=zh-CN&gl=CN&ceid=CN:zh-Hans&sites=cls', name: '财联社-创新药' },
-    { url: 'https://news.google.com/rss/search?q=黄金+金价+美联储+利率+央行购金&hl=zh-CN&gl=CN&ceid=CN:zh-Hans&sites=cls', name: '财联社-黄金' },
-    { url: 'https://news.google.com/rss/search?q=制裁+出口管制+芯片+科技+限制&hl=zh-CN&gl=CN&ceid=CN:zh-Hans&sites=cls', name: '财联社-制裁政策' },
-    { url: 'https://news.google.com/rss/search?q=半导体+芯片+光模块+创新药+黄金&hl=zh-CN&gl=CN&ceid=CN:zh-Hans&sites=jin10', name: '金十数据-四板块' },
-    { url: 'https://news.google.com/rss/search?q=黄金+金价+美联储+利率+非农+CPI&hl=zh-CN&gl=CN&ceid=CN:zh-Hans&sites=jin10', name: '金十数据-宏观' },
-    { url: 'https://news.google.com/rss/search?q=半导体+芯片+创新药+黄金+A股&hl=zh-CN&gl=CN&ceid=CN:zh-Hans&sites=sina', name: '新浪财经-四板块' },
-    { url: 'https://news.google.com/rss/search?q=半导体+芯片+科技股+光模块+算力&hl=zh-CN&gl=CN&ceid=CN:zh-Hans&sites=sina', name: '新浪财经-科技' },
-    { url: 'https://news.google.com/rss/search?q=半导体+芯片+光模块+创新药+黄金&hl=zh-CN&gl=CN&ceid=CN:zh-Hans&sites=wallstreetcn', name: '华尔街见闻-四板块' },
-    { url: 'https://news.google.com/rss/search?q=美联储+利率+黄金+芯片+制裁+科技战&hl=zh-CN&gl=CN&ceid=CN:zh-Hans&sites=wallstreetcn', name: '华尔街见闻-宏观' },
-    { url: 'https://news.google.com/rss/search?q=半导体+芯片+创新药+黄金+投资&hl=zh-CN&gl=CN&ceid=CN:zh-Hans&sites=21jingji', name: '21世纪经济' },
-    { url: 'https://news.google.com/rss/search?q=创新药+生物医药+黄金+科技股&hl=zh-CN&gl=CN&ceid=CN:zh-Hans&sites=eeo', name: '经济观察报' },
-    { url: 'https://news.google.com/rss/search?q=半导体+创新药+黄金+资产配置&hl=zh-CN&gl=CN&ceid=CN:zh-Hans&sites=yicai', name: '第一财经' },
-  ],
-
   // 每源条数上限(2026-09-12 实测标定):原先 5 个源都写死 page=1&page_size=30,
   // 30 条只覆盖最近 2~3 小时 → 当日候选池被人工压到约 150 条。实测放大后当日
   // 条数:东财 30→82、见闻 30→100、见闻医药 40→100(但该频道自 09-08 起停更)、
@@ -62,17 +25,23 @@ export const CONFIG = {
     { name: '财联社', url: 'https://www.cls.cn/api/cache?app=CailianpressWeb&name=telegraph&os=web&sv=8.7.9', enabled: true },
     { name: '金十数据', url: 'https://www.jin10.com/flash_newest.js', enabled: true },
     { name: '东方财富', url: 'https://np-listapi.eastmoney.com/comm/web/getNewsByColumns?client=web&biz=web_news_new&column=350,35,466,467&order=1&needInteractData=0&page_index=1&page_size=100&req_trace=test', enabled: true },
-    // pages:新浪的 page 参数有效(未去重重叠约 25%),3 页正好覆盖到北京当日 00:00
-    { name: '新浪财经', url: 'https://zhibo.sina.com.cn/api/zhibo/feed?page=1&page_size=100&zhibo_id=152&tag_id=0&type=0', pages: 3, enabled: true },
+    // pages:新浪的 page 参数有效(未去重重叠约 25%)。2026-10-15 从 3 页抬到 6 页:
+    // 实测 3 页在当日高峰只回溯到午后,6 页(600 条)才够覆盖更早时段,当日可入板块 +23 条。
+    { name: '新浪财经', url: 'https://zhibo.sina.com.cn/api/zhibo/feed?page=1&page_size=100&zhibo_id=152&tag_id=0&type=0', pages: 6, enabled: true },
+    // 同花顺快讯 —— 2026-10-15 新增,用于补上删除 Google News RSS 之后的缺口。
+    // 实测(阶段 A):3 页 ×100 条、跨板块,当日可入板块 36 条,是候选里增量最大的一个。
+    // 它是**滚动快讯流**(3 页约覆盖 10 小时),所以早上构建时当日条数会明显少于晚间。
+    { name: '同花顺快讯', url: 'https://news.10jqka.com.cn/tapp/news/push/stock/?page=1&tag=&track=website&pagesize=100', pages: 3, enabled: true },
     { name: '华尔街见闻', url: 'https://api-one.wallstcn.com/apiv1/content/lives?channel=global-channel&limit=100', enabled: true },
     // 华尔街见闻医药频道 — 专门的创新药新闻源（礼来/百济/诺和诺德/药明康德等）
     // 2026-09-12 停用：该频道返回 HTTP 200 + 100 条,但最新一条停在 4 天前(半年前的
-    // 存量池),当日产出一直是 0 —— 创新药板块实际靠其他 API 与 RSS 供量。它每天都会
+    // 存量池),当日产出一直是 0 —— 创新药板块实际靠其他 API 供量。它每天都会
     // 命中 health 的「源内容陈旧」判 degraded,进而每次构建发一条微信告警。找到替代
     // 的医药专用源后改回 true 即可(抓取器 fetchWallStreetCNInfoFlow 一并保留)。
+    // 2026-10-15 复核:当日仍只有 1 条、最新 9 小时前 —— 确认仍停更,维持 false。
     { name: '华尔街见闻医药', url: 'https://api-one.wallstcn.com/apiv1/content/information-flow?channel=medicine&client=pc&limit=100', enabled: false },
   ],
-  // 单源总量兜底(不是每页上限):新浪 3 页 ×100 是当前最大的一源,取 300 留余量。
+  // 单源总量兜底(不是每页上限):新浪 6 页 ×100 是当前最大的一源,取 300 留余量。
   apiSourceMaxItems: 300,
 
   // 单个直连 API 请求的超时(ms)。原先各抓取器传的是 `timeout: 10000`,而 Node 原生
@@ -85,7 +54,7 @@ export const CONFIG = {
   // analyzed 条数分布(14~95,中位约 40)取的保守下限,先观察再收紧。
   health: {
     minKept: 10,        // 当日(北京时间)可用新闻下限,低于此判 failed
-    minApiSources: 3,   // 直连 API 成功源数下限(apiSources 里 enabled 的共 5 个),低于此判 degraded
+    minApiSources: 4,   // 直连 API 成功源数下限(apiSources 里 enabled 的共 6 个),低于此判 degraded
     // 源内最新条目的最大年龄(小时),超过判 degraded。防「返回 200 的存量池」
     // 这类假绿灯:见闻医药频道 09-12 实测返回 100 条、HTTP 200,最新一条却停在
     // 4 天前,只数条数的健康判定判它 ok。48 小时是折中——足够放过周末的自然清淡,

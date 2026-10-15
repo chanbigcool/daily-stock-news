@@ -2,6 +2,40 @@
 
 export function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+// 带重试的 fetch —— **只给实测会间歇性失败的源用**(fetch.mjs 里的两个新浪接口)。
+//
+// 依据(2026-10-14/15 探针实测,结论记在 cloud/README.md):`hq.sinajs.cn` 从云函数
+// 出去连打 5 次有 1 次 403,而且是**慢拒**(那次耗时 5.3s),本机 5 次全成 ——
+// 那是出口 IP 层面的间歇拦截,换 User-Agent/Referer 都没用,只能重试。
+// 不重试的话,搬进云函数后每天会随机丢掉整批 ETF 行情。
+//
+// 只重试「重试有意义」的情况:网络错误 / 超时,以及 403(n) / 408 / 429 / 5xx。
+// 404、401 这类确定性错误直接返回给调用方 —— 重试三次只是白等。
+export async function fetchWithRetry(url, opts = {}, {
+  tries = 3,
+  backoffMs = [500, 1500],
+  retryOnStatus = [403, 408, 429, 500, 502, 503, 504],
+} = {}) {
+  let lastErr;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const resp = await fetch(url, opts);
+      if (resp.ok) return resp;
+      const last = i === tries - 1;
+      if (last || !retryOnStatus.includes(resp.status)) return resp;
+      // 丢掉这次没用的响应体,否则连接不会回收到池子里
+      try { await resp.body?.cancel(); } catch { /* 取消失败无所谓 */ }
+      lastErr = new Error('HTTP ' + resp.status);
+    } catch (err) {
+      lastErr = err;
+      if (i === tries - 1) throw err;
+    }
+    await sleep(backoffMs[Math.min(i, backoffMs.length - 1)]);
+  }
+  throw lastErr;
+}
+
+
 export function htmlToText(s) {
   let t = (s || '')
     .replace(/&nbsp;/g, ' ').replace(/&#160;/g, ' ')

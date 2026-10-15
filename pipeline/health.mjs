@@ -25,12 +25,8 @@ export function evaluateHealth(stats = {}, { kept = 0, analyzed = 0, now = Date.
   const maxStaleHours = cfg.maxStaleHours ?? 48;
   const dayStartGraceHours = cfg.dayStartGraceHours ?? 6;
 
-  const rss = stats.rss || { total: 0, okFeeds: 0, failFeeds: 0, items: 0 };
   const api = stats.api || { total: 0, okSources: 0, failSources: 0, items: 0 };
   const sources = Array.isArray(stats.sources) ? stats.sources : [];
-  // probeRSSAvailable 在本地(国内网络不通 Google)按设计跳过全部 RSS ——
-  // 这种「没尝试」不能算失败,否则本地每次构建都会误报。
-  const rssEnabled = !!stats.rssEnabled;
 
   const issues = [];
   let level = 'ok';
@@ -49,31 +45,24 @@ export function evaluateHealth(stats = {}, { kept = 0, analyzed = 0, now = Date.
     flag('failed', 'low-volume', `当日仅 ${kept} 条新闻(下限 ${minKept})`);
   }
 
-  // 2. RSS 全灭(一个源都没通),或通了但一条都没返回
-  if (rssEnabled && rss.okFeeds === 0) {
-    flag('failed', 'rss-all-failed', `RSS ${rss.total} 个源全部失败`);
-  } else if (rssEnabled && rss.items === 0) {
-    flag('degraded', 'rss-no-items', `RSS ${rss.okFeeds} 个源成功但返回 0 条`);
-  }
-
-  // 3. 直连 API 成功源数过少
+  // 2. 直连 API 成功源数过少
   if (api.total > 0 && api.okSources < minApiSources) {
     flag('degraded', 'api-few-sources', `直连 API 仅 ${api.okSources}/${api.total} 个源成功(下限 ${minApiSources})`);
   }
 
-  // 4. 单个 API 源「请求成功但 0 条」——接口变更/限流的典型表现(如 09-12 的金十、东财)
+  // 3. 单个 API 源「请求成功但 0 条」——接口变更/限流的典型表现(如 09-12 的金十、东财)
   const emptyApis = sources.filter(s => s.kind === 'api' && s.ok && s.count === 0).map(s => s.name);
   if (emptyApis.length > 0) {
     flag('degraded', 'api-empty-source', `API 源无数据: ${emptyApis.join('、')}`);
   }
 
-  // 5. 单个 API 源直接报错
+  // 4. 单个 API 源直接报错
   const failedApis = sources.filter(s => s.kind === 'api' && !s.ok).map(s => s.name);
   if (failedApis.length > 0) {
     flag('degraded', 'api-error', `API 源抓取失败: ${failedApis.join('、')}`);
   }
 
-  // 6. 源「有返回,但内容是存量池」——条数看着满、最新条目却很久以前。
+  // 5. 源「有返回,但内容是存量池」——条数看着满、最新条目却很久以前。
   // 09-12 实测:见闻医药返回 100 条 HTTP 200,最新一条停在 4 天前,只数条数的判定
   // 判它 ok,于是板块专用源死了四天没人发现。这条把它降级并点名。
   // 只对「确实有返回」的源判(s.count > 0):0 条的情况由规则 4 覆盖,不重复报。
@@ -88,14 +77,9 @@ export function evaluateHealth(stats = {}, { kept = 0, analyzed = 0, now = Date.
   }
 
   const counts = {
-    fetched: (rss.items || 0) + (api.items || 0),
+    fetched: api.items || 0,
     kept,
     analyzed,
-    // rssEnabled 一并带出:展示层要区分「RSS 全失败」与「本地按设计没尝试」,
-    // 否则本地构建的横幅会谎报 RSS 挂了。
-    rssEnabled,
-    rssOk: rss.okFeeds || 0,
-    rssTotal: rss.total || 0,
     apiOk: api.okSources || 0,
     apiTotal: api.total || 0,
     // 宽限窗口内 kept 天然趋近 0,展示层要能说清「这不是异常」而不是干看着 0。
@@ -110,24 +94,14 @@ export function evaluateHealth(stats = {}, { kept = 0, analyzed = 0, now = Date.
   return { level, issues, summary, counts };
 }
 
-// 控制台/推送用的可读摘要:RSS 汇总一行 + 逐个直连 API 一行。
-// onlyProblems=true 时只留有问题的行(告警正文用,避免把 RSS 各行刷屏)。
+// 控制台/推送用的可读摘要:逐个直连 API 一行。
+// onlyProblems=true 时只留有问题的行(告警正文用)。
 // 陈旧源(count>0 但最新条目很老)也按「有问题」处理并标注年龄 —— 否则它会被
 // 打印成「✓ 100 条」,正是要消灭的假绿灯。
 export function formatSourceSummary(stats = {}, { onlyProblems = false, now = Date.now() } = {}) {
-  const rss = stats.rss || { total: 0, okFeeds: 0, failFeeds: 0, items: 0 };
   const sources = Array.isArray(stats.sources) ? stats.sources : [];
   const maxStaleHours = CONFIG.health?.maxStaleHours ?? 48;
   const lines = [];
-
-  const rssEnabled = !!stats.rssEnabled;
-  const rssProblem = !rssEnabled || rss.okFeeds === 0 || rss.items === 0;
-  if (!onlyProblems || rssProblem) {
-    const state = rssEnabled
-      ? `成功 ${rss.okFeeds} / 失败 ${rss.failFeeds}`
-      : '本地探测不可达,按设计跳过';
-    lines.push(`RSS ${rss.total} 源 → ${rss.items} 条 (${state})`);
-  }
 
   for (const s of sources) {
     if (s.kind !== 'api') continue;

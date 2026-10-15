@@ -14,7 +14,7 @@ flowchart LR
         A3["东方财富 API"]
         A4["新浪财经 API"]
         A5["华尔街见闻 API"]
-        A6["Google News RSS<br/>(21 条 Feed)"]
+        A6["同花顺快讯 API"]
     end
 
     subgraph Pipeline["ETL 流水线 (pipeline/)"]
@@ -50,7 +50,7 @@ flowchart LR
 | 层面 | 技术选型 |
 |------|----------|
 | 运行时 | Node.js (ESM `.mjs`, zero dependencies) |
-| 数据抓取 | `fetch` API (原生 HTTP), 正则解析 XML/JSON/JS |
+| 数据抓取 | `fetch` API (原生 HTTP), 正则解析 JSON / JS 变量注入 |
 | AI 分析 | Claude API 或本地关键词引擎兜底 (无需密钥) |
 | 渲染 | 纯字符串拼接 HTML, 内联 CSS + 原生 JS |
 | 图表 | Chart.js 4.4 (CDN), 无构建时依赖 |
@@ -128,10 +128,10 @@ daily-stock-news/
 │   ├── cloud-refresh.mjs          # 云函数的 ESM 孪生版（本地调试用，线上跑 cloud/index.js）
 │   └── refresh-server.mjs         # 本地刷新服务（端口 3456，含历史 API，仅本机）
 ├── pipeline/
-│   ├── config.mjs                 # 配置中心（API 源、RSS Feed、ETF 列表、关键词规则）
-│   ├── utils.mjs                  # 工具函数（HTML 清洗、日期格式化）
+│   ├── config.mjs                 # 配置中心（API 源、ETF 列表、板块关键词规则、健康阈值）
+│   ├── utils.mjs                  # 工具函数（HTML 清洗、北京时间换算、带重试的 fetch）
 │   ├── sectors.mjs                # 板块常量与共享工具（名称/CSS class/颜色/impact 排序）
-│   ├── fetch.mjs                  # 数据抓取层（5 API + 21 RSS + 12 ETF 行情）
+│   ├── fetch.mjs                  # 数据抓取层（6 API + 12 ETF 行情）
 │   ├── health.mjs                 # 抓取健康判定（纯函数：ok / degraded / failed）
 │   ├── classifier.mjs             # 板块分类规则引擎（clean 与 analyze 共用的唯一分类出口）
 │   ├── clean.mjs                  # 清洗层（去重、事件聚类、板块分类、时效性过滤）
@@ -157,13 +157,13 @@ daily-stock-news/
 │   ├── dates.json                 # 日期索引
 │   └── db.sqlite                  # 全量真 SQLite（数据查询页数据源）—— 构建产物，不入库
 ├── quality/                       # 产出质量校验报告（quality/index.html + report.json）
-├── tests/                         # 单元测试（11 个文件 / 206 个用例，node --test 自动发现）
+├── tests/                         # 单元测试（11 个文件 / 200 个用例，node --test 自动发现）
 │   ├── analyze.test.mjs           # AI 研判 + 关键词兜底引擎
 │   ├── clean.test.mjs             # 清洗层（去重、板块分类、时效过滤）
 │   ├── cloud-deploy.test.mjs      # 云函数打包（手写 zip 的字节结构 + CRC32）
 │   ├── db-build.test.mjs          # 数据库构建（归一化 + 端到端导入断言）
 │   ├── events.test.mjs            # 事件级去重（三层相似度漏斗）
-│   ├── fetch.test.mjs             # 抓取层（超时、降级、并发）
+│   ├── fetch.test.mjs             # 抓取层（翻页、超时信号、重试、单源失败不中断）
 │   ├── health.test.mjs            # 抓取健康判定（ok / degraded / failed）
 │   ├── push-gate.test.mjs         # 空报告闸门
 │   ├── quality.test.mjs           # 产出质量校验
@@ -180,7 +180,7 @@ daily-stock-news/
 ## 核心功能
 
 - **模块化 ETL 流水线** — `pipeline/` 目录 12 个模块，职责分离：`fetch`（数据抓取）→ `clean`（去重分类）→ `analyze`（AI 分析）→ `charts`（图表数据），另有 `health`（抓取健康判定）、`sentiment`（情绪评分）、`classifier`（分类规则）、`companies`（公司词典）、`sectors`（板块常量）等支撑模块，`scripts/build-daily.mjs` 负责编排 + HTML 渲染 + 推送
-- **多源聚合** — 5 个中文财经 API 直连 + 21 条 Google News RSS Feed，8 路并行分批抓取。直接 API 源优先于 RSS 源去重
+- **多源聚合** — 6 个中文财经 API 直连（财联社 / 金十数据 / 东方财富 / 新浪财经 / 同花顺快讯 / 华尔街见闻），12 只 ETF 行情另走新浪批量接口；全部为国内直连源，不依赖任何境外目标（原因见「数据源边界」）
 - **事件级去重** — 同一财经事件被不同媒体以不同标题报道（如财联社「现货黄金站上4600美元」与华尔街见闻「现货黄金突破4600美元」）→ 自动聚合为单个 Event：加权字符 Jaccard（实体词满权重、泛财经词降权）+ bigram overlap + 信号类别加成三层相似度判定，共享具体价格点位等数字时强合并；聚合结果收敛为代表条目继续走 AI 研判，卡片展示来源聚合徽标（N 家）与相关报道列表；事件存档至 `history/events_YYYYMMDD.json`
 - **AI 智能分析** — Claude 兼容 API（默认智谱 GLM 免费模型）对新闻逐条研判，输出中文标题、板块归类、方向判断（利好/利空/中性/分化）、影响评级（极高/高/中/低），附带确定性评分和时间窗口，每条简讯关联 A 股标的；AI 不可用时自动降级为本地关键词引擎
 - **板块方向硬校准** — 板块方向看行情、单条新闻看内容：板块最终方向以当日 ETF 实际涨跌为准（±3% 硬阈值）：跌超 3% 强制利空、涨超 3% 强制利好、±1%~3% 强制中性、±1% 内由板块内新闻加权投票决定；单条新闻方向完全按自身内容判断，不被板块行情强制翻转，避免大跌日整版利空
@@ -196,21 +196,56 @@ daily-stock-news/
 
 ## 数据源详情
 
-### 直连 API（5 路）
+### 直连 API（6 路）
 
 | 来源 | 数据特点 | 解析方式 |
 |------|----------|----------|
 | 财联社 (cls.cn) | 电报快讯，更新频率高 | JSON API, 提取 `roll_data` |
 | 金十数据 (jin10.com) | 7x24 快讯，带【标签】格式 | JS 变量注入格式解析 |
 | 东方财富 (eastmoney.com) | 综合财经新闻，多栏目 | RESTful JSON API |
-| 新浪财经 (sina.com.cn) | 财经直播流 | JSON API |
+| 新浪财经 (sina.com.cn) | 财经直播流（`page` 有效，翻 6 页） | JSON API |
+| 同花顺快讯 (10jqka.com.cn) | 滚动快讯流（翻 3 页，约覆盖 10 小时） | JSON API |
 | 华尔街见闻 (wallstreetcn.com) | 全球宏观 + 中国市场 | RESTful JSON API |
 
-### Google News RSS（21 条 Feed）
+> **2026-10-15：21 条 Google News RSS Feed 已整体删除。** 原因见下方「数据源边界」。
+> 补位来源是先实测再定的（门槛：北京当日 + 能通过板块分类 ≥2 条才接线），
+> 2026-10-15 20:11 本地实测：
+>
+> | 候选 | 类型 | 条数 | 当日 | 边际增量 | 结论 |
+> |---|---|---|---|---|---|
+> | 同花顺快讯 p1-3 | JSON | 300 | 300 | **+36** | 接线 |
+> | 新浪财经 pages 3→6 | JSON | 600 | 600 | **+23** | 接线 |
+> | 中金在线-黄金网（列表页） | HTML | 185 | 47 | +24 | 不接（拿不到正文摘要） |
+> | 东方财富-黄金频道（列表页） | HTML | 34 | 28 | +22 | 不接（同上） |
+> | 华尔街见闻医药（现停用） | JSON | 100 | 1 | 0 | 仍停更 |
+> | 中国黄金网（列表页） | HTML | 0 | 0 | 0 | 首页是栏目导航页 |
+>
+> 两个接线的源之间**零重复**（同一次实测里逐条比对 `freshItems` 确认），
+> 合计边际 +59 条/日。**注意这是「通过板块分类」口径的上限，不含事件级聚类** ——
+> 同一事件被多家报道时会被合并成一条，所以实际进入日报的增量低于 59。
+>
+> 接入后首次完整构建（2026-10-15 21:3x 北京）的实测值：6/6 源成功、原始 862 条、
+> 精选 79 条，高于此前 15 天存档的中位 54（均值 53.9）；**同花顺快讯以 19 条成为当日
+> 最大单源**，新浪 15 条。这一天的数字只能算过渡值——当天存档里还混着旧代码（含 RSS）
+> 那次构建留下的 30 条，要等次日构建（存档已无 RSS 残留）才能得到干净对比。
+>
+> 对照：被删掉的 RSS 尾巴在 14 天存档里贡献 141 条（约 10 条/日，单日最高 28 条）。
+> 复算：`node scripts/probe-backfill.mjs`（脚本头部写明指标口径；输出落在
+> `output/probe-backfill-<北京日>.json`，`output/` 不入库）；云函数侧的可达性另有一轮实测，
+> 见 [cloud/README.md](cloud/README.md)。
 
-全部为 Google News 关键词检索（`hl=zh-CN`），按赛道（四板块 / 创新药 / 黄金）与来源细分：财联社、金十数据、新浪财经、华尔街见闻、21 世纪经济、经济观察报、第一财经，以及各赛道龙头与业绩词条。每条 Feed 按关键词精确匹配四大赛道。
+### 数据源边界：为什么全部用国内直连源
 
-> 说明：这里**只做中文检索**。历史版本的 README 曾写「覆盖中/英/日/韩多语种，含 Reuters、Bloomberg、CNBC、WSJ、FT、Nikkei Asia」，但 `pipeline/config.mjs` 里 21 条 Feed 的 `hl` 全是 `zh-CN`，URL 中也没有任何海外媒体域名——那些来源从未存在过。
+抓取层**只连国内财经站的直连接口**，不使用任何境外目标。这不是偏好而是硬约束：
+
+- 旧 GitHub 账号被封的依据是「**在 Actions 里定时抓第三方站点**」这个架构形态。
+  Google News 是抓取层里唯一的境外目标，留着它，形态就没变。
+- `news.google.com` 从中国大陆网络与腾讯云函数**都不可达**（2026-10-14/15 双向实测），
+  搬去云函数也无从谈起。
+
+代价是失去了海外媒体的英文原稿（Reuters / Bloomberg / CNBC 等）。需要说明的是，
+这一块**从来没有真正生效过**：历史版本的 README 曾写「覆盖中/英/日/韩多语种」，
+但 `config.mjs` 里 21 条 Feed 的 `hl` 全是 `zh-CN`，URL 里也没有任何海外媒体域名。
 
 ### ETF 行情数据
 

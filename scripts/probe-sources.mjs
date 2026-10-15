@@ -113,9 +113,10 @@ function guessFeedCandidates(html, homeUrl) {
 }
 
 // ── 解析(RSS 2.0 与 Atom 都认)────────────────────────────
-// 不复用 fetch.mjs 的 fetchGoogleNewsRSS:它只认 <item>,喂 Atom 会返回 0 条,
+// 自备解析器,不复用抓取层:那里的 RSS 解析只认 <item>,喂 Atom 会返回 0 条,
 // 而 0 条在这里的含义是「这个源没用」—— 把「解析器读不懂」误报成「源没内容」,
 // 正是本项目一直在消灭的那类假信号。所以这里两种格式都解析,并把格式写进报告。
+// (抓取层的 RSS 已于 2026-10-15 整体删除,这个探针保留自备解析器以便日后复算。)
 
 function pickTag(block, tag) {
   const m = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, 'i').exec(block);
@@ -191,8 +192,8 @@ async function main() {
   console.log(`\n🔎 候选源实测  ${beijingNowString()}  (北京当日 ${today})`);
   console.log(`   候选 ${CANDIDATES.length} 个站点 · 每站 1 次首页(未广告 feed 时最多再试 3 个线索)· 超时 ${TIMEOUT_MS}ms\n`);
 
-  // 基线:现有 5 个直连 API 今天的实际产出。本地会按设计跳过 RSS(探测不可达),
-  // 剩下的正好就是要对比的那 5 个源。
+  // 基线:现有直连 API 今天的实际产出。2026-10-15 删掉 RSS 层之后,这就是全部
+  // 抓取来源,候选源的去重增量都相对它算。
   console.log('📊 先抓基线(现有直连 API)...');
   const { items: baseItems, stats } = await fetchAllNews();
   const baseKeys = new Set(baseItems.map(it => dedupKey(it.title)));

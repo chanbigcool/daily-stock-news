@@ -1,8 +1,14 @@
 // ── Pipeline: 数据抓取层 ────────────────────────────────
-// Fetches from 5 direct Chinese financial APIs + 21 Google News RSS feeds + 12 ETF quotes
+// Fetches from 6 direct Chinese financial APIs + 12 ETF quotes
+//
+// 2026-10-15 删除了整层 Google News RSS(21 条 feed)。原因是架构性的:旧 GitHub 账号
+// 被封的依据是「在 Actions 里定时抓第三方站点」这个形态,而 RSS 是抓取层里唯一的
+// 境外目标;加上 news.google.com 从云函数和本机都不可达,搬去 SCF 也无从谈起。
+// 补位靠国内直连源(新增同花顺快讯、新浪翻页加倍),实测净增 ≈ +59 条/日,
+// 见 scripts/probe-backfill.mjs 与 scripts/probe-sources.mjs 的实测记录。
 
 import { CONFIG, ETFS } from './config.mjs';
-import { sleep, htmlToText, stripCDATA, parseBeijingTime } from './utils.mjs';
+import { sleep, parseBeijingTime, fetchWithRetry } from './utils.mjs';
 
 // ── ETF 实时行情 (新浪财经) ──────────────────────────────
 
@@ -16,7 +22,9 @@ export async function fetchETFData() {
   });
 
   try {
-    const resp = await fetch(`https://hq.sinajs.cn/list=${sinaCodes.join(',')}`, {
+    // 走 fetchWithRetry:hq.sinajs.cn 从云函数出去会间歇性 403(实测 5 次里 1 次),
+    // 且是慢拒、换 header 无效 —— 不重试的话每天会随机丢掉整批 ETF 行情。
+    const resp = await fetchWithRetry(`https://hq.sinajs.cn/list=${sinaCodes.join(',')}`, {
       headers: { 'Referer': 'https://finance.sina.com.cn/' },
       signal: AbortSignal.timeout(CONFIG.apiTimeoutMs),
     });
@@ -49,18 +57,6 @@ export async function fetchETFData() {
   return results;
 }
 
-// ── Google News RSS ──────────────────────────────────────
-
-// Google News 搜索 RSS 是**按相关度**排序的,不是按时间 —— 2026-09-12 线上实测:
-// 43 个源抓回 2054 条,当日(北京时间)只有 8 条,93% 比 4 天前还老。所以 RSS 一直
-// 抓不到当日量,不是"掉线"而是"排序口径不对"。给 q 加 Google 的 when:1d 时间窗
-// 运算符把 feed 限定到最近 24 小时(写法:关键词之间用 + 连接,when:1d 当作一个词)。
-// 已是存量池的源(sites: 之类的组合查询)同样适用。非 Google News 的 URL 原样返回。
-export function withRecency(url, win = '1d') {
-  if (!url || !url.includes('news.google.com')) return url;
-  return url.replace(/([?&]q=[^&]*)/, m => (m.includes('when:') ? m : `${m}+when:${win}`));
-}
-
 // 源内最新条目的时间戳(ms);无条目/时间不可解析 → null。
 // 供健康判定识别「条数看着满、内容却是存量池」的假绿灯(见闻医药)。
 function newestTime(items) {
@@ -70,41 +66,6 @@ function newestTime(items) {
     if (Number.isFinite(t) && t > max) max = t;
   }
   return max || null;
-}
-
-// Google News 比直连 API 慢(单次搜索查询要等 Google 聚合),给宽一点的时间。
-const RSS_TIMEOUT_MS = 15000;
-
-export async function fetchGoogleNewsRSS(feed) {
-  // 与直连 API 同一写法:Node 原生 fetch 不认 timeout 选项,超时只能靠 signal。
-  // 这里不吞异常 —— 让 'HTTP 404' / 超时这几类真实原因冒泡给 fetchAllNews,
-  // 它会记进 sources[].error(泛化成 'fetch failed' 就丢掉了最有用的那部分信息)。
-  const resp = await fetch(feed.url, {
-    signal: AbortSignal.timeout(RSS_TIMEOUT_MS),
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; news-bot/1.0)' },
-  });
-  if (!resp.ok) throw new Error('HTTP ' + resp.status);
-  const xml = await resp.text();
-
-  const items = [];
-  const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
-  let match;
-  while ((match = itemRegex.exec(xml)) !== null) {
-    const block = match[1];
-    const title = (block.match(/<title>([\s\S]*?)<\/title>/i) || [])[1] || '';
-    const link = (block.match(/<link>([\s\S]*?)<\/link>/i) || [])[1] || '';
-    const desc = (block.match(/<description>([\s\S]*?)<\/description>/i) || [])[1] || '';
-    const pubDate = (block.match(/<pubDate>([\s\S]*?)<\/pubDate>/i) || [])[1] || '';
-    const source = (block.match(/<source[^>]*>([\s\S]*?)<\/source>/i) || [])[1] || '';
-    items.push({
-      title: htmlToText(stripCDATA(title)),
-      description: htmlToText(stripCDATA(desc)).substring(0, 600),
-      link: link.trim(),
-      pubDate: pubDate ? new Date(pubDate.trim()) : new Date(),
-      source: source ? htmlToText(stripCDATA(source)) : feed.name,
-    });
-  }
-  return items;
 }
 
 // ── 直接 API 抓取器 ──────────────────────────────────────
@@ -184,7 +145,7 @@ export async function fetchSinaNews(source) {
   try {
     for (let p = 1; p <= pages; p++) {
       const url = source.url.replace(/([?&]page=)\d+/, `$1${p}`);
-      const resp = await fetch(url, {
+      const resp = await fetchWithRetry(url, {
         headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://finance.sina.com.cn/' },
         signal: AbortSignal.timeout(CONFIG.apiTimeoutMs),
       });
@@ -206,6 +167,41 @@ export async function fetchSinaNews(source) {
   } catch (err) {
     // 首页失败=整体失败,让异常冒泡给 fetchAllNews 点名(在那里记 ok:false);
     // 中途某页失败则保住已取到的页 —— 这才是下面那句「翻页」设计的本意。
+    if (out.length === 0) throw err;
+    console.warn(`  [API] ${source.name} ⚠ ${err.message}(已取 ${out.length} 条)`);
+    return out.slice(0, CONFIG.apiSourceMaxItems);
+  }
+}
+
+export async function fetch10jqkaNews(source) {
+  // 同花顺快讯:page 参数有效,每页 100 条。它是**滚动流**,page 越深回溯越早 ——
+  // 2026-10-15 实测 3 页(300 条)覆盖约 10 小时,所以清晨构建时当日量会明显偏少。
+  // 与 fetchSinaNews 同一套容错:首页失败让异常冒泡(整体失败),中途某页失败保住已取到的页。
+  const pages = Math.max(1, source.pages || 1);
+  const out = [];
+  try {
+    for (let p = 1; p <= pages; p++) {
+      const url = source.url.replace(/([?&]page=)\d+/, `$1${p}`);
+      const resp = await fetchWithRetry(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://news.10jqka.com.cn/' },
+        signal: AbortSignal.timeout(CONFIG.apiTimeoutMs),
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      const items = data?.data?.list || [];
+      if (items.length === 0) break;
+      out.push(...items.map(item => ({
+        title: (item.title || '').replace(/<[^>]+>/g, '').trim(),
+        description: (item.digest || item.short || '').replace(/<[^>]+>/g, '').trim().substring(0, 600),
+        link: item.url || item.shareUrl || '',
+        // ctime 是 unix 秒(字符串),不是北京钟面串 —— 直接按时间戳换算,不经时区解释
+        pubDate: new Date(Number(item.ctime) * 1000),
+        source: source.name,
+      })).filter(n => n.title));
+      if (p < pages) await sleep(400);
+    }
+    return out.slice(0, CONFIG.apiSourceMaxItems);
+  } catch (err) {
     if (out.length === 0) throw err;
     console.warn(`  [API] ${source.name} ⚠ ${err.message}(已取 ${out.length} 条)`);
     return out.slice(0, CONFIG.apiSourceMaxItems);
@@ -253,81 +249,24 @@ export async function fetchWallStreetCNInfoFlow(source) {
     .filter(n => n && n.title);
 }
 
-// APU fetcher map
+// API fetcher map —— key 必须与 config.apiSources[].name 逐字相同
 export const API_FETCHERS = {
   '财联社': fetchClsNews,
   '金十数据': fetchJin10News,
   '东方财富': fetchEastMoneyNews,
   '新浪财经': fetchSinaNews,
+  '同花顺快讯': fetch10jqkaNews,
   '华尔街见闻': fetchWallStreetCNNews,
   '华尔街见闻医药': fetchWallStreetCNInfoFlow,
 };
 
 // ── 主抓取入口 ──────────────────────────────────────────
 
-// Probe RSS reachability (local mainland networks block Google News).
-// On CI (GitHub Actions, US host) RSS works fine and we keep all feeds.
-// Locally, if a quick probe can't reach Google News, skip all RSS to avoid
-// dozens of long timeouts — the 6 direct Chinese APIs carry the report.
-async function probeRSSAvailable(allFeeds) {
-  if (CONFIG.isCi) return true;
-  const probes = allFeeds.slice(0, 3);
-  try {
-    const results = await Promise.all(probes.map(async (feed) => {
-      const controller = new AbortController();
-      const t = setTimeout(() => controller.abort(), 3000);
-      try {
-        const resp = await fetch(feed.url, { signal: controller.signal });
-        return resp.ok;
-      } catch { return false; } finally { clearTimeout(t); }
-    }));
-    const ok = results.filter(Boolean).length;
-    if (ok === 0) {
-      console.log(`  📡 RSS 探测失败（${probes.length}/3 不可达），本地模式跳过全部 Google RSS，仅使用国内直连 API`);
-      return false;
-    }
-    return true;
-  } catch {
-    return true; // probe itself failed — fall through to normal RSS fetching
-  }
-}
-
 export async function fetchAllNews() {
   const allItems = [];
-  // when:1d 时间窗在抓取处统一注入,配置里仍保留人类可读的关键词查询串。
-  const rssWindow = CONFIG.rssRecencyWindow === null ? null : (CONFIG.rssRecencyWindow || '1d');
-  const allFeeds = [...CONFIG.feeds, ...(CONFIG.extraFeeds || [])]
-    .map(f => (rssWindow ? { ...f, url: withRecency(f.url, rssWindow) } : f));
   const sources = []; // 每源一条统计,供健康判定 / quality 回看页
 
-  // 1. Google News RSS (batched by 8) — skipped entirely when unreachable locally
-  const rssAvailable = await probeRSSAvailable(allFeeds);
-  const rssStats = { total: allFeeds.length, okFeeds: 0, failFeeds: 0, items: 0 };
-  if (rssAvailable) {
-    console.log('\n📡 拉取 Google News RSS (并行)...');
-    const BATCH = 8;
-    for (let b = 0; b < allFeeds.length; b += BATCH) {
-      const batch = allFeeds.slice(b, b + BATCH);
-      await Promise.allSettled(
-        batch.map((feed, j) => fetchGoogleNewsRSS(feed).then(items => {
-          console.log(`  [${b + j + 1}/${allFeeds.length}] ${feed.name} → ${items.length} 条`);
-          allItems.push(...items);
-          rssStats.okFeeds++;
-          rssStats.items += items.length;
-          sources.push({ name: feed.name, kind: 'rss', ok: true, count: items.length, newest: newestTime(items), error: null });
-        }).catch(err => {
-          console.warn(`  [${b + j + 1}/${allFeeds.length}] ${feed.name} ⚠ ${err.message}`);
-          rssStats.failFeeds++;
-          sources.push({ name: feed.name, kind: 'rss', ok: false, count: 0, newest: null, error: err.message });
-        }))
-      );
-      if (b + BATCH < allFeeds.length) await sleep(800);
-    }
-  } else {
-    console.log('  📡 RSS 按设计跳过(本地探测不可达),不计入健康判定');
-  }
-
-  // 2. Direct API sources in parallel
+  // 直连 API 并行抓取
   const apiSources = (CONFIG.apiSources || []).filter(s => s.enabled !== false);
   const apiStats = { total: apiSources.length, okSources: 0, failSources: 0, items: 0 };
   if (apiSources.length > 0) {
@@ -359,10 +298,8 @@ export async function fetchAllNews() {
     });
   }
 
-  // rssEnabled 让健康判定区分「按设计跳过」(本地) 与「尝试了但全灭」(CI),
-  // 否则本地每次构建都会因 RSS 缺失误报失败。
   return {
     items: allItems,
-    stats: { rssEnabled: rssAvailable, rss: rssStats, api: apiStats, sources },
+    stats: { api: apiStats, sources },
   };
 }

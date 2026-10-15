@@ -2,7 +2,8 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { SECTORS, SECTOR_COLORS } from './sectors.mjs';
-import { beijingDateKey } from './utils.mjs';
+import { beijingDateKey, fetchWithRetry } from './utils.mjs';
+import { CONFIG } from './config.mjs';
 
 // Pick representative ETF per sector
 const SECTOR_ETF = {
@@ -219,9 +220,12 @@ export async function fetchETFHistoryKLine(days = 30) {
     const code = SECTOR_ETF[sector];
     const market = code.startsWith('5') ? 'sh' : 'sz';
     try {
-      const resp = await fetch(`https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20_data=/CN_MarketDataService.getKLineData?symbol=${market}${code}&scale=240&ma=no&datalen=${days}`, {
+      // 原先这里写的是 `timeout: 12000` —— **undici 不认这个选项,只认 signal**,
+      // 等于这个请求从来没有超时(config.mjs 里记着同一个坑)。搬进云函数后一次 hang
+      // 会烧掉整个函数的超时预算,所以换成真的 signal;顺带走重试,与两个新浪接口一致。
+      const resp = await fetchWithRetry(`https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20_data=/CN_MarketDataService.getKLineData?symbol=${market}${code}&scale=240&ma=no&datalen=${days}`, {
         headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://finance.sina.com.cn/' },
-        timeout: 12000,
+        signal: AbortSignal.timeout(CONFIG.apiTimeoutMs),
       });
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const text = await resp.text();
