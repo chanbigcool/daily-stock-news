@@ -1,15 +1,44 @@
-# cloud/ — 公网一键刷新代理（腾讯云 SCF）
+# cloud/ — 云端抓取 + 公网一键刷新（腾讯云 SCF）
 
-站点右上角「🔄 刷新日报」按钮打的不是本机，是这个云函数。它拿最小权限 PAT
-在云端触发 `daily.yml` 的 `workflow_dispatch`，所以刷新不需要本机开机。
+站点右上角「🔄 刷新日报」按钮打的不是本机，是这个云函数。
+
+它做三件事（顺序不能反）：
+
+```
+POST /refresh
+  ① 抓取      6 个国内财经 API + 12 只 ETF 行情 + 30 日 ETF K 线
+              复用 pipeline/*.mjs（动态 import，同一份源码，不另写副本）
+  ② 写 payload Git Data API 四步 → 分支 fetch-cache（孤儿提交，每次 force 覆盖）
+  ③ dispatch   workflows/daily.yml 的 workflow_dispatch，带上本次 runId
+```
+
+**为什么抓取在云函数而不是 Actions**：旧 GitHub 账号被封的依据是「在 Actions 里定时抓
+第三方站点」这个架构形态。搬走抓取之后，Actions 只剩测试 + 清洗/研判/渲染 + 部署，
+形态变了。Actions 侧禁止现场抓取（`CONFIG.isCi && !FETCH_PAYLOAD` 直接抛错，
+见 `daily.yml` 的 `FETCH_PAYLOAD`），否则形态又回去了。
+
+**为什么 payload 走孤儿分支而不是提交进 main**：payload 约 0.5MB，一天 3~4 次就是
+2MB/天；提交进 main 即使下个 commit 删掉，blob 也永久留在历史里（一年 700MB+）。
+`fetch-cache` 每次是一个**无父提交**（`trees` 不传 `base_tree`、`commits` 用
+`parents: []`），旧对象无人引用后会被 GC，仓库不长大。
+
+`runId` 是并发保护：云函数把 runId 放进 payload，Actions 断言
+`payload.runId === inputs.run_id`，对不上就**明确失败**，不拿错数据静默渲染。
 
 ## 文件
 
 | 文件 | 作用 |
 |---|---|
-| `index.js` | 云函数本体（CommonJS，SCF 的 `index.handler` 入口）。与 `scripts/cloud-refresh.mjs` 是同源的两个版本：那边是 ESM、供本地调试；这边是 CJS、供 SCF 运行时 |
+| `index.js` | 云函数本体（CommonJS，SCF 的 `index.handler` 入口）：抓取 → 写 payload → dispatch |
 | `tc-call.mjs` | 腾讯云 API v3 签名调用（从 `TC_SECRET_ID` / `TC_SECRET_KEY` 读凭据，不落盘） |
-| `deploy.mjs` | 部署。把 `index.js` 就地打包上传，创建或更新函数、配置环境变量、打印函数 URL |
+| `deploy.mjs` | 部署。把 `index.js` + `pipeline/{fetch,config,utils,charts,sectors}.mjs` 就地打成 zip 上传，创建或更新函数、配置运行时/内存/超时/环境变量、打印函数 URL |
+
+打包清单写死在 `deploy.mjs` 的 `PIPELINE_FILES`。漏加文件在线上只会报
+`Cannot find module`，所以 `tests/cloud-deploy.test.mjs` 会顺着 import 图核一遍
+「清单 = 本地依赖闭包」，漏了 CI 直接红。
+
+本机调试：`node cloud/index.js` 起一个 3000 端口的 HTTP server（没有 `scripts/cloud-refresh.mjs`
+那种 ESM 孪生版了——孪生版的问题是改一处必忘另一处）。
 
 ## 部署
 
@@ -20,8 +49,14 @@ TC_SECRET_ID=AKID... TC_SECRET_KEY=... GITHUB_PAT=github_pat_... SHARED_SECRET=.
 四个环境变量缺一不可，缺了直接报错退出——旧脚本用 `|| ''` 兜底，会把空串当"已配置"
 推上云，函数跑起来才 401/500，排查成本高得多。
 
-`GITHUB_PAT` 是 fine-grained PAT，权限只要 `daily-stock-news` 一个仓库的
-**Actions: Read and write**。
+`GITHUB_PAT` 是 fine-grained PAT，只需 `daily-stock-news` 一个仓库，权限要两项：
+**`Actions: Read and write`**（dispatch 工作流）+ **`Contents: Read and write`**
+（写 `fetch-cache` 分支的 blob / tree / commit / ref）。只给前者的话按钮会以
+`创建 blob 失败: HTTP 403` 报错。
+
+`TC_RUNTIME` / `TC_MEMORY_MB` / `TC_TIMEOUT_S` 可覆盖默认值（`Nodejs22.21` / 256 / 60）。
+抓取要等 6 个源 + 12 只 ETF + 4 条 K 线请求，本机实测约 5s，云上按出口延迟估 20~40s
+——60s 是给它的余量。
 
 函数 URL 也可以用仓库 Secret `REFRESH_URL` 覆盖（构建时注入前端）；
 不配的话 `scripts/build-daily.mjs` 里有一个内置默认值。
@@ -65,11 +100,10 @@ TC_SECRET_ID=AKID... TC_SECRET_KEY=... GITHUB_PAT=github_pat_... SHARED_SECRET=.
 **运行时名**：腾讯云每条 Node 大版本线**只挂一个**运行时名，用的是他们发镜像时的那个小版本——
 不是真实 Node 版本号。已确认存在：`Nodejs22.21` / `20.19` / `18.15` / `16.13` / `14.18`；
 `Nodejs22.15`、`Nodejs20.15`、`Nodejs22.11` 都报 `InvalidParameterValue.Runtime`。
-**要 `node:sqlite` 必须显式选 `Nodejs22.21`**（它实测是 Node v22.21.1）。`deploy.mjs` 默认
-`Nodejs18.15` 只是为了对齐线上现状；哪天要把构建搬进函数，得同时把运行时改到 22 线
-（`TC_RUNTIME` 可覆盖）。新出一条 Node 线想看名字，拿 `CreateFunction` 试即可，但
-**必须不传 `Role`**：传了 `Role` 校验顺序变成先角色后运行时，角色不存在就直接
-`ResourceNotFound.Role`，所有候选都会「通过」，等于没测。
+`Nodejs22.21` 实测是 Node v22.21.1。抓取搬进函数后 `deploy.mjs` 的默认运行时已从
+`Nodejs18.15`（线上旧值）改成 **`Nodejs22.21`**，与本地/CI 对齐。新出一条 Node 线想看名字，
+拿 `CreateFunction` 试即可，但**必须不传 `Role`**：传了 `Role` 校验顺序变成先角色后运行时，
+角色不存在就直接 `ResourceNotFound.Role`，所有候选都会「通过」，等于没测。
 
 **`UpdateFunctionConfiguration` 是整体覆盖 `Environment.Variables`**：本地没有
 `GITHUB_PAT` / `SHARED_SECRET` 的副本时，任何只想去改代码/运行时的调用都别顺手带上它，

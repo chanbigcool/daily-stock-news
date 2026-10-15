@@ -67,7 +67,7 @@ flowchart LR
 ## 在线访问
 
 - **主链接（GitHub Pages）**：<https://chanbigcool.github.io/daily-stock-news/> —— 本机实测可直连（2026-10-14 三次探测均 HTTP 200，1.5~2.0s），正确渲染为网页；每次构建后由 Actions 自动部署，构建完即可看到最新日报（页面带 no-cache 控制，普通刷新即更新）
-- **公网一键刷新**：网页顶部「🔄 刷新日报」按钮在公网也可用 —— 点击后经腾讯云 SCF 云函数触发 GitHub Actions 重建，约 2~6 分钟后页面自动更新到最新版（无需本机运行任何服务）
+- **公网一键刷新**：网页顶部「🔄 刷新日报」按钮在公网也可用 —— 点击后由腾讯云 SCF 云函数**在云端抓取**，把结果写成 payload 推到 `fetch-cache` 分支，再触发 GitHub Actions 完成清洗/研判/渲染/部署，约 2~6 分钟后页面自动更新到最新版（无需本机运行任何服务）
 - **辅助（EdgeOne Pages 预览，国内节点）**：构建后 3 小时内可通过 EdgeOne 预览链接查看最新版（免 CDN 缓存延迟），每次构建后去 [EdgeOne 控制台](https://edgeone.cloud.tencent.com/pages) → `daily-stock-news` 项目 → 部署列表 → 预览获取。长期稳定访问需绑定已备案自定义域名
 - ~~jsDelivr 镜像~~：jsDelivr 对仓库内 `.html` 文件强制返回 `text/plain`（防钓鱼的安全设计），浏览器只会显示源代码而不会渲染成网页，因此不能作为页面入口；仅作 Chart.js 等静态资源 CDN 使用
 - ~~Zeabur~~：免费档已关停（2026/3 起共享集群停止接受新项目），不再作为主链接
@@ -118,14 +118,13 @@ daily-stock-news/
 ├── .github/workflows/
 │   ├── daily.yml               # 主构建:push main / 手动触发,构建/提交/部署(schedule 已停用)
 │   └── daily-heartbeat.yml     # 心跳自愈:当天存档缺失才补建(schedule 已停用)
-├── cloud/                      # 公网一键刷新代理(腾讯云 SCF;部署与密钥轮换见 cloud/README.md)
-│   ├── index.js                # 云函数本体(CommonJS,SCF 的 index.handler 入口)
+├── cloud/                      # 云端抓取 + 公网一键刷新（腾讯云 SCF；架构与密钥轮换见 cloud/README.md）
+│   ├── index.js                # 云函数本体（CommonJS，SCF 的 index.handler 入口）：抓取 → 写 payload → dispatch
 │   ├── tc-call.mjs             # 腾讯云 API v3 签名调用
-│   └── deploy.mjs              # 打包上传 index.js + 创建/更新函数 + 写环境变量
+│   └── deploy.mjs              # 打包（index.js + pipeline/*.mjs）上传 + 创建/更新函数 + 写环境变量
 ├── scripts/
 │   ├── build-daily.mjs            # 构建入口（编排 ETL 流水线 + 渲染 + 推送）
 │   ├── db-build.mjs               # 数据库构建（node:sqlite 聚合 history/ → db.sqlite）
-│   ├── cloud-refresh.mjs          # 云函数的 ESM 孪生版（本地调试用，线上跑 cloud/index.js）
 │   └── refresh-server.mjs         # 本地刷新服务（端口 3456，含历史 API，仅本机）
 ├── pipeline/
 │   ├── config.mjs                 # 配置中心（API 源、ETF 列表、板块关键词规则、健康阈值）
@@ -157,10 +156,10 @@ daily-stock-news/
 │   ├── dates.json                 # 日期索引
 │   └── db.sqlite                  # 全量真 SQLite（数据查询页数据源）—— 构建产物，不入库
 ├── quality/                       # 产出质量校验报告（quality/index.html + report.json）
-├── tests/                         # 单元测试（11 个文件 / 200 个用例，node --test 自动发现）
+├── tests/                         # 单元测试（11 个文件 / 203 个用例，node --test 自动发现）
 │   ├── analyze.test.mjs           # AI 研判 + 关键词兜底引擎
 │   ├── clean.test.mjs             # 清洗层（去重、板块分类、时效过滤）
-│   ├── cloud-deploy.test.mjs      # 云函数打包（手写 zip 的字节结构 + CRC32）
+│   ├── cloud-deploy.test.mjs      # 云函数打包（手写 zip 的字节结构 + CRC32 + 打包清单 = import 闭包）
 │   ├── db-build.test.mjs          # 数据库构建（归一化 + 端到端导入断言）
 │   ├── events.test.mjs            # 事件级去重（三层相似度漏斗）
 │   ├── fetch.test.mjs             # 抓取层（翻页、超时信号、重试、单源失败不中断）
@@ -189,7 +188,7 @@ daily-stock-news/
 - **板块 ETF 实时指标** — 新浪财经 `hq.sinajs.cn` 批量拉取 12 只 ETF 实时行情，按板块分组展示
 - **历史数据浏览** — 每日输出 JSON 结构化数据，前端下拉框按日期回溯，刷新服务动态渲染（含图表）
 - **微信推送** — Server酱3 每日推送 Markdown 摘要（板块 ETF + 核心数据 + TOP 3 + 要点）
-- **一键刷新** — 网页按钮触发完整管线：重建 → git commit → git push，前端轮询状态，完成后自动重载。公网走云端代理（腾讯云 SCF 触发 Actions 重建），本机走 refresh-server（/refresh → 重建 → push）
+- **一键刷新** — 网页按钮触发完整管线：抓取 → 清洗研判 → 渲染 → 提交 → 部署，前端轮询状态，完成后自动重载。公网走云函数（腾讯云 SCF 抓取并写 payload，再触发 Actions 渲染部署），本机走 refresh-server（/refresh → 本地抓取 → 重建 → push）
 - **GitHub Actions 自动化** — 构建并部署到 GitHub Pages；单元测试前置为 CI 门槛，不过测试不构建、不部署。定时 `schedule:` 已于 2026-10-13 停用（原因见上方「在线访问」），现由 `push` / 手动刷新 / `workflow_dispatch` 触发
 
 ---

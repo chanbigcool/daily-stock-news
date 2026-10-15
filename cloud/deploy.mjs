@@ -2,8 +2,9 @@
 //
 // 用法: TC_SECRET_ID=... TC_SECRET_KEY=... GITHUB_PAT=... SHARED_SECRET=... node cloud/deploy.mjs
 //
-// 把 cloud/index.js 就地打成 zip 上传,不再依赖预先存在的 function.zip
-// (旧流程要先手动跑 mkzip.mjs,忘了跑就会把上一版代码传上去,且 zip 与源码会悄悄脱节)。
+// 把 cloud/index.js 与它 import 的 pipeline/*.mjs 就地打成 zip 上传,不再依赖预先存在的
+// function.zip(旧流程要先手动跑 mkzip.mjs,忘了跑就会把上一版代码传上去,且 zip 与源码会
+// 悄悄脱节)。
 //
 // 凭据一律从环境变量读,不落盘;脚本只打印函数 URL,不回显任何密钥。
 import { tcCall } from './tc-call.mjs';
@@ -13,7 +14,25 @@ import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-// ── zip:store(不压缩)单文件,够用且零依赖 ──────────────────────
+// 云函数包的内容清单。**显式列举,不做打包器** —— 零依赖是硬约束,而自动顺着
+// import 图收集依赖得先有解析器。代价是加了 import 可能忘了加这里,所以
+// tests/cloud-deploy.test.mjs 会从 pipeline/fetch.mjs 与 pipeline/charts.mjs
+// 出发走一遍相对 import,断言闭包 ⊆ 这份清单 —— 漏了测试会红,而不是等函数
+// 跑起来才报 "Cannot find module"。
+export const PIPELINE_FILES = ['fetch.mjs', 'config.mjs', 'utils.mjs', 'charts.mjs', 'sectors.mjs'];
+
+// 由 PIPELINE_FILES 静态推导出的完整打包清单(相对 cloud/ 的路径)。
+export function bundleManifest(here) {
+  return [
+    { name: 'index.js', file: path.join(here, 'index.js') },
+    ...PIPELINE_FILES.map((f) => ({
+      name: `pipeline/${f}`,
+      file: path.join(here, '..', 'pipeline', f),
+    })),
+  ];
+}
+
+// ── zip:store(不压缩),够用且零依赖 ──────────────────────────
 const crcTable = [];
 for (let n = 0; n < 256; n++) {
   let c = n;
@@ -26,36 +45,64 @@ const crc32 = (buf) => {
   return (c ^ 0xFFFFFFFF) >>> 0;
 };
 
-export function zipSingle(name, data) {
-  const nameBuf = Buffer.from(name);
-  const crc = crc32(data);
-  const lh = Buffer.alloc(30);
-  lh.writeUInt32LE(0x04034b50, 0);
-  lh.writeUInt16LE(20, 4);
-  lh.writeUInt32LE(crc, 14);
-  lh.writeUInt32LE(data.length, 18);
-  lh.writeUInt32LE(data.length, 22);
-  lh.writeUInt16LE(nameBuf.length, 26);
-  const local = Buffer.concat([lh, nameBuf, data]);
+export function zipFiles(entries) {
+  // 带路径的条目(如 pipeline/fetch.mjs)先补显式目录记录。ZIP 规范里目录不是
+  // 必需项,但各家解压器对「只有文件条目、没有目录条目」的处理不一致 —— SCF 那边
+  // 一旦不建目录就会解压失败,而失败信息只会是 "Cannot find module"。
+  const dirs = [...new Set(
+    entries.map((e) => e.name).filter((n) => n.includes('/')).map((n) => n.slice(0, n.lastIndexOf('/') + 1)),
+  )];
+  const all = [...dirs.map((name) => ({ name, data: Buffer.alloc(0), dir: true })), ...entries.map((e) => ({ ...e, dir: false }))];
 
-  const cd = Buffer.alloc(46);
-  cd.writeUInt32LE(0x02014b50, 0);
-  cd.writeUInt16LE(20, 4);
-  cd.writeUInt16LE(20, 6);
-  cd.writeUInt32LE(crc, 16);
-  cd.writeUInt32LE(data.length, 20);
-  cd.writeUInt32LE(data.length, 24);
-  cd.writeUInt16LE(nameBuf.length, 28);
-  cd.writeUInt32LE(0, 42);
-  const central = Buffer.concat([cd, nameBuf]);
+  const locals = [];
+  const centrals = [];
+  let offset = 0;
 
+  for (const e of all) {
+    const nameBuf = Buffer.from(e.name);
+    const data = e.data;
+    const crc = e.dir ? 0 : crc32(data);
+
+    const lh = Buffer.alloc(30);
+    lh.writeUInt32LE(0x04034b50, 0);
+    lh.writeUInt16LE(20, 4);
+    lh.writeUInt32LE(crc, 14);
+    lh.writeUInt32LE(data.length, 18);
+    lh.writeUInt32LE(data.length, 22);
+    lh.writeUInt16LE(nameBuf.length, 26);
+    const local = Buffer.concat([lh, nameBuf, data]);
+    locals.push(local);
+
+    const cd = Buffer.alloc(46);
+    cd.writeUInt32LE(0x02014b50, 0);
+    cd.writeUInt16LE(20, 4);
+    cd.writeUInt16LE(20, 6);
+    cd.writeUInt32LE(crc, 16);
+    cd.writeUInt32LE(data.length, 20);
+    cd.writeUInt32LE(data.length, 24);
+    cd.writeUInt16LE(nameBuf.length, 28);
+    // 外部属性:目录置 MS-DOS 目录位 0x10,普通文件 0
+    if (e.dir) cd.writeUInt32LE(0x10, 38);
+    cd.writeUInt32LE(offset, 42);
+    centrals.push(Buffer.concat([cd, nameBuf]));
+
+    offset += local.length;
+  }
+
+  const central = Buffer.concat(centrals);
   const eocd = Buffer.alloc(22);
   eocd.writeUInt32LE(0x06054b50, 0);
-  eocd.writeUInt16LE(1, 8);
-  eocd.writeUInt16LE(1, 10);
+  eocd.writeUInt16LE(all.length, 8);
+  eocd.writeUInt16LE(all.length, 10);
   eocd.writeUInt32LE(central.length, 12);
-  eocd.writeUInt32LE(local.length, 16);
-  return Buffer.concat([local, central, eocd]);
+  eocd.writeUInt32LE(offset, 16);
+  return Buffer.concat([...locals, central, eocd]);
+}
+
+// 单文件薄封装。保留是因为测试锁着它的字节结构,且「只有一个文件」是最常见的
+// 心智模型 —— 但 packages 只有这一个来源,两个函数走同一段代码。
+export function zipSingle(name, data) {
+  return zipFiles([{ name, data }]);
 }
 
 // 读函数的公网入口。两条路都试:
@@ -105,10 +152,17 @@ async function waitActive(scf, name, tries = 30) {
 export async function deploy() {
   const REGION = process.env.TC_REGION || 'ap-guangzhou';
   const FUNC_NAME = 'daily-stock-refresh';
-  // 线上一直是 Nodejs18.15(2026-08-19 从 16.13 升上来),默认跟着它走。
-  // 建/更新两条分支都会传 Runtime,所以这个值会压过控制台里选的版本。
-  // 这个账号实测支持 Nodejs20.19,要升用 TC_RUNTIME=Nodejs20.19,不必改代码。
-  const RUNTIME = process.env.TC_RUNTIME || 'Nodejs18.15';
+  // 2026-10-15 起抓取在函数里跑,所以运行时对齐本地/CI 的 Node 22 线,不再跟着
+  // 线上旧值走。运行时名是「腾讯云发镜像时的小版本」,不是真实 Node 版本号:
+  // Nodejs22.21 = Node v22.21.1(实测,见 cloud/README.md「运行时名」一节)。
+  // 该账号实测支持 Nodejs22.21 / 20.19;Nodejs22.15、Nodejs20.15 均报
+  // InvalidParameterValue.Runtime。
+  const RUNTIME = process.env.TC_RUNTIME || 'Nodejs22.21';
+  // 抓取要等 6 个源 + 12 只 ETF + 4 条 K 线请求,本地实测数十秒。60s 超时是给
+  // 它留的余量(上限 900s);内存 256MB 是因为 payload 峰值要在内存里同时存
+  // JSON 串和它的 base64,128MB 太紧。
+  const MEMORY_MB = Number(process.env.TC_MEMORY_MB || 256);
+  const TIMEOUT_S = Number(process.env.TC_TIMEOUT_S || 60);
 
   const OWNER = process.env.GITHUB_OWNER || 'chanbigcool';
   const REPO = process.env.GITHUB_REPO || 'daily-stock-news';
@@ -133,9 +187,12 @@ export async function deploy() {
     { Key: 'SHARED_SECRET', Value: process.env.SHARED_SECRET },
   ];
 
-  const srcPath = path.join(here, 'index.js');
-  const zip = zipSingle('index.js', fs.readFileSync(srcPath));
-  console.log(`源码: cloud/index.js (${fs.statSync(srcPath).size} B) → zip ${zip.length} B`);
+  const manifest = bundleManifest(here);
+  const entries = manifest.map((m) => ({ name: m.name, data: fs.readFileSync(m.file) }));
+  const zip = zipFiles(entries);
+  const rawBytes = entries.reduce((s, e) => s + e.data.length, 0);
+  console.log(`源码: ${manifest.length} 个文件(${rawBytes} B)→ zip ${zip.length} B`);
+  for (const m of manifest) console.log(`  · ${m.name}  (${fs.statSync(m.file).size} B)`);
 
   const scf = (action, params) => tcCall('scf', '2018-04-16', action, REGION, params);
   const unwrap = (r, what) => {
@@ -155,9 +212,9 @@ export async function deploy() {
       Handler: 'index.handler',
       Runtime: RUNTIME,
       Code: { ZipFile: zip.toString('base64') },
-      Description: '公网一键刷新:触发 GitHub Actions 重建日报 (daily-stock-news)',
-      MemorySize: 128,
-      Timeout: 30,
+      Description: '公网一键刷新:云端抓取 → 写 payload 到 fetch-cache → 触发 Actions 构建日报 (daily-stock-news)',
+      MemorySize: MEMORY_MB,
+      Timeout: TIMEOUT_S,
       Role: 'SCF_QcsRole',
       Environment: { Variables: envVars },
     }), 'CreateFunction');
@@ -167,9 +224,13 @@ export async function deploy() {
       FunctionName: FUNC_NAME, Handler: 'index.handler', ZipFile: zip.toString('base64'),
     }), 'UpdateFunctionCode');
     await waitActive(scf, FUNC_NAME);
-    console.log('[2/3] 更新配置(运行时 + 环境变量) ...');
+    console.log('[2/3] 更新配置(运行时 + 内存/超时 + 环境变量) ...');
     unwrap(await scf('UpdateFunctionConfiguration', {
-      FunctionName: FUNC_NAME, Runtime: RUNTIME, Environment: { Variables: envVars },
+      FunctionName: FUNC_NAME,
+      Runtime: RUNTIME,
+      MemorySize: MEMORY_MB,
+      Timeout: TIMEOUT_S,
+      Environment: { Variables: envVars },
     }), 'UpdateFunctionConfiguration');
   }
 
@@ -178,7 +239,7 @@ export async function deploy() {
 
   console.log('\n=== 部署完成 ===');
   console.log('账号     :', OWNER, '/', REPO);
-  console.log('运行时   :', RUNTIME);
+  console.log('运行时   :', RUNTIME, `· 内存 ${MEMORY_MB}MB · 超时 ${TIMEOUT_S}s`);
   if (url) {
     console.log('函数 URL :', url);
     console.log('\n把这个 URL 换成 scripts/build-daily.mjs 里的内置默认值,');
