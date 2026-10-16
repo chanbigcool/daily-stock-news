@@ -48,20 +48,17 @@ export function dedupKey(title) {
 // ── 清洗阶段 ────────────────────────────────────────────
 
 function stageDedup(allItems) {
-  // Deduplicate — prefer direct API sources over RSS
-  const seen = new Map();
+  // 精确键去重:同一个归一标题只留先到的那条。
+  // 「优先 direct_api、淘汰 RSS」的分支已删(2026-10-16):RSS 层 2026-10-15 就删了,
+  // 唯一给 sourceType 赋值的地方(fetch.mjs:278)对所有源都打 direct_api;而存档项
+  // 不带 sourceType 又由 mergeWithHistory 用标题键/link 事先比对过、且追加在 fresh
+  // 之后 —— 所以那个分支的 existing 永远不可能是非 direct_api 的条目,是死代码。
+  const seen = new Set();
   const deduped = [];
   for (const item of allItems) {
     const key = dedupKey(item.title);
-    const existing = seen.get(key);
-    if (existing && existing.sourceType !== 'direct_api' && item.sourceType === 'direct_api') {
-      const idx = deduped.findIndex(d => dedupKey(d.title) === key);
-      if (idx >= 0) deduped[idx] = item;
-      seen.set(key, item);
-      continue;
-    }
-    if (existing) continue;
-    seen.set(key, item);
+    if (seen.has(key)) continue;
+    seen.add(key);
     deduped.push(item);
   }
   return deduped;
@@ -84,24 +81,62 @@ function stageClusterEvents(kept) {
   // eventId/eventSources/sourceCount/eventMembers;collapseToRepresentatives
   // 把多来源事件收敛为一条代表条目(最长标题),其余成员作为相关报道引用,
   // 不进入下游分析/渲染。单事件条目原样通过、携带自身事件元数据。
-  // 收敛后再跑一层旧 stageCollapse 的包含去重兜底(跨事件的高重合标题)。
+  // 包含兜底:同一事件被两个源各存一份时,标题归一键会互为包含 —— 一种是
+  // 「短标题 + 完整正文(description)」,另一种是「【标题】正文」全塞进 title、
+  // description 为空。**保留短标题那条**:实测它的 description 才是完整正文,
+  // 留长的会得到「标题是一整段」的卡片(63 天存档里 75 组此类重复,短条目
+  // description 为空的 0 组,所以保留短的不会丢正文)。
+  //
+  // 判定必须**双向**:原来的单向写法(只看「已收的更长」)漏掉「新到的更长」那条,
+  // 即快讯先到、全文后到 —— 2026-08-22 起 28 天里 48 对进了报告而规则触发 0 次,
+  // 完全取决于到达顺序。clusterEvents 的相似度评分接不住这类对:长标题里混着正文,
+  // 加权字符 Jaccard 被稀释到 0.55~0.60,低于合并阈值。
   const { annotatedItems } = clusterEvents(kept);
-  const collapsed = collapseToRepresentatives(annotatedItems);
-  const accepted = [];
+  const collapsed = collapseToRepresentatives(annotatedItems).map(preferConciseTitle);
+  const accepted = []; // { item, outIdx }
   const out = [];
   for (const item of collapsed) {
     const norm = dedupKey(item.title);
     if (norm.length < 6) { out.push(item); continue; }
-    let dup = false;
-    for (const acc of accepted) {
-      const accNorm = dedupKey(acc.title);
-      if (accNorm.length >= norm.length + 4 && accNorm.includes(norm)) { dup = true; break; }
+    let hit = -1;
+    for (let i = 0; i < accepted.length; i++) {
+      const accNorm = dedupKey(accepted[i].item.title);
+      if (Math.abs(accNorm.length - norm.length) < 4) continue;
+      const [longK, shortK] = accNorm.length > norm.length ? [accNorm, norm] : [norm, accNorm];
+      if (longK.includes(shortK)) { hit = i; break; }
     }
-    if (dup) continue;
-    accepted.push(item);
-    out.push(item);
+    if (hit < 0) {
+      accepted.push({ item, outIdx: out.length });
+      out.push(item);
+      continue;
+    }
+    // 命中的是已收条目:只有新到的更短才顶掉它,否则(新到的更长)直接丢弃。
+    if (norm.length < dedupKey(accepted[hit].item.title).length) {
+      accepted[hit].item = item;
+      out[accepted[hit].outIdx] = item;
+    }
   }
   return out;
+}
+
+// 代表条目的标题修正:clusterEvents 收敛时按**最长标题**选代表,而「【标题】正文」
+// 这种把正文塞进 title 的条目总是更长,于是卡片标题变成一整段。若代表条目的归一键
+// 包含同簇某个更短成员的归一键(即那条短标题就是它开头的那句),改用那条短标题 ——
+// 实测短条目的 description 才是完整正文,长条目的 description 是空的。
+// 只动 title/description,link/source 仍属原代表条目,归属不变。
+// 簇外单项(无 eventMembers)原样返回。实测全语料 16 个簇命中、近期 1 个。
+function preferConciseTitle(item) {
+  const members = item.eventMembers;
+  if (!Array.isArray(members) || members.length < 2) return item;
+  const key = dedupKey(item.title);
+  let pick = null;
+  for (const m of members) {
+    const k = dedupKey(m.title);
+    if (k.length === 0 || k.length + 4 > key.length || !key.includes(k)) continue;
+    if (!pick || k.length < dedupKey(pick.title).length) pick = m;
+  }
+  if (!pick) return item;
+  return { ...item, title: pick.title, description: pick.description || item.description };
 }
 
 function stageClassify(kept) {

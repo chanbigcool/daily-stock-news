@@ -39,25 +39,26 @@ test('完全重复标题只保留一条', () => {
   assert.equal(out.length, 1);
 });
 
-test('direct_api 优先替换 RSS 同题(保留 API 版)', () => {
+test('完全重复标题保留先到的那条', () => {
   const items = [
-    { title: '台积电 Q2 业绩超预期', description: 'rss版', sourceType: 'rss' },
-    { title: '台积电 Q2 业绩超预期', description: 'api版', sourceType: 'direct_api' },
+    { title: '台积电 Q2 业绩超预期', description: '先到', sourceType: 'direct_api' },
+    { title: '台积电 Q2 业绩超预期', description: '后到', sourceType: 'direct_api' },
   ];
   const out = dedupAndClean(items);
   assert.equal(out.length, 1);
-  assert.equal(out[0].description, 'api版', '应保留 direct_api 版');
-  assert.equal(out[0].sourceType, 'direct_api');
+  assert.equal(out[0].description, '先到');
 });
 
-test('两个 RSS 同题只保留第一条(不替换)', () => {
+test('同题不同来源类型也只留第一条(旧「direct_api 优先」分支已删)', () => {
+  // 该分支是死代码:RSS 层 2026-10-15 已删,全部源都打 direct_api;存档项由
+  // mergeWithHistory 自己比对且追加在 fresh 之后,当不了先到的 existing。
   const items = [
-    { title: '中芯国际扩产', description: 'rss1', sourceType: 'rss' },
-    { title: '中芯国际扩产', description: 'rss2', sourceType: 'rss' },
+    { title: '中芯国际扩产', description: '第一条', sourceType: 'direct_api' },
+    { title: '中芯国际扩产', description: '第二条', sourceType: 'direct_api' },
   ];
   const out = dedupAndClean(items);
   assert.equal(out.length, 1);
-  assert.equal(out[0].description, 'rss1');
+  assert.equal(out[0].description, '第一条');
 });
 
 // ── dedupAndClean:去噪 ──────────────────────────────────
@@ -103,6 +104,68 @@ test('事件代表条目带 sourceCount,单条事件 sourceCount=1', () => {
   const out = dedupAndClean(items);
   assert.equal(out.length, 1);
   assert.equal(out[0].sourceCount, 1);
+});
+
+// 「快讯 + 全文」双份:一个源给短标题配完整正文,另一个源把正文全塞进 title。
+// 标题归一键互为包含,clusterEvents 的相似度接不住(长标题混着正文,加权字符
+// Jaccard 被稀释到 0.55~0.60),只能靠 stageClusterEvents 的包含兜底。
+// 实测 2026-08-22 起 28 天里这种对漏掉 49 条,原来只查「已收的更长」这一向,
+// 快讯先到、全文后到就漏。
+test('快讯在前、全文在后 → 仍收敛,且保留短标题那条', () => {
+  const items = [
+    {
+      title: '新洁能：功率半导体正迎来新一轮量价齐升的景气周期',
+      description: '10月15日，在半年度业绩会上，新洁能表示功率半导体行业正经历一场变革…',
+      source: '同花顺快讯', sourceType: 'direct_api', link: 'https://a.com/1',
+    },
+    {
+      title: '【新洁能：功率半导体正迎来新一轮量价齐升的景气周期】10月15日，在半年度业绩会上，新洁能表示，功率半导体行业正经历一场由“AI算力+新能源”双轮驱动的深刻变革',
+      description: '',
+      source: '新浪财经', sourceType: 'direct_api', link: 'https://a.com/2',
+    },
+  ];
+  const out = dedupAndClean(items);
+  assert.equal(out.length, 1, '同一事件的两份应并成一条');
+  assert.equal(out[0].title, '新洁能：功率半导体正迎来新一轮量价齐升的景气周期',
+    '应保留短标题那条 —— 正文在它的 description 里,长的那条正文塞在标题里');
+  assert.ok(out[0].description.includes('半年度业绩会'), '短条目的正文被保留');
+});
+
+test('全文在前、快讯在后 → 短标题顶掉已收的长条目', () => {
+  const items = [
+    {
+      title: '【恒瑞医药：瑞普泊肽注射液上市申请获国家药监局受理】恒瑞医药(600276.SH)公告称，公司子公司福建盛迪医药收到国家药监局《受理通知书》，瑞普泊肽注射液药品上市许可申请获受理，拟定适应症为成人2型糖尿病患者的血糖控制。该药品为恒瑞自主研发的GLP-1和GIP双激动剂，两项关键Ⅲ期临床研究显示，瑞普',
+      description: '',
+      source: '新浪财经', sourceType: 'direct_api', link: 'https://a.com/1',
+    },
+    {
+      title: '恒瑞医药：瑞普泊肽注射液上市申请获国家药监局受理',
+      description: '财联社9月9日电，恒瑞医药公告称…',
+      source: '财联社', sourceType: 'direct_api', link: 'https://a.com/2',
+    },
+  ];
+  const out = dedupAndClean(items);
+  assert.equal(out.length, 1);
+  // 这对会被 clusterEvents 先并成同一个事件,代表条目落在 preferConciseTitle 上
+  // (收敛时按最长标题选,长的正是「【标题】正文」那条),标题仍然要回到短的那句。
+  assert.equal(out[0].title, '恒瑞医药：瑞普泊肽注射液上市申请获国家药监局受理');
+});
+
+test('包含判定:长度差 ≥ 4 且互为包含才收敛', () => {
+  const far = dedupAndClean([
+    { title: '中芯国际扩产', description: '', sourceType: 'direct_api', link: 'https://a.com/1' },
+    { title: '中芯国际扩产并上调全年资本开支指引', description: '', sourceType: 'direct_api', link: 'https://a.com/2' },
+  ]);
+  assert.equal(far.length, 1, '长度差 ≥ 4 且包含 → 收敛');
+  assert.equal(far[0].title, '中芯国际扩产');
+
+  // 反向:短条目在中间而非前缀,同样算包含(保持原来的非锚定语义)
+  const mid = dedupAndClean([
+    { title: '半导体设备国产化率提升带动中芯国际扩产', description: '', sourceType: 'direct_api', link: 'https://a.com/1' },
+    { title: '中芯国际扩产', description: '', sourceType: 'direct_api', link: 'https://a.com/2' },
+  ]);
+  assert.equal(mid.length, 1, '中段包含也算同一事件');
+  assert.equal(mid[0].title, '中芯国际扩产');
 });
 
 
