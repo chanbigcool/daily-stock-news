@@ -178,17 +178,17 @@
     </div>
     <div class="examples">
       <span class="ex-label">示例：</span>
-      <button class="chip-example" data-sql="SELECT date, cat, dir, impact, title, score FROM news WHERE date = (SELECT MAX(date) FROM news) ORDER BY score DESC LIMIT 15">今日新闻 TOP</button>
+      <button class="chip-example" data-sql="SELECT date, cat, dir, impact, title, confidence FROM news WHERE date = (SELECT MAX(date) FROM news) ORDER BY CASE impact WHEN '极高' THEN 0 WHEN '高' THEN 1 WHEN '中' THEN 2 ELSE 3 END, confidence DESC LIMIT 15">今日新闻 TOP</button>
       <button class="chip-example" data-sql="SELECT date, COUNT(*) AS n FROM news GROUP BY date ORDER BY date DESC LIMIT 15">每日条数趋势</button>
       <button class="chip-example" data-sql="SELECT dir, COUNT(*) AS n FROM news GROUP BY dir ORDER BY n DESC">方向分布</button>
       <button class="chip-example" data-sql="SELECT impact, COUNT(*) AS n FROM news GROUP BY impact ORDER BY n DESC">影响等级</button>
-      <button class="chip-example" data-sql="SELECT n.date, n.cat, n.title, d.count AS 板块当日条数 FROM news n JOIN daily d USING(date, cat) WHERE n.dir = '利好' ORDER BY n.score DESC LIMIT 15">JOIN 教学例</button>
+      <button class="chip-example" data-sql="SELECT n.date, n.cat, n.title, d.count AS 板块当日条数 FROM news n JOIN daily d USING(date, cat) WHERE n.dir = '利好' ORDER BY CASE n.impact WHEN '极高' THEN 0 WHEN '高' THEN 1 WHEN '中' THEN 2 ELSE 3 END, n.confidence DESC LIMIT 15">JOIN 教学例</button>
       <button class="chip-example" data-sql="SELECT name, count, cats, firstDate, lastDate FROM companies ORDER BY count DESC LIMIT 10">公司榜 TOP10</button>
       <button class="chip-example" data-sql="SELECT date, cat, count, etfChg FROM daily WHERE cat = '光模块' ORDER BY date DESC LIMIT 10">光模块 ETF 涨跌</button>
     </div>
     <details class="cheatsheet">
       <summary>SQL 速查（真实 SQLite，与命令行 sqlite 行为一致）</summary>
-      <p>表：<code>news</code>（新闻，15 列：date/cat/dir/impact/title/summary/score…）、<code>daily</code>（每日×板块聚合，含 etfChg）、<code>companies</code>（公司频次）、<code>meta</code>（元信息）。</p>
+      <p>表：<code>news</code>（新闻，15 列：date/cat/dir/impact/title/summary/confidence…）、<code>daily</code>（每日×板块聚合，含 etfChg）、<code>companies</code>（公司频次）、<code>meta</code>（元信息）。</p>
       <p>关联：三表以 <code>date</code>、<code>cat</code>、公司名 概念关联；<code>news</code> 与 <code>daily</code> 可用 <code>JOIN … USING(date, cat)</code>。</p>
       <p>常用：<code>SELECT</code> <code>WHERE</code> <code>GROUP BY</code> <code>HAVING</code> <code>ORDER BY</code> <code>LIMIT</code> <code>DISTINCT</code>；聚合 <code>COUNT</code> <code>SUM</code> <code>AVG</code> <code>MIN</code> <code>MAX</code>；谓词 <code>=</code> <code>&gt;</code> <code>&lt;</code> <code>LIKE</code> <code>IN</code> <code>BETWEEN</code> <code>AND/OR/NOT</code>。</p>
       <p>本库为完整 SQLite：JOIN、子查询、窗口函数等均可尝试，行为与真库一致。</p>

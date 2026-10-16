@@ -122,3 +122,56 @@ test('引擎标注:AI 链路 → 页面只说 AI,不暴露覆盖率', () => {
   // 页尾那处措辞同样不能带
   assert.doesNotMatch(render({ isAi: true, aiCoverage: 12 }), /智能分析 \+ 中文翻译 · AI 覆盖/);
 });
+
+// ── 今日复盘 / 次日倾向:两个方向各占一列 ─────────────────
+// direction 被 ETF 硬校准(复盘),forwardDirection 不被(前瞻)。合并成一列就分不清
+// 「新闻读错了」和「行情本来就不跟」,所以列必须分开、标签必须写明。
+
+const withForward = (fwd) => mkResult({
+  sectorMatrix: mkResult().sectorMatrix.map(s => ({ ...s, forwardDirection: fwd[s.name] })),
+});
+
+test('有 forwardDirection → 矩阵拆成「今日复盘」「次日倾向」两列', () => {
+  const html = renderHTML(
+    withForward({ 半导体: '利好', 光模块: '利空', 创新药: '中性', 黄金: '分化' }),
+    '2026-09-12', [], undefined);
+  assert.match(html, /<th>今日复盘<\/th><th>次日倾向<\/th>/);
+  // 单列「方向」的表头必须消失,否则两套口径并存
+  assert.doesNotMatch(html, /<th>方向<\/th>/);
+  // 每行两个方向值:半导体 复盘中性/次日利好
+  assert.match(html, /半导体<\/td><td class="[^"]*">强<\/td><td class="[^"]*">中性<\/td><td class="[^"]*">利好<\/td>/);
+});
+
+test('有 forwardDirection → 速览卡片分别标注「复盘」「次日」,并给出释义条', () => {
+  const html = renderHTML(
+    withForward({ 半导体: '利好', 光模块: '利空', 创新药: '中性', 黄金: '分化' }),
+    '2026-09-12', [], undefined);
+  assert.match(html, /class="badge badge-[a-z]+" title="今日复盘[^"]*">复盘 中性<\/span>/);
+  assert.match(html, /class="badge badge-[a-z]+" title="次日倾向[^"]*">次日 利好<\/span>/);
+  assert.match(html, /class="dir-legend"/, '两个方向语义不同,必须有释义条说明差别');
+  assert.match(html, /<b>今日复盘<\/b>/);
+  assert.match(html, /<b>次日倾向<\/b>/);
+});
+
+test('无 forwardDirection(旧存档)→ 保持单列「方向」,不出释义条', () => {
+  // rerender-history.mjs 会拿旧存档重渲染已发布页面;那时若冒出「次日 —」整列、
+  // 或平白多一条释义,历史页就被改变了。这条钉住旧页的**可见内容**与从前一致
+  // (.dir-legend 的 CSS 仍在 <style> 里,那是死的,不产生元素)。
+  const html = render();
+  assert.match(html, /<th>方向<\/th>/);
+  assert.doesNotMatch(html, /<th>今日复盘<\/th>/);
+  assert.doesNotMatch(html, /class="dir-legend"/);
+  assert.doesNotMatch(html, /">次日 /, '旧页不该出现「次日 X」徽章');
+  assert.doesNotMatch(html, /">复盘 /, '旧页不该出现「复盘 X」徽章');
+  // 卡片回到不加前缀的老样子
+  assert.match(html, /class="badge badge-neutral">中性<\/span>/);
+});
+
+test('有 forwardDirection 但某板块为空 → 该格显「—」而不是充一个中性', () => {
+  // 缺值时编一个「中性」等于谎报「研判为不表态」,与「没有这个数据」是两回事
+  const html = renderHTML(
+    withForward({ 半导体: '利好', 光模块: '利空', 创新药: '', 黄金: '分化' }),
+    '2026-09-12', [], undefined);
+  assert.match(html, /创新药<\/td><td class="shock-weak">弱<\/td><td class="dir-flat">中性<\/td><td class="">—<\/td>/);
+  assert.match(html, /class="badge badge-neutral" title="次日倾向[^"]*">次日 —<\/span>/);
+});

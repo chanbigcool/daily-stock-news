@@ -21,10 +21,15 @@ export function _setPaths(historyDir, dbPath) {
   _dbPath = dbPath;
 }
 
-const DB_VERSION = '1';
+// v2:news.score 更名为 news.confidence(列名与内容对齐,见 flattenNews 的说明)。
+// 库是整体重建的(见下方 rmSync),没有迁移负担,版本号只用于标记表结构。
+const DB_VERSION = '2';
 const FILE_RE = /^日报_\d{8}\.json$/;
 
 // 单条 analyzed → news 行(15 列,降维去 description/reasoning/evidence 等体积大头)
+// ⚠ 该列 2026-10-16 前叫 `score`,存的却是 AI 的 confidence_score(0~1)。名字误导:
+// db.html 的示例查询按 `score DESC` 取"今日 TOP",实际取到的是"最有把握"而非
+// "影响最大"。已改名 `confidence`,要按影响排序请用 impact 档位(见 db.html)。
 export function flattenNews(n, date) {
   const tickers = Array.isArray(n.tickers)
     ? n.tickers.filter(Boolean).join('|')
@@ -45,7 +50,7 @@ export function flattenNews(n, date) {
     pubDate: n.pubDate || '',
     comps,
     link: n.link || '',
-    score: typeof n.confidence_score === 'number' ? n.confidence_score : null,
+    confidence: typeof n.confidence_score === 'number' ? n.confidence_score : null,
   };
 }
 
@@ -121,7 +126,7 @@ PRAGMA synchronous = OFF;
 CREATE TABLE IF NOT EXISTS news(
   id TEXT, date TEXT NOT NULL, cat TEXT, dir TEXT,
   impact TEXT, certainty TEXT, tw TEXT, tickers TEXT, title TEXT,
-  summary TEXT, source TEXT, pubDate TEXT, comps TEXT, link TEXT, score REAL);
+  summary TEXT, source TEXT, pubDate TEXT, comps TEXT, link TEXT, confidence REAL);
 CREATE INDEX IF NOT EXISTS idx_news_date ON news(date);
 CREATE INDEX IF NOT EXISTS idx_news_cat  ON news(cat);
 CREATE INDEX IF NOT EXISTS idx_news_dir  ON news(dir);
@@ -186,7 +191,7 @@ export async function buildDatabase(histDir = _historyDir, dbPath = _dbPath) {
     db.exec(SCHEMA);
     db.exec('BEGIN');
     const insNews = db.prepare('INSERT OR REPLACE INTO news VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
-    for (const n of allNews) insNews.run(n.id, n.date, n.cat, n.dir, n.impact, n.certainty, n.tw, n.tickers, n.title, n.summary, n.source, n.pubDate, n.comps, n.link, n.score);
+    for (const n of allNews) insNews.run(n.id, n.date, n.cat, n.dir, n.impact, n.certainty, n.tw, n.tickers, n.title, n.summary, n.source, n.pubDate, n.comps, n.link, n.confidence);
     const insDaily = db.prepare('INSERT OR REPLACE INTO daily VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
     for (const r of dailyRows) insDaily.run(r.date, r.cat, r.count, r.bull, r.bear, r.mix, r.neu, r.vhigh, r.high, r.mid, r.low, r.etfChg, r.shock, r.tickers, r.summary);
     const insComp = db.prepare('INSERT OR REPLACE INTO companies VALUES (?,?,?,?,?,?)');

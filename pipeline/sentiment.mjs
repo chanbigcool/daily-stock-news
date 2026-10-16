@@ -10,73 +10,23 @@
 
 import { matchKw } from './sectors.mjs';
 import { extractCompanies } from './companies.mjs';
+import {
+  SIGNALS, NEG_PHRASE_TERMS, STRONG_DEGREE, WEAK_DEGREE,
+  IMPACT_BANDS, DIR_RATIO, WEAK_MAX,
+  IMPACT_VALUE, DIR_WEIGHT, SHOCK_BANDS,
+  SIGNAL_DECAY, MAX_IMPACT_SCORE,
+  ROUNDUP_TITLE_RE, CLICKBAIT_RE, OPINION_SOURCE_RE, OPINION_TONE_RE, GENRE_CAP,
+} from './rating-rules.mjs';
 
-// ── 信号表 ───────────────────────────────────────────────
-// 每项:
-//   cat      信号语义分类(用于 notes 展示)
-//   kw       命中关键词(复用 matchKw 匹配,短拉丁词按词边界)
-//   dir      方向:利好/利空/中性/分化(分化=利好利空并存,标中性冲击)
-//   base     事件强度分(硬信号高,软信号低)
-//   weight   命中权重(多条信号累加;标题满命中、描述半命中)
-//   sectors  可选:仅这些板块生效(空则全局生效)
-//   time     可选:覆盖 time_window(缺省按硬/软信号推导)
-//   note     可选:评级说明
-export const SIGNALS = [
-  // ── 基本面硬信号 ──
-  { cat: '业绩', kw: ['营收创新高', '净利大增', '业绩超预期', '财报超预期', '翻倍', '增长超50%', 'beat estimates', 'earnings beat'], dir: '利好', base: 40, weight: 3 },
-  { cat: '业绩', kw: ['亏损扩大', '净利下滑', '业绩不及预期', '下调业绩指引', 'profit warning', 'miss estimates', 'guidance cut'], dir: '利空', base: 40, weight: 3 },
-  { cat: '订单', kw: ['大单', '中标', '订单增长', '订单饱满', '拿单', '长单', '订单爬坡', '新增订单', '新签订单', '小批量订单', '订单交付', 'booking', 'orders surge', 'order backlog'], dir: '利好', base: 30, weight: 2 },
-  { cat: '扩产', kw: ['扩产', '新增产能', '量产', '投产', '项目总投资', '总投资', '扩建', '建厂', 'fabs', 'capacity expansion', 'mass production'], dir: '利好', base: 20, weight: 2 },
-  { cat: '技术', kw: ['突破', '重大进展', '全球首发', '原型', '首款', '成功验证', '转产验证', '产能爬坡', 'breakthrough', 'first to market'], dir: '利好', base: 20, weight: 2 },
-  // ── 创新药临床/授权 ──
-  { cat: '临床', kw: ['FDA批准', '上市获批', 'NDA获批', 'BLA获批', '优先审评', '临床成功', 'III期达主要终点', 'approval', 'drug approved', 'phase 3 success'], dir: '利好', base: 40, weight: 3, sectors: ['创新药'] },
-  { cat: '临床', kw: ['临床失败', '试验中止', '审批被拒', '撤回申请', '安全性问题', 'trial failed', 'withdrawn', 'rejected', 'discontinued'], dir: '利空', base: 40, weight: 3, sectors: ['创新药'] },
-  { cat: '授权', kw: ['License-out', '授权出海', '全球权益授予', 'BD交易', '合作开发', '总里程碑付款'], dir: '利好', base: 30, weight: 2, sectors: ['创新药'] },
-  // ── 黄金 ──
-  { cat: '价格', kw: ['金价大涨', '创历史新高', '涨超', '现货黄金突破', '现货白银', '金价站上', 'gold hits record', 'price surge'], dir: '利好', base: 30, weight: 2, sectors: ['黄金'] },
-  { cat: '价格', kw: ['金价大跌', '跳水', '跌超', '回调', '跌破', 'gold plunges', 'price slump', 'selloff'], dir: '利空', base: 30, weight: 2, sectors: ['黄金'] },
-  { cat: '央行购金', kw: ['央行购金', '增持黄金', '黄金储备上升', 'central bank buys gold', 'reserve accumulation'], dir: '利好', base: 25, weight: 2, sectors: ['黄金'] },
-  // ── 政策/制裁(方向分板块)──
-  { cat: '政策', kw: ['制裁', '出口管制', '实体清单', '限制出口', '管控', 'sanction', 'export ban', 'restriction', 'entity list'], dir: '分化', base: 25, weight: 2, sectors: ['半导体', '光模块'], note: '制裁对国产替代链利好、对依赖海外设备/客户的公司利空,标为分化' },
-  { cat: '政策', kw: ['国产替代', '自主可控', '本土化率提升', '国产化', 'localization', 'domestic chip'], dir: '利好', base: 25, weight: 2, sectors: ['半导体'] },
-  // ── 宏观(对黄金方向)──
-  { cat: '宏观', kw: ['降息', '美联储降息', '鸽派', 'rate cut', 'Fed cut', 'dovish'], dir: '利好', base: 20, weight: 2, sectors: ['黄金'], note: '降息→持有黄金机会成本下降,利好黄金' },
-  { cat: '宏观', kw: ['加息', '鹰派', '通胀超预期', 'rate hike', 'hawkish'], dir: '利空', base: 20, weight: 2, sectors: ['黄金'] },
-  // ── 软信号(弱)──
-  { cat: '传闻', kw: ['传闻', '或考虑', '据报道', '有望', '计划', 'may', 'could', 'reportedly', 'in talks'], dir: '中性', base: 10, weight: 1 },
-  // 行情类信号计入方向:涨/跌行情本身就是板块方向的最直接体现。
-  // base=15 恰好越过 WEAK_MAX=15 压制(15 < 15 为假),下跌词同样命中即利空,
-  // 避免"板块暴跌新闻被压成中性"。
-  // 补充多字词(下跌/收跌/走弱…):让"板块下跌3.2%"这类行情描述新闻也能
-  // 按内容定向,不再依赖"大跌/跳水"等强词(刻意不加单字"跌/涨"防误伤)。
-  { cat: '行情', kw: ['股价上涨', '大涨', '涨停', '领涨', '上涨', '收涨', '走强', '上行', '反弹', '翻红', '涨超', '涨近', '涨幅扩大', '普涨', '拉升', 'surge', 'rally', 'soars', 'climbs'], dir: '利好', base: 15, weight: 1, note: '板块行情上涨' },
-  { cat: '行情', kw: ['暴跌', '重挫', '大跌', '跳水', '下挫', '领跌', '闪崩', '持续走低', '跌幅居前', '下跌', '收跌', '走弱', '走低', '回调', '回落', '下行', '下滑', '飘绿', '跌超', '跌近', '跌幅扩大', '普跌', '走跌', 'crashed', 'plunge', 'plummet', 'slump', 'tumble', 'selloff', 'nosedive'], dir: '利空', base: 18, weight: 2, note: '板块行情走弱' },
-  // ── 供需/价格传导(半导体/光模块)──
-  { cat: '涨价', kw: ['涨价', '提价', '涨价函', '上调价格', '供需紧张', '供不应求', '缺货', '价格上调', 'price hike', 'price increase', 'shortage'], dir: '利好', base: 25, weight: 2, sectors: ['半导体', '光模块'], note: '供不应求/涨价,量价齐升利好' },
-  { cat: '降价', kw: ['降价', '跌价', '价格战', '以价换量', '去库存', '清库存', '库存高企', '供过于求', 'price war', 'oversupply', 'inventory glut'], dir: '利空', base: 25, weight: 2, sectors: ['半导体', '光模块'], note: '去库存/价格战,盈利承压' },
-  { cat: '资本开支', kw: ['资本开支上调', '上调资本开支', '资本支出', 'capex', '追加投资'], dir: '利好', base: 20, weight: 2, sectors: ['半导体', '光模块'], note: '上游资本开支上行,需求景气' },
-  // ── 股东行为 ──
-  { cat: '回购', kw: ['回购', '增持', '大股东增持', '管理层增持', 'buyback'], dir: '利好', base: 20, weight: 2, note: '回购/增持,大股东看好' },
-  { cat: '减持', kw: ['减持', '套现', '解禁', '股东减持', 'share sale'], dir: '利空', base: 20, weight: 2, note: '减持/解禁,筹码承压' },
-  // ── 财报口径补充 ──
-  { cat: '业绩', kw: ['营收增长', '净利增长', '利润增长', '业绩大增', '净利润同比增', '上调业绩指引', '释放积极信号'], dir: '利好', base: 25, weight: 2 },
-  { cat: '业绩', kw: ['营收下滑', '净利下滑', '转亏', '首亏', '业绩预减', '利润下滑', '业绩下滑'], dir: '利空', base: 25, weight: 2 },
-  // ── 机构/研报(弱信号)──
-  { cat: '机构', kw: ['目标价上调', '买入评级', '增持评级', '推荐评级', '首予买入', '上调目标价', '维持买入', '首次覆盖'], dir: '利好', base: 15, weight: 1, note: '机构看多(弱信号)' },
-  { cat: '机构', kw: ['目标价下调', '卖出评级', '下调评级', '减持评级'], dir: '利空', base: 15, weight: 1, note: '机构看空(弱信号)' },
-  // ── 创新药:医保/临床申报 ──
-  { cat: '医保', kw: ['医保谈判', '纳入医保', '医保目录', '进医保', '集采', '带量采购'], dir: '中性', base: 15, weight: 1, sectors: ['创新药'], note: '医保/集采放量利好但降价承压,标中性' },
-  { cat: '临床', kw: ['临床II期', '申报上市', 'IND获批', '获得临床许可', '启动III期'], dir: '利好', base: 20, weight: 2, sectors: ['创新药'] },
-  // ── 黄金:避险/美元 ──
-  { cat: '避险', kw: ['地缘冲突', '避险情绪', '避险需求', '美元走弱', '美元指数下跌', '实际利率下行'], dir: '利好', base: 18, weight: 2, sectors: ['黄金'], note: '避险/美元走弱利好金价' },
-  { cat: '避险', kw: ['美元走强', '美元指数上涨', '美债收益率上行', '实际利率上行', '风险偏好回升'], dir: '利空', base: 18, weight: 2, sectors: ['黄金'], note: '美元/利率走强压制金价' },
-];
+// 词表与阈值在 rating-rules.mjs(改口径不必碰引擎代码)。这里只留**匹配逻辑**:
+// 否定词的位置规则、程度词的选择、体裁的判定顺序。
+// SIGNALS 一并转发出去:聚类(pipeline/events.mjs)要用同一张表算"是否同事件"。
+export { SIGNALS };
 
 // ── 否定词/程度词处理(关键词引擎精化)──────────────────
 // 否定词中和误判:如"暂停降息"命中"降息"利好、"降息预期降温"也应丢弃该
 // 信号。kw 自身含否定词(如"业绩不及预期")不受影响(kw.includes 判断保证)。
 const NEG_PREFIX_RE = /(不|未|无|没|不再|尚未|并未|并没有|未能|无法)$/; // 紧邻 kw 前
-const NEG_PHRASE_TERMS = ['暂停', '取消', '推迟', '延迟', '终止', '停止', '搁置', '降温', '回落', '放缓', '止跌', '止涨', '不及', '低于', '不达', '下修', '转跌', '转涨'];
 // 否定在 kw 之后:"降息预期回落/降温"。
 const NEG_POST_RE = /预期(回落|降温|消退|推迟|转弱|下降|减弱|搁置)/;
 
@@ -101,39 +51,24 @@ function isNegated(kw, text) {
 }
 
 // 程度词分级:强程度放大冲击分(抬 impact),弱程度缩小;方向分不调整。
-const STRONG_DEGREE = ['大幅', '显著', '创纪录', '历史新高', '新高', '首次', '突破', '暴涨', '暴跌', '骤降', '飙升', '翻番', '翻倍', '腰斩', '断崖', '激增', '锐减'];
-const WEAK_DEGREE = ['小幅', '微跌', '微涨', '略有', '略微', '温和', '窄幅', '轻微', '低幅', '微幅', '小涨', '小跌'];
-
 function degreeMultiplier(text) {
   if (STRONG_DEGREE.some(d => text.includes(d))) return 1.5;
   if (WEAK_DEGREE.some(d => text.includes(d))) return 0.5;
   return 1;
 }
 
-// 冲击分 → impact 档位阈值(可配置)
-const IMPACT_BANDS = [
-  { min: 70, impact: '极高' },
-  { min: 40, impact: '高' },
-  { min: 15, impact: '中' },
-  { min: 0, impact: '低' },
-];
-
-// 方向判定:正负分占比
-const DIR_RATIO = 0.6; // 优势明显阈值
-const WEAK_MAX = 15;   // 单边命中但总分低于此 → 中性
-
-// 板块冲击:impact 数值 × 方向强度 的加权和 → 强/中/弱
-const IMPACT_VALUE = { '极高': 4, '高': 3, '中': 2, '低': 1 };
-const DIR_WEIGHT = { '利好': 1.0, '利空': 1.0, '分化': 0.6, '中性': 0.3 };
-const SHOCK_BANDS = [
-  { min: 6, shock: '强' },
-  { min: 3, shock: '中' },
-  { min: 0, shock: '弱' },
-];
-
 function impactFromScore(score) {
   for (const band of IMPACT_BANDS) if (score >= band.min) return band.impact;
   return '低';
+}
+
+// 档位由高到低(极高→低),用于封顶比较。
+const BAND_ORDER = IMPACT_BANDS.map(b => b.impact);
+
+// 体裁 → 档位封顶。见 rating-rules.mjs 里各条规则的误伤率实测。
+function capBand(band, cap) {
+  if (!cap) return band;
+  return BAND_ORDER.indexOf(band) < BAND_ORDER.indexOf(cap) ? cap : band;
 }
 
 // 板块冲击:板块内加权新闻数 → 强/中/弱
@@ -158,7 +93,6 @@ function collectSignals(n, excludeCats = null) {
   const hit = [];
   let scorePos = 0;
   let scoreNeg = 0;
-  let scoreImpact = 0;
 
   for (const sig of SIGNALS) {
     if (excludeCats && excludeCats.includes(sig.cat)) continue;
@@ -181,13 +115,41 @@ function collectSignals(n, excludeCats = null) {
     // 标题满命中 weight,描述半命中 weight×0.5;程度词分级缩放冲击分(方向分不动)
     const w = titleHit ? sig.weight : sig.weight * 0.5;
     const pts = Math.round(sig.base * w * degreeMultiplier(matched));
-    scoreImpact += pts;
     if (sig.dir === '利好') scorePos += sig.base;
     else if (sig.dir === '利空') scoreNeg += sig.base;
     hit.push({ cat: sig.cat, dir: sig.dir, pts, note: sig.note, kw: hitKw });
   }
 
+  // 冲击分 = 最强信号的满分 + 其余信号的递减贡献,再封顶。
+  // 改自"Σ pts":一条汇总了十条快讯的栏目稿,会因凑齐 4 个关键词而累到 255 分,
+  // 超过任何真实事件(实测最狠的一条 255,人工判「低」)。单个事件的冲击由
+  // **最强的那条信号**决定,其余只是佐证,故按强度降序做几何衰减。
+  const sorted = [...hit].sort((a, b) => b.pts - a.pts);
+  let acc = 0, decay = 1;
+  for (const h of sorted) { acc += h.pts * decay; decay *= SIGNAL_DECAY; }
+  const scoreImpact = Math.min(MAX_IMPACT_SCORE, Math.round(acc));
+
   return { hit, scorePos, scoreNeg, scoreImpact };
+}
+
+// 体裁判定 —— 决定 impact 的**上限**,不改变方向。
+//   roundup 汇总/栏目/行情复述 → 封顶「低」
+//   opinion 观点/研报/分析      → 封顶「中」
+//   event   默认                → 不封顶
+// 判定不看"有没有命中硬信号":汇总稿的高分恰恰**来自**正文里凑齐的关键词,
+// 有硬信号正是它该被压的理由。曾加过"标题含硬信号则放行"的后门,结果放行了
+// 金标 #9(【早报】…净利润增长翻倍)与 #37(三条快讯用「；」串起),两条人工都判「低」。
+export function genreOf(n, hit) {
+  const title = n.title || '';
+  if (ROUNDUP_TITLE_RE.test(title) || CLICKBAIT_RE.test(title)) return 'roundup';
+  if ((title.match(/；/g) || []).length >= 2) return 'roundup';
+  // 观点必须排在「只命中行情」之前:券商标题里的「景气度上行/下行」会命中行情类
+  // 关键词,若先判行情就把它误当成当日复盘封顶「低」。署名机构是更强的证据 ——
+  // 标题自称机构观点的,按观点处理。
+  if (OPINION_SOURCE_RE.test(title) || OPINION_TONE_RE.test(title)) return 'opinion';
+  // 只命中「行情」类信号:这条新闻在复述当日板块涨跌,不是一个事件。
+  if (hit.length > 0 && hit.every(h => h.cat === '行情')) return 'roundup';
+  return 'event';
 }
 
 // 方向判定:正负分占比。hasSplit 为「命中显式分化信号」。
@@ -203,14 +165,19 @@ function directionFromScores(scorePos, scoreNeg, hasSplit) {
 }
 
 // 对单条新闻做评级。n 需含 title/description/guessedSector(分类结果由 classifier 决定)。
-// 返回 { direction, impact, certainty, time_window, notes, score, hitSignals }
+// 返回 { direction, impact, certainty, time_window, notes, score, hitSignals, genre }
 export function scoreNewsItem(n) {
   const { hit, scorePos, scoreNeg, scoreImpact } = collectSignals(n);
 
   // 显式分化信号(制裁/政策)优先:利好与利空并存,或命中标注 direction=分化 的信号
   const hasSplit = hit.some(s => s.dir === '分化');
   const direction = directionFromScores(scorePos, scoreNeg, hasSplit);
-  const impact = impactFromScore(scoreImpact);
+
+  // 体裁封顶:分数只决定"候选档位",体裁决定"上限"。汇总类拿到的高分来自
+  // 正文里凑齐的关键词,不代表这条新闻本身的冲击。
+  const genre = genreOf(n, hit);
+  const cap = GENRE_CAP[genre];
+  const impact = capBand(impactFromScore(scoreImpact), cap);
 
   // certainty:硬信号(命中分 pts≥40)→ 高;有命中 → 中;无命中 → 低
   const hasHard = hit.some(s => s.pts >= 40);
@@ -219,20 +186,22 @@ export function scoreNewsItem(n) {
   // time_window:命中硬信号(pts≥40)→ 短期;否则中期
   const timeWindow = hasHard ? '短期' : '中期';
 
-  // notes:可审计的评级依据
+  // notes:可审计的评级依据(按强度降序,与冲击分的计算顺序一致)
+  const ranked = [...hit].sort((a, b) => b.pts - a.pts);
   let notes = '';
-  if (hit.length > 0) {
-    const parts = hit.map(h => `${h.cat}·${h.dir}(${h.pts}${h.note ? '·' + h.note : ''})`);
+  if (ranked.length > 0) {
+    const parts = ranked.map(h => `${h.cat}·${h.dir}(${h.pts}${h.note ? '·' + h.note : ''})`);
     notes = `评分引擎:${parts.join('+')}`;
   } else {
     notes = '评分引擎:未命中明显信号,中性';
   }
+  if (cap) notes += `；体裁判定「${genre === 'roundup' ? '汇总/栏目/行情复述' : '观点/研报'}」,档位封顶「${cap}」`;
 
   // 公司→ticker 映射(关键词路径 affected_companies/tickers 数据源)
   const companies = extractCompanies(`${n.title || ''}\n${n.description || ''}`, n.guessedSector || '');
 
   return {
-    direction, impact, certainty, time_window: timeWindow, notes, score: scoreImpact, hitSignals: hit,
+    direction, impact, certainty, time_window: timeWindow, notes, score: scoreImpact, hitSignals: ranked, genre,
     companies: companies.map(c => c.name),
     tickers: companies.map(c => c.ticker ? `${c.name}(${c.ticker})` : c.name).join('、'),
   };
@@ -280,15 +249,34 @@ function strArr(v, maxLen) {
   }).filter(Boolean);
 }
 
+// 体裁封顶(GENRE_CAP)过去只作用在关键词引擎上:AI 条目的 market_impact 只被
+// sanitizeRating 校验过枚举合法性,**不封顶**。阶段 1 之后 AI 通道要覆盖 80%+ 的
+// 条目,prompt 里虽然写了口径,但模型不保证遵守 —— 没有代码兜底的话,「汇总稿/
+// 观点稿封顶」这条治理会在主流路径上失效,而它正是压住评级通胀的主要手段。
+// 复用 genreOf + GENRE_CAP,与关键词路径同源,不另立一套判据。
+// 判定统一取**中文标题优先**(title_cn || title):体裁正则与信号词都是中文的,
+// 而 AI 条目的原文标题往往是英文 —— 拿原文判会让这个兜底对最该管的那批条目
+// 静默失效。归一化放在这里而不是各调用点,免得谁忘了传就悄悄不封顶。
+export function capImpactByGenre(impact, n = {}) {
+  const judged = { ...n, title: n.title_cn || n.title || '' };
+  const { hit } = collectSignals(judged);
+  const cap = GENRE_CAP[genreOf(judged, hit)];
+  return capBand(impact, cap);
+}
+
 // 对 AI 返回的单条研判做逐字段防御。ai 为解析后的对象;direction/impact
 // 是关键词引擎基线(评分),当 AI 对应枚举非法时回退到它们,保持新旧字段 1:1。
 // 返回字段齐全的 expl,confidence_score 非法/缺失时留 undefined 由
 // explanationToRating 兜底。
-export function sanitizeExplanation(ai, fallback = {}) {
+// n 为该条原文(用于体裁封顶);不传则不封顶(单测里只需要字段防御时可不传)。
+export function sanitizeExplanation(ai, fallback = {}, n = null) {
   const base = sanitizeRating({ ...fallback, direction: fallback.direction, impact: fallback.impact });
+  const impact = EXPL_IMPACTS.includes(ai.market_impact) ? ai.market_impact : base.impact;
   return {
     sentiment: EXPL_DIRECTIONS.includes(ai.sentiment) ? ai.sentiment : base.direction,
-    market_impact: EXPL_IMPACTS.includes(ai.market_impact) ? ai.market_impact : base.impact,
+    // 封顶只在这里做一次:expl.market_impact 既是被下游透传的字段,也是
+    // explanationToRating 推导 rating.impact 的唯一来源。两处各封一次会漂移。
+    market_impact: n ? capImpactByGenre(impact, n) : impact,
     affected_companies: strArr(ai.affected_companies),
     reasoning: strArr(ai.reasoning, 200),
     evidence: strArr(ai.evidence, 200),

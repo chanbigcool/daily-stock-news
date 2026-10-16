@@ -7,7 +7,7 @@ import { SECTORS, IMPACT_RANK, impactCompare } from './sectors.mjs';
 import {
   scoreNewsItem, sectorShock, sanitizeRating,
   sectorAvgChange, etfDirectionFor,
-  aggregateDirection, applyEtfCalibration,
+  aggregateDirection, applyEtfCalibration, hasForwardSignal,
   sanitizeExplanation, explanationToRating,
 } from './sentiment.mjs';
 
@@ -61,11 +61,25 @@ export function parseSSEText(raw) {
   return out;
 }
 
+// Retry-After 解析:秒数(Retry-After: 30)与 HTTP-date 两种形式都要认。
+// 智谱免费档限流时会给这个头,读它比盲目指数退避准得多。
+export function parseRetryAfter(value) {
+  if (!value) return 0;
+  const secs = Number(value);
+  if (Number.isFinite(secs)) return Math.max(0, Math.round(secs * 1000));
+  const at = Date.parse(value);
+  return Number.isFinite(at) ? Math.max(0, at - Date.now()) : 0;
+}
+
 // 流式调用 AI 接口并累积纯文本返回。超时策略改为「首 token 120s + 空闲 30s」:
 // 旧 180s 硬超时会把真正在生成(需 4-5 分钟)的慢请求误杀,导致 3×180s 白等重试。
 // 流式下只要 token 持续到达就保活;真正挂死(无任何数据)120s 内放弃,生成中途
 // 停住 30s 放弃 —— 单次最坏 ~2 分钟,不牺牲会成功的请求。
 // 兼容 Anthropic 及 GLM 兼容端点的 SSE 格式;端点忽略 stream 返回普通 JSON 时兜底走 extractTextBlock。
+//
+// 返回 { text, status, retryAfterMs }:text 为 null 即失败。**失败原因必须透出去** ——
+// 退避策略要区分「限流(429,等 Retry-After 再来)」与「内容坏了(JSON 截断,拆小重试)」,
+// 旧版一律 return null 把这个区别丢掉了。
 async function streamResponseText(prompt, maxTokens = 8192) {
   const controller = new AbortController();
   let gotData = false;
@@ -96,17 +110,19 @@ async function streamResponseText(prompt, maxTokens = 8192) {
   } catch (err) {
     clearTimeout(idleTimer);
     console.error(`  Claude API 请求失败 (${err.message})`);
-    return null;
+    return { text: null, status: 0, retryAfterMs: 0 };
   }
   if (!resp.ok) {
     clearTimeout(idleTimer);
-    console.error(`  Claude API 错误 (${resp.status})`);
-    return null;
+    const retryAfterMs = parseRetryAfter(resp.headers.get('retry-after'));
+    console.error(`  Claude API 错误 (${resp.status})`
+      + (retryAfterMs ? `,Retry-After ${(retryAfterMs / 1000).toFixed(0)}s` : ''));
+    return { text: null, status: resp.status, retryAfterMs };
   }
   if (!resp.body) {
     clearTimeout(idleTimer);
     console.error('  Claude API 无流式响应体');
-    return null;
+    return { text: null, status: resp.status, retryAfterMs: 0 };
   }
 
   let raw = '';
@@ -123,12 +139,12 @@ async function streamResponseText(prompt, maxTokens = 8192) {
     raw += decoder.decode();
   } catch (err) {
     console.error(`  Claude API 流读取失败 (${controller.signal.aborted ? '超时: 120s 无首 token / 30s 无新数据' : err.message})`);
-    return null;
+    return { text: null, status: resp.status, retryAfterMs: 0 };
   } finally {
     clearTimeout(idleTimer);
   }
 
-  return parseSSEText(raw);
+  return { text: parseSSEText(raw), status: resp.status, retryAfterMs: 0 };
 }
 
 // ── 本地 proxy 可用性探测(快速失败) ──────────────────────
@@ -290,11 +306,11 @@ export function groupBySector(items) {
     .filter(g => g.items.length > 0);
 }
 
-// 大分片二次拆分:> SHARD_MAX_ITEMS 的板块拆成多个 ≤10 条的并行块,让每个请求
+// 大分片二次拆分:> SHARD_MAX_ITEMS 的板块拆成多个 ≤10 条的小块,让每个请求
 // 都落在 ~2-3 分钟的正常生成区间(25 条大分片实测 6.5 分钟,预算救不了)。
 // 25 条大分片拆小了,配合 AI_BUDGET_MS 软预算,健康日子全覆盖、异常只掐个别块。
 // sector 保持板块原名(供 prompt 的【板块】前缀与 key_points);label 形如
-// "半导体#1/#2"用于日志与重试提示。
+// "半导体#1/#2"用于日志与重试提示。块之间**串行**发送(见 analyzeWithClaude)。
 const SHARD_MAX_ITEMS = 10;
 export function chunkShards(groups) {
   const out = [];
@@ -311,7 +327,7 @@ export function chunkShards(groups) {
         items: g.items.slice(k, k + SHARD_MAX_ITEMS),
       });
     }
-    console.log(`  ✂️  ${g.sector} ${g.items.length} 条拆成 ${n} 个并行块`);
+    console.log(`  ✂️  ${g.sector} ${g.items.length} 条拆成 ${n} 个小块`);
   }
   return out;
 }
@@ -350,6 +366,17 @@ ${marketContext(etfData)}
 3. 若某条确属噪声/重复，仍要给方向(可标中性/低)，不要删条。
 4. 对关键词预判复核：同意则 reasoning 留"同意关键词预判"，修正则写明修正理由（如"板块大跌，行情类应判利空"）。
 
+档位口径（与本地引擎共用同一把尺子）。历史问题是"极高"发得太多 —— 实测占全部条目的
+6.3%，而人工标注只认 1~2%，等于这一档没有区分度。请按下面的分布把握：
+- 极高：全市场级别的产业/政策冲击，或龙头公司的重磅超预期（FDA 批准重磅新药、出口管制升级、龙头业绩远超预期）。**一个分片里通常 0~1 条**。
+- 高：单一公司或细分赛道的实质事件（业绩超预期、大额订单、减持、临床数据读出、量产交付、增资扩产）。**一个分片里通常 1~3 条**。
+- 中：有明确信息但影响有限（机构观点、行业数据、常规订单）。
+- 低：行情复述、栏目汇总、观点评论、无实质信息的快讯。**分片里多数条目属于这一档**。
+
+体裁硬约束（与上面的口径配套，不要违反）：
+- 汇总/栏目稿（早报、晚报、收评、午评、复盘、要闻精选、多条快讯用「；」串起）与纯行情复述（内容只是当日板块/个股涨跌）→ market_impact 一律不超过"低"。这类稿子正文里往往凑齐了多个关键词，但那是"汇总了很多事"，不是"发生了大事"。
+- 券商研报/机构观点（标题带机构署名，或带"预计/有望/看好/建议/维持/目标价/后市"等态度词）→ market_impact 不超过"中"。预判不是事实。
+
 每个对象包含以下字段（请严格遵守）：
 - id：对应输入编号，必须与输入的 [N] 一致
 - sentiment：利好 / 利空 / 中性 / 分化
@@ -374,14 +401,15 @@ ${marketContext(etfData)}
 
 ${newsText}`;
 
-  const responseText = await streamResponseText(prompt, maxTokens);
-  if (responseText === null) return null;
-  const cleanText = responseText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  const resp = await streamResponseText(prompt, maxTokens);
+  if (resp.text === null) return { ok: false, status: resp.status, retryAfterMs: resp.retryAfterMs };
+  const cleanText = resp.text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
 
   console.log(`  [${label}] AI 已接收 ${cleanText.length} 字`);
+  // 走到这说明 HTTP 通了但内容不可用(空回/截断)——不是限流,退避没用,该拆小重试。
   if (!cleanText) {
     console.error(`  [${label}] AI 返回空内容`);
-    return null;
+    return { ok: false, status: 200, retryAfterMs: 0 };
   }
 
   let result;
@@ -393,18 +421,18 @@ ${newsText}`;
     const end = cleanText.lastIndexOf('}');
     if (start < 0 || end <= start) {
       console.error(`  [${label}] AI 返回 JSON 解析失败`);
-      return null;
+      return { ok: false, status: 200, retryAfterMs: 0 };
     }
     try {
       result = JSON.parse(cleanText.slice(start, end + 1));
     } catch {
       console.error(`  [${label}] AI 返回 JSON 解析失败`);
-      return null;
+      return { ok: false, status: 200, retryAfterMs: 0 };
     }
   }
   if (!Array.isArray(result.analyzed) || result.analyzed.length === 0) {
     console.error(`  [${label}] AI 返回的 analyzed 为空`);
-    return null;
+    return { ok: false, status: 200, retryAfterMs: 0 };
   }
 
   // 按 id 合并回条目:缺 id 的条目保留关键词预判,不丢数据
@@ -423,11 +451,12 @@ ${newsText}`;
     const ai = byId.get(String(n.__id));
     const kw = n.keyword;
     if (ai) aiItems++;
-    // 新字段为真源:AI 逐条研判存在 → sanitizeExplanation 防御 + explanationToRating
-    // 推导 direction/impact/certainty(1:1 映射,新旧字段绝不矛盾),新字段透传。
-    // AI 条目缺失(id 不在)→ 关键词评级兜底 + deriveExplanation 派生同名字段。
+    // 新字段为真源:AI 逐条研判存在 → sanitizeExplanation 防御(含体裁封顶,传 n)
+// + explanationToRating 推导 direction/impact/certainty(1:1 映射,新旧字段绝不
+// 矛盾),新字段透传。AI 条目缺失(id 不在)→ 关键词评级兜底 + deriveExplanation
+// 派生同名字段。
     const expl = ai
-      ? sanitizeExplanation(ai, { direction: kw.direction, impact: kw.impact })
+      ? sanitizeExplanation(ai, { direction: kw.direction, impact: kw.impact }, n)
       : deriveExplanation(kw);
     const rating = ai ? explanationToRating(expl) : kw;
     const reasoning = expl.reasoning;
@@ -462,6 +491,7 @@ ${newsText}`;
   });
 
   return {
+    ok: true,
     analyzed,
     aiItems,
     keyPoints: Array.isArray(result.key_points) ? result.key_points : [],
@@ -469,33 +499,111 @@ ${newsText}`;
   };
 }
 
-// 分片重试退避(ms):429 等限流窗口通常几十秒,退避递增到 20s。
+// 分片重试退避(ms):429 等限流窗口通常几十秒,退避递增。
+// 服务端给了 Retry-After 就听它的(取两者较大值)—— 限流窗口是服务端知道而我们
+// 不知道的信息,盲目指数退避要么白等、要么还没到窗口就又撞一次。
 const RETRY_DELAYS = [2000, 8000, 20000];
+const MAX_BACKOFF_MS = 60_000;
+
+// 序列可在运行时用 AI_RETRY_DELAYS_MS(如 "0,0,0")覆盖。存在的理由是**可测**:
+// 默认序列下一次全失败的分片要等 2s+8s,单测里 4 片就是 40s,没法跑。顺带也让 CI
+// 能不改代码就调重试节奏。
+export function retryDelays() {
+  const raw = process.env.AI_RETRY_DELAYS_MS;
+  if (!raw) return RETRY_DELAYS;
+  const parsed = raw.split(',').map(Number).filter(n => Number.isFinite(n) && n >= 0);
+  return parsed.length > 0 ? parsed : RETRY_DELAYS;
+}
+
+export function backoffDelay(attempt, retryAfterMs = 0) {
+  const delays = retryDelays();
+  const base = delays[Math.min(attempt - 1, delays.length - 1)];
+  return Math.min(MAX_BACKOFF_MS, Math.max(base, retryAfterMs));
+}
 
 // AI 研判阶段软预算:到点后不再启动新的尝试/重试(进行中的请求照常跑完,保住
 // 接近完成的输出),超出的分片走关键词局部兜底。原则是"多数时刻出全量 AI,
-// 少部分情况掐断"。默认 5 分钟,env AI_BUDGET_MS 可调。
-const AI_BUDGET_MS = Number(process.env.AI_BUDGET_MS) || 300_000;
+// 少部分情况掐断"。
+//
+// 默认值 5 分钟 → 20 分钟(2026-10-16):分片改串行后**总时长 ≈ 各片之和**
+// (免费档并发上限约 1,并行省不出时间,只会互相踩踏),5 分钟的预算会在第 2-3 片
+// 就到期,覆盖率反而和并行时代那 20 条一样 —— 串行的收益只有在预算够跑完全部
+// 分片时才拿得到。env AI_BUDGET_MS 仍可覆盖。
+const AI_BUDGET_MS = Number(process.env.AI_BUDGET_MS) || 1_200_000;
 
-// 单片带重试;deadline 传 Date.now()+AI_BUDGET_MS,每次尝试前判定。
-// 返回结果或 null。
+// 单片带重试。失败分两类,处置不同:
+//   429/5xx(限流、服务端错)→ 按 Retry-After/指数退避,重试**同一片**;
+//   200 但内容坏了(空回、JSON 截断)→ 退避没用,更可能的原因是片太大,拆半再来。
+// 两类都没辙才 return null,由调用方交回关键词引擎。
+// deadline 传 Date.now()+AI_BUDGET_MS,每次发起前判定。
+//
+// RETRY_DELAYS 是**等待序列**不是尝试次数:元素 N 是第 N 次失败后的等待,所以
+// 尝试次数 = delays.length + 1。2026-10-16 修正:此前循环写的是 attempts =
+// delays.length,于是最后一个等待(20s)永远走不到,限流时实际只等过 2s+8s ——
+// 而免费档的 429 恰恰是按几十秒的尺度消退的,丢掉的正是最该保留的那一档。
 async function runShard(shard, etfData, deadline) {
   const name = shard.label || shard.sector;
   const start = Date.now();
-  for (let attempt = 1; attempt <= RETRY_DELAYS.length; attempt++) {
-    if (attempt > 1) console.log(`  🔁 重试 ${name} 分片 (第 ${attempt}/${RETRY_DELAYS.length} 次)...`);
+  let last = { status: 0, retryAfterMs: 0 };
+  const delays = retryDelays();
+  const maxAttempts = delays.length + 1;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    if (attempt > 1) console.log(`  🔁 重试 ${name} 分片 (第 ${attempt}/${maxAttempts} 次)...`);
     if (deadline && Date.now() > deadline) {
       console.log(`  ⏱ AI 预算到期，跳过 ${name} 的后续尝试`);
       return null;
     }
-    const ok = await tryAnalyzeSectorOnce(shard.sector, shard.items, etfData, name);
-    if (ok) {
-      console.log(`  ✅ ${name} 分片完成 (${((Date.now() - start) / 1000).toFixed(1)}s, ${ok.analyzed.length} 条)`);
-      return ok;
+    const res = await tryAnalyzeSectorOnce(shard.sector, shard.items, etfData, name);
+    if (res.ok) {
+      console.log(`  ✅ ${name} 分片完成 (${((Date.now() - start) / 1000).toFixed(1)}s, ${res.analyzed.length} 条)`);
+      return res;
     }
-    if (attempt < RETRY_DELAYS.length) await new Promise(r => setTimeout(r, RETRY_DELAYS[attempt - 1]));
+    last = res;
+    if (attempt < maxAttempts) {
+      const wait = backoffDelay(attempt, res.retryAfterMs);
+      console.log(`  ⏳ ${name} 等待 ${(wait / 1000).toFixed(1)}s 后重试`);
+      await new Promise(r => setTimeout(r, wait));
+    }
   }
-  console.log(`  ✗ ${name} 分片 ${RETRY_DELAYS.length} 次尝试均失败`);
+
+  // 内容类失败(非限流)且片够大 → 拆半各试一次。限流失败**不拆**:拆小不解决限流,
+  // 只会把后面排队分片的预算吃掉。
+  if (last.status === 200 && shard.items.length >= 4) {
+    const mid = Math.ceil(shard.items.length / 2);
+    const halves = [
+      { sector: shard.sector, label: `${name}a`, items: shard.items.slice(0, mid) },
+      { sector: shard.sector, label: `${name}b`, items: shard.items.slice(mid) },
+    ];
+    console.log(`  ✂️  ${name} 内容类失败，拆成两半各试一次`);
+    const analyzed = [];
+    const keyPoints = [];
+    const marketParts = [];
+    let aiItems = 0;
+    let anyAi = false;
+    for (const h of halves) {
+      const r = (deadline && Date.now() > deadline)
+        ? { ok: false }
+        : await tryAnalyzeSectorOnce(h.sector, h.items, etfData, h.label);
+      if (r.ok) {
+        anyAi = true;
+        analyzed.push(...r.analyzed);
+        aiItems += r.aiItems;
+        keyPoints.push(...(r.keyPoints || []));
+        if (r.marketSummary) marketParts.push(r.marketSummary);
+      } else {
+        // 失败了的那半要补齐,否则条目会凭空消失(mergeShardResults 只对
+        // 「整片返回 null」做兜底,不认识「半片结果」)。
+        analyzed.push(...h.items.map(keywordItemShape));
+      }
+    }
+    if (anyAi) {
+      console.log(`  ✅ ${name} 拆半后取得 AI 结果 (${aiItems}/${shard.items.length} 条)`);
+      return { ok: true, analyzed, aiItems, keyPoints, marketSummary: marketParts.join('；') };
+    }
+  }
+
+  console.log(`  ✗ ${name} 分片 ${maxAttempts} 次尝试均失败`);
   return null;
 }
 
@@ -594,9 +702,8 @@ export async function analyzeWithClaude(newsItems, etfData) {
   // also fully in simplified Chinese (independent of which analysis path runs).
   const translated = dedupTranslated(await translateItems(newsItems));
 
-  // 按板块分片并行:4 个小请求替代 1 个全量请求,失败隔离到单板块。
-  // 每个分片生成更快(输出更小),即使共享 TPM 限流使并行不省时间,
-  // 精简输出仍确定性降低生成量,且单板块失败不会拖垮整链。
+  // 按板块分片:多个小请求替代 1 个全量请求,失败隔离到单板块。
+  // 每个分片输出更小、生成更快,且单块失败不会拖垮整链。
   const targets = translated.filter(n => SECTORS.includes(n.guessedSector));
   const shards = chunkShards(groupBySector(targets));
   if (shards.length === 0) {
@@ -604,14 +711,18 @@ export async function analyzeWithClaude(newsItems, etfData) {
     return analyzeWithKeywords(translated, etfData);
   }
 
-  console.log(`\n🤖 调用 Claude API 分片并行研判 (${shards.length} 片: ${shards.map(s => `${s.label} ${s.items.length}条`).join('、')})...`);
-  // 错峰 1.5s 启动,避免多个请求同时撞上免费档限流窗口;
+  console.log(`\n🤖 调用 Claude API 分片串行研判 (${shards.length} 片: ${shards.map(s => `${s.label} ${s.items.length}条`).join('、')})...`);
+  // **串行队列**(2026-10-16 由 Promise.allSettled 并行 + 1.5s 错峰改来)。
+  // 智谱免费档并发上限约 1,9-11 个分片同时发射只会互相踩踏:先到的占住并发位,
+  // 其余全撞 429,RETRY_DELAYS 里的重试又互相踩踏 —— 实测每天**恰好**只有前 2 片
+  // (20 条)成功、其余整片被打回关键词,就是这个形态。这不是模型能力问题,串行即可
+  // 解决,且零成本(总时长由总输出量决定,并行省不出时间)。
   // AI_BUDGET_MS 软预算:到期后不再发起新尝试/重试(进行中请求照常跑完)。
   const deadline = Date.now() + AI_BUDGET_MS;
-  const settled = await Promise.allSettled(shards.map((shard, i) =>
-    new Promise(r => setTimeout(r, i * 1500)).then(() => runShard(shard, etfData, deadline))
-  ));
-  const results = settled.map(r => r.status === 'fulfilled' ? r.value : null);
+  const results = [];
+  for (const shard of shards) {
+    results.push(await runShard(shard, etfData, deadline));
+  }
 
   const merged = mergeShardResults(shards, results);
   const aiCoverage = aiCoveragePct(merged.aiItems, merged.eligibleItems);
@@ -645,8 +756,9 @@ const SECTOR_DEFAULT_TICKERS = {
 
 // 共享板块矩阵构建(AI 与关键词两路径统一走它):
 // 1. 分板块聚合:news_count + 加权投票(aggregateDirection,修复"最后写入胜出")
-// 2. ETF 硬校准(applyEtfCalibration,板块方向最终以当日 ETF 涨跌为准)
-// 3. 冲击 sectorShock + summary/tickers
+// 2. 次日倾向 forwardDirection(未校准的新闻方向,先存下来)
+// 3. ETF 硬校准(applyEtfCalibration → direction,板块方向最终以当日 ETF 涨跌为准)
+// 4. 冲击 sectorShock + summary/tickers
 // 返回排序后的矩阵数组。
 export function buildSectorMatrix(analyzed, etfData) {
   const reRated = analyzed;
@@ -667,6 +779,16 @@ export function buildSectorMatrix(analyzed, etfData) {
   for (const cat of Object.keys(secMap)) {
     secMap[cat].direction = aggregateDirection(secItems[cat]);
     secMap[cat].shock = sectorShock(secItems[cat]);
+    // 次日倾向:剔掉纯行情复述(hasForwardSignal)后的新闻方向,**不做 ETF 校准**。
+    // 这正是 scripts/quality-report.mjs 的「研判准确率」口径 —— 那一栏就是拿它比
+    // 次日 ETF 涨跌算出来的。与下方被 applyEtfCalibration 覆写的 direction(今日复盘)
+    // 语义不同,故各占一个字段;direction 的含义保持唯一。
+    const fwd = secItems[cat].filter(n => hasForwardSignal({
+      title: n.title_cn || n.title || '',
+      description: n.description || '',
+      guessedSector: cat,
+    }));
+    secMap[cat].forwardDirection = fwd.length > 0 ? aggregateDirection(fwd) : '中性';
   }
 
   // ETF 硬校准:板块方向最终以当日 ETF 实际涨跌为准(±3% 阈值,±1% 内不干预)

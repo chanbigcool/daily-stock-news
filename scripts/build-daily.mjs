@@ -108,9 +108,20 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
     ].join('\n');
   }).join('\n');
 
-  const matrixRows = (Array.isArray(sectorMatrix) ? sectorMatrix : []).map(s =>
-    `<tr><td class="mx-name">${escHtml(s.name)}</td><td class="${shockCls(s.shock)}">${s.shock}</td><td class="${dirText(s.direction)}">${s.direction}</td><td class="num">${s.news_count}</td><td>${escHtml(s.summary || s.logic || '')}</td><td class="num">${escHtml(s.tickers || '—')}</td></tr>`
-  ).join('\n');
+  // 「今日复盘」= direction(ETF 硬校准后),「次日倾向」= forwardDirection(纯新闻研判)。
+  // 两者语义不同,必须各占一列 —— 一个是已发生事实的复述,一个是没被行情污染的前瞻
+  // 判断,合并就分不清「读错了新闻」还是「行情本来就不跟」。旧存档没有
+  // forwardDirection(2026-10-16 前构建),那时保持单列「方向」,免得重渲染历史页时
+  // 多出一整列「—」;新页才拆两列。
+  const hasForward = (Array.isArray(sectorMatrix) ? sectorMatrix : []).some(s => s.forwardDirection);
+  const matrixRows = (Array.isArray(sectorMatrix) ? sectorMatrix : []).map(s => {
+    const fwdCell = hasForward
+      ? `<td class="${s.forwardDirection ? dirText(s.forwardDirection) : ''}">${s.forwardDirection || '—'}</td>`
+      : '';
+    return `<tr><td class="mx-name">${escHtml(s.name)}</td><td class="${shockCls(s.shock)}">${s.shock}</td>`
+      + `<td class="${dirText(s.direction)}">${s.direction}</td>${fwdCell}`
+      + `<td class="num">${s.news_count}</td><td>${escHtml(s.summary || s.logic || '')}</td><td class="num">${escHtml(s.tickers || '—')}</td></tr>`;
+  }).join('\n');
 
   const pointsHTML = keyPoints.map(p => `<div class="kp-card">${escHtml(p)}</div>`).join('\n');
 
@@ -361,6 +372,10 @@ new Chart(document.getElementById('heatmapChart'), {
   .sec-title::before{content:'';width:13px;height:13px;background:var(--accent);flex:none;}
   @media(max-width:640px){.sec-title{margin-left:12px;margin-right:12px;}}
   .sec-hint{margin-left:auto;font-size:12px;font-weight:400;color:var(--text-muted);}
+  /* 「今日复盘 / 次日倾向」两个方向的释义条:两者语义不同,必须让读者一眼看出差别 */
+  .dir-legend{margin:8px 20px 0;font-size:12px;line-height:1.6;color:var(--text-muted);}
+  .dir-legend b{font-weight:700;color:var(--text-dim);}
+  @media(max-width:640px){.dir-legend{margin-left:12px;margin-right:12px;}}
 
   /* News cards —— 改成由分隔线分组的列表行,不再是白底圆角阴影的通用卡片 */
   .news-grid{display:grid;gap:0;margin:0 20px;}
@@ -549,12 +564,16 @@ ${sectorMatrix.map(s => `
   <button type="button" class="sc" data-sector="${escHtml(s.name)}" data-cat="${CATEGORY_CLS[s.name] || 'other'}" aria-pressed="false">
     <span class="sc-name">${escHtml(s.name)}<b>${s.news_count}</b></span>
     <span class="sc-stat">
-      <span class="badge ${dirCls(s.direction)}">${s.direction}</span>
+      ${hasForward ? `
+      <span class="badge ${dirCls(s.direction)}" title="今日复盘：板块方向以当日 ETF 实际涨跌校准">复盘 ${s.direction}</span>
+      <span class="badge ${s.forwardDirection ? dirCls(s.forwardDirection) : 'badge-neutral'}" title="次日倾向：只由新闻内容研判，未经行情校准">次日 ${s.forwardDirection || '—'}</span>` : `
+      <span class="badge ${dirCls(s.direction)}">${s.direction}</span>`}
       <span class="impact-tag ${impactCls(s.shock === '强' ? '极高' : s.shock === '中' ? '中' : '低')}">${s.shock}冲击</span>
     </span>
   </button>
 `).join('')}
 </div>
+${hasForward ? `<div class="dir-legend"><b>今日复盘</b>=板块方向以当日 ETF 实际涨跌校准（回答「今天为什么涨跌」）；<b>次日倾向</b>=只由新闻内容研判、未经行情校准（回答「明天可能怎样」）。</div>` : ''}
 ` : ''}
 
 ${marketSummary ? `<div class="market-summary">${escHtml(marketSummary)}</div>` : ''}
@@ -576,7 +595,7 @@ ${newsCards}
 <div class="sec-title">板块冲击矩阵</div>
 <div class="table-wrap">
   <table>
-    <thead><tr><th>板块</th><th>冲击</th><th>方向</th><th>新闻</th><th>传导逻辑</th><th>关联标的</th></tr></thead>
+    <thead><tr><th>板块</th><th>冲击</th>${hasForward ? '<th>今日复盘</th><th>次日倾向</th>' : '<th>方向</th>'}<th>新闻</th><th>传导逻辑</th><th>关联标的</th></tr></thead>
     <tbody>${matrixRows}</tbody>
   </table>
 </div>

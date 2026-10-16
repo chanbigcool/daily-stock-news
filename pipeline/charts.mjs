@@ -179,6 +179,8 @@ export function buildImpactHeatmap(analyzed) {
 }
 
 // Build sector direction stacked bar data
+// 逐条新闻方向计数 —— 与板块矩阵的 direction(ETF 硬校准后的今日复盘)无关,
+// 这里的口径天然就是「次日倾向」那一列:不被行情覆写。两者不要互相同步。
 export function buildDirectionChart(analyzed) {
   const directions = ['利好', '利空', '中性', '分化'];
   const counts = {};

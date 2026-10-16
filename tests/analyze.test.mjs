@@ -7,7 +7,7 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../pipeline/config.mjs';
-import { analyzeWithKeywords, analyzeWithClaude, translateWithLocalDict, proxyReachable, deriveExplanation, parseSSEText, groupBySector, mergeShardResults, keywordItemShape, chunkShards, aiCoveragePct } from '../pipeline/analyze.mjs';
+import { analyzeWithKeywords, analyzeWithClaude, translateWithLocalDict, proxyReachable, deriveExplanation, parseSSEText, groupBySector, mergeShardResults, keywordItemShape, chunkShards, aiCoveragePct, parseRetryAfter, backoffDelay, buildSectorMatrix } from '../pipeline/analyze.mjs';
 import { sanitizeExplanation, explanationToRating } from '../pipeline/sentiment.mjs';
 import { SECTORS } from '../pipeline/sectors.mjs';
 
@@ -399,6 +399,213 @@ test('aiCoveragePct:没有条目进分片时返回 0(不是 NaN)', () => {
   assert.equal(aiCoveragePct(1, 3), 33);
 });
 
+// ── 串行分片队列:限流下的覆盖率(本次改动的核心声明)────
+// 本地没有 ANTHROPIC_API_KEY,真机验证只能在 CI。这里用一个**并发上限 1** 的假
+// 服务端把「免费档并发上限约 1」这个前提搬进单测:并行发射时第 2 个请求起就被
+// 429 打死,串行时每一个都过。断言的是机制,不是模型质量。
+
+function sseResponse(payload) {
+  const sse = `data: ${JSON.stringify({
+    type: 'content_block_delta', delta: { type: 'text_delta', text: JSON.stringify(payload) },
+  })}\n\ndata: [DONE]\n\n`;
+  const body = new ReadableStream({
+    start(c) { c.enqueue(new TextEncoder().encode(sse)); c.close(); },
+  });
+  return { ok: true, status: 200, headers: new Headers(), body };
+}
+
+function aiPayloadFor(prompt) {
+  const ids = [...prompt.matchAll(/^\[(\d+)\]【/gm)].map(m => Number(m[1]));
+  return {
+    analyzed: ids.map(id => ({
+      id, sentiment: '利好', market_impact: '低', affected_companies: [],
+      reasoning: ['同意关键词预判'], evidence: [], confidence_score: 0.5,
+      uncertainty: '', time_window: '中期',
+    })),
+    key_points: [], market_summary: '片段总结',
+  };
+}
+
+// 安装假 fetch,返回 { restore, stats }。并发超过 allowConcurrent 即回 429(带
+// Retry-After),用来复现「免费档并发上限约 1」。
+function installFakeApi(respond, { allowConcurrent = 1 } = {}) {
+  const realFetch = globalThis.fetch;
+  const realKey = CONFIG.apiKey;
+  const realBase = CONFIG.apiBase;
+  const stats = { requests: 0, maxInFlight: 0, seen429: 0, maxItemsInCall: 0 };
+  let inFlight = 0;
+
+  CONFIG.apiKey = 'test-key';
+  CONFIG.apiBase = 'https://api.example.invalid'; // 非 127.0.0.1 → 跳过 proxyReachable 探测
+  globalThis.fetch = async (url, opts) => {
+    stats.requests++;
+    inFlight++;
+    stats.maxInFlight = Math.max(stats.maxInFlight, inFlight);
+    try {
+      const prompt = JSON.parse(opts.body).messages[0].content;
+      const ids = [...prompt.matchAll(/^\[(\d+)\]【/gm)].map(m => Number(m[1]));
+      stats.maxItemsInCall = Math.max(stats.maxItemsInCall, ids.length);
+      await new Promise(r => setTimeout(r, 10)); // 模拟生成耗时,让并发窗口真实存在
+      if (inFlight > allowConcurrent) {
+        stats.seen429++;
+        return { ok: false, status: 429, headers: new Headers({ 'retry-after': '0' }), body: null };
+      }
+      // respond 自己回的 429(如"只失败第一次")也要计入,否则统计口径两套
+      const res = respond(prompt, ids);
+      if (res && res.status === 429) stats.seen429++;
+      return res;
+    } finally {
+      inFlight--;
+    }
+  };
+
+  return {
+    stats,
+    restore() {
+      globalThis.fetch = realFetch;
+      CONFIG.apiKey = realKey;
+      CONFIG.apiBase = realBase;
+    },
+  };
+}
+
+// 假服务端行为:正常返回 / 200 但内容不可用(JSON 截断)/ 服务端错
+const okReply = (prompt) => sseResponse(aiPayloadFor(prompt));
+const brokenReply = () => sseResponse({ analyzed: [] });
+const serverError = () => ({ ok: false, status: 500, headers: new Headers(), body: null });
+
+// 把退避序列压成 0,否则一次全失败的分片要等 2s+8s,4 片就是 40s,单测跑不动。
+async function withFastRetry(fn) {
+  const real = process.env.AI_RETRY_DELAYS_MS;
+  process.env.AI_RETRY_DELAYS_MS = '0,0,0';
+  try { return await fn(); } finally {
+    if (real === undefined) delete process.env.AI_RETRY_DELAYS_MS;
+    else process.env.AI_RETRY_DELAYS_MS = real;
+  }
+}
+
+// 24 条半导体(拆 3 片)+ 5 条黄金(1 片)= 4 片,足够暴露并发争抢
+const shardFixture = () => [
+  ...Array.from({ length: 24 }, (_, i) => item(`半导体公司${i}业绩超预期`, '营收创新高', '半导体')),
+  ...Array.from({ length: 5 }, (_, i) => item(`黄金公司${i}公告增持`, '央行购金', '黄金')),
+];
+
+test('串行队列:并发上限 1 的服务端下,4 片全部拿到 AI 结果(覆盖率 100%)', async () => {
+  const api = installFakeApi(okReply, { allowConcurrent: 1 });
+  try {
+    const r = await analyzeWithClaude(shardFixture());
+    assert.equal(api.stats.maxInFlight, 1, '必须串行发射,同时在飞的请求数只能是 1');
+    assert.equal(api.stats.seen429, 0, '串行下不该撞到限流');
+    assert.equal(r.isAi, true);
+    assert.equal(r.aiCoverage, 100, `覆盖率应打满,实际 ${r.aiCoverage}%`);
+    assert.equal(r.analyzed.length, 29);
+  } finally {
+    api.restore();
+  }
+});
+
+test('限流重试:首片 429 后重试,最终仍覆盖 100%', () => {
+  return withFastRetry(async () => {
+    let calls = 0;
+    const api = installFakeApi((prompt) => {
+      calls++;
+      return calls === 1
+        ? { ok: false, status: 429, headers: new Headers({ 'retry-after': '0' }), body: null }
+        : okReply(prompt);
+    }, { allowConcurrent: 1 });
+    try {
+      const r = await analyzeWithClaude(shardFixture());
+      assert.equal(api.stats.seen429, 1, '应当先撞到一次 429');
+      assert.equal(r.isAi, true);
+      assert.equal(r.aiCoverage, 100, `重试后应补齐,实际 ${r.aiCoverage}%`);
+    } finally {
+      api.restore();
+    }
+  });
+});
+
+test('重试阶梯:RETRY_DELAYS 是等待序列,尝试次数 = 等待数 + 1', () => {
+  // 钉住一个曾经的静默缺陷:循环写的是 attempts = delays.length,于是最后一个
+  // 等待(20s)永远走不到,限流时实际只等过 2s+8s —— 而免费档的 429 正按几十秒
+  // 的尺度消退,丢的恰是最该留的那一档。用一个只管一片的小输入数请求次数。
+  return withFastRetry(async () => {
+    const api = installFakeApi(() => ({ ok: false, status: 429, headers: new Headers({ 'retry-after': '0' }), body: null }));
+    try {
+      // 3 条 → 单板块单片。429 是非 200,不触发拆半,故请求数 = 尝试次数。
+      const one = await analyzeWithClaude([item('A业绩超预期', '', '半导体'), item('B营收创新高', '', '半导体'), item('C订单饱满', '', '半导体')]);
+      assert.equal(one.isAi, false);
+      assert.equal(api.stats.requests, 4, 'AI_RETRY_DELAYS_MS 三档等待 → 应尝试 4 次(3+1)');
+    } finally {
+      api.restore();
+    }
+  });
+});
+
+test('内容类失败(非限流)拆半重试:片太大导致 JSON 截断时,拆小后仍拿满', () => {
+  return withFastRetry(async () => {
+    // >8 条就回 200 但内容不可用 —— 模拟「片太大 → 输出被截断」。这类失败退避
+    // 重试几次都不会好,只有拆小才行。分片是 10/10/4(半导体 24 条)+5(黄金)。
+    const api = installFakeApi((prompt, ids) => (ids.length > 8 ? brokenReply() : okReply(prompt)));
+    try {
+      const r = await analyzeWithClaude(shardFixture());
+      assert.equal(api.stats.maxItemsInCall, 10, '首个大分片是 10 条(半导体 24 条拆成 10/10/4)');
+      assert.equal(r.isAi, true);
+      assert.equal(r.aiCoverage, 100, `拆半后应补齐,实际 ${r.aiCoverage}%`);
+      assert.equal(r.analyzed.length, 29, '拆半过程不能丢条目');
+    } finally {
+      api.restore();
+    }
+  });
+});
+
+test('全片失败 → 交回关键词引擎:isAi=false、覆盖率 0、条目一条不丢', () => {
+  return withFastRetry(async () => {
+    const api = installFakeApi(serverError);
+    try {
+      const r = await analyzeWithClaude(shardFixture());
+      assert.equal(r.isAi, false);
+      assert.equal(r.aiCoverage, 0);
+      assert.equal(r.analyzed.length, 29, '兜底后条目数不丢');
+      assert.ok(api.stats.requests >= 4, '每个分片都应尝试过');
+    } finally {
+      api.restore();
+    }
+  });
+});
+
+
+
+test('parseRetryAfter:秒数形式', () => {
+  assert.equal(parseRetryAfter('30'), 30000);
+  assert.equal(parseRetryAfter('0'), 0);
+  assert.equal(parseRetryAfter('1.5'), 1500);
+});
+
+test('parseRetryAfter:HTTP-date 形式按剩余毫秒折算', () => {
+  const ms = parseRetryAfter(new Date(Date.now() + 10_000).toUTCString());
+  assert.ok(ms > 8000 && ms <= 10_000, `实际 ${ms}`);
+});
+
+test('parseRetryAfter:缺失/垃圾值 → 0(退避回落到指数序列)', () => {
+  for (const v of [null, undefined, '', 'soon', 'N/A']) assert.equal(parseRetryAfter(v), 0);
+});
+
+test('backoffDelay:无 Retry-After 时按指数序列递增', () => {
+  assert.equal(backoffDelay(1), 2000);
+  assert.equal(backoffDelay(2), 8000);
+  assert.equal(backoffDelay(3), 20000);
+});
+
+test('backoffDelay:服务端 Retry-After 更长时听服务端的', () => {
+  assert.equal(backoffDelay(1, 45_000), 45_000, '限流窗口 45s 就等 45s,不是指数序列的 2s');
+  assert.equal(backoffDelay(3, 5_000), 20000, 'Retry-After 更短时仍用指数序列,别退避得太勤');
+});
+
+test('backoffDelay:封顶 60s,不让一次等待吃掉整个预算', () => {
+  assert.equal(backoffDelay(1, 600_000), 60000);
+  assert.equal(backoffDelay(9, 0), 20000, '尝试次数超出序列长度不越界,取最后一项');
+});
+
 test('mergeShardResults:keyPoints 超 6 条截断', () => {
   const items = [item('A', '', '半导体'), item('B', '', '黄金'), item('C', '', '光模块'), item('D', '', '创新药')];
   const shards = groupBySector(items);
@@ -415,3 +622,64 @@ test('mergeShardResults:keyPoints 超 6 条截断', () => {
   assert.equal(merged.keyPoints.length, 6);
 });
 
+
+// ── 板块矩阵:今日复盘 vs 次日倾向 ────────────────────────
+// 两个方向必须是两回事:direction 被 ETF 硬校准(复盘),forwardDirection 不被
+// (前瞻)。混成一个字段就分不清「读错新闻」和「行情本来就不跟」。
+
+const rated = (title, description, category, direction, impact = '中') => ({
+  title, title_cn: title, description, category, guessedSector: category,
+  direction, impact, pubDate: new Date(), source: '测试源',
+});
+
+test('buildSectorMatrix:ETFs 校准只改 direction,不动 forwardDirection', () => {
+  const analyzed = [rated('中芯国际二季度业绩超预期', '营收创历史新高', '半导体', '利好', '高')];
+  const etfData = [{ category: '半导体', change: -4 }]; // -4% → etfDirectionFor 推出「利空」
+  const m = buildSectorMatrix(analyzed, etfData);
+  const semi = m.find(s => s.name === '半导体');
+  assert.equal(semi.direction, '利空', 'direction 应被 ETF 校准覆写成利空');
+  assert.equal(semi.forwardDirection, '利好', 'forwardDirection 是纯新闻研判,不该被行情翻转');
+  assert.notEqual(semi.direction, semi.forwardDirection, '本例两列必须不同,否则测不出分离');
+});
+
+test('buildSectorMatrix:纯行情复述不计入次日倾向,但计入复盘方向', () => {
+  // 只在「行情」组命中 → hasForwardSignal 为假 → 对次日没有预测含义,前瞻行应回避
+  const analyzed = [rated('半导体板块今日集体走强', '多只个股涨停', '半导体', '利好', '中')];
+  const semi = buildSectorMatrix(analyzed, []).find(s => s.name === '半导体');
+  assert.equal(semi.direction, '利好', '复盘方向仍按全部条目聚合');
+  assert.equal(semi.forwardDirection, '中性', '只有行情信号的条目被剔除 → 无表态');
+});
+
+test('buildSectorMatrix:四个板块都带 forwardDirection(缺新闻的板块回中性)', () => {
+  const m = buildSectorMatrix([rated('央行连续增持黄金', '储备数据公布', '黄金', '利好')], []);
+  assert.equal(m.length, SECTORS.length);
+  for (const s of m) {
+    assert.ok(['利好', '利空', '中性', '分化'].includes(s.forwardDirection),
+      `${s.name} 的 forwardDirection 非法: ${s.forwardDirection}`);
+  }
+  assert.equal(m.find(s => s.name === '黄金').forwardDirection, '利好');
+  assert.equal(m.find(s => s.name === '半导体').forwardDirection, '中性', '无新闻的板块回中性');
+});
+
+test('AI 路径也受体裁封顶:模型无视 prompt 给汇总稿「极高」,代码兜底压到「低」', () => {
+  return withFastRetry(async () => {
+    // prompt 里写了「汇总/栏目稿不超过低」,但模型不保证遵守。这条钉住代码侧兜底 ——
+    // 阶段 1 后 AI 覆盖 80%+ 条目,若只靠 prompt,通胀治理会在主流路径上失效。
+    const api = installFakeApi((prompt) => sseResponse({
+      analyzed: [...prompt.matchAll(/^\[(\d+)\]【/gm)].map(m => ({
+        id: Number(m[1]), sentiment: '利好', market_impact: '极高',
+        affected_companies: [], reasoning: ['模型认为是重大利好'], evidence: [],
+        confidence_score: 0.9, uncertainty: '', time_window: '短期',
+      })),
+      key_points: [], market_summary: '总结',
+    }));
+    try {
+      const r = await analyzeWithClaude([item('【早评】A股三大指数集体收涨,多条快讯汇总', '栏目汇总多条消息', '半导体')]);
+      const a = r.analyzed[0];
+      assert.equal(a.market_impact, '低', 'AI 给的「极高」应被封顶');
+      assert.equal(a.impact, '低', 'rating.impact 与 market_impact 必须一致');
+    } finally {
+      api.restore();
+    }
+  });
+});

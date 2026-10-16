@@ -25,7 +25,7 @@ function fixturePayload(date, analyzed, extra = {}) {
   };
 }
 
-test('flattenPayload:news 归一化(comps/score/缺字段/占位符)', () => {
+test('flattenPayload:news 归一化(comps/confidence/缺字段/占位符)', () => {
   const { news } = flattenPayload(fixturePayload('20260813', [
     {
       eventId: 'e1', category: '半导体', direction: '利好', impact: '高', certainty: '中',
@@ -49,13 +49,13 @@ test('flattenPayload:news 归一化(comps/score/缺字段/占位符)', () => {
   assert.equal(a.summary, '摘要A');
   assert.equal(a.source, '源A');
   assert.equal(a.comps, '公司甲|公司乙');
-  assert.equal(a.score, 0.7);
+  assert.equal(a.confidence, 0.7);
   // 缺字段 → 空串/null 兜底,不用 undefined
   const b = news.find(n => n.cat === '黄金');
   assert.equal(b.id, '');
   assert.equal(b.certainty, '');
   assert.equal(b.title, '英文标题'); // title_cn 缺 → fallback title
-  assert.equal(b.score, null);
+  assert.equal(b.confidence, null);
   assert.equal(b.link, '');
 });
 
@@ -131,7 +131,7 @@ test('buildDatabase:端到端生成真 SQLite 并可查询', async () => {
   const { DatabaseSync } = await import('node:sqlite');
   const db = new DatabaseSync(dbPath);
   try {
-    const news = db.prepare('SELECT id, date, cat, dir, score FROM news ORDER BY date DESC, id').all();
+    const news = db.prepare('SELECT id, date, cat, dir, confidence FROM news ORDER BY date DESC, id').all();
     assert.equal(news.length, 4);
     assert.equal(news[0].date, '20260814'); // date DESC
     assert.equal(news[3].date, '20260813');
