@@ -415,9 +415,14 @@ ${newsText}`;
   const maxInputDate = rated.reduce((max, n) => n.pubDate > max ? n.pubDate : max, new Date(0));
   const baseDate = maxInputDate.getTime() > 0 ? maxInputDate : new Date();
 
+  // 真正走了 AI 的条目数:AI 可能只回了部分 id,缺的那些退回关键词评级。
+  // 分片「成功」不等于片内每条都研判过 —— 这正是一开始 isAi 布尔掩盖掉的降级。
+  let aiItems = 0;
+
   const analyzed = rated.map(n => {
     const ai = byId.get(String(n.__id));
     const kw = n.keyword;
+    if (ai) aiItems++;
     // 新字段为真源:AI 逐条研判存在 → sanitizeExplanation 防御 + explanationToRating
     // 推导 direction/impact/certainty(1:1 映射,新旧字段绝不矛盾),新字段透传。
     // AI 条目缺失(id 不在)→ 关键词评级兜底 + deriveExplanation 派生同名字段。
@@ -458,6 +463,7 @@ ${newsText}`;
 
   return {
     analyzed,
+    aiItems,
     keyPoints: Array.isArray(result.key_points) ? result.key_points : [],
     marketSummary: typeof result.market_summary === 'string' ? result.market_summary : '',
   };
@@ -494,17 +500,26 @@ async function runShard(shard, etfData, deadline) {
 }
 
 // 合并各分片:成功片 concat 完整条目,失败片用关键词引擎局部兜底(不拖垮整链)。
-// results[i] 为 null 表示该片失败。isAi = 任一片成功(渲染层仅展示用)。
+// results[i] 为 null 表示该片失败。
+//
+// 覆盖口径(2026-10-16 起):**同时**统计 aiItems(片内真被 AI 研判的条数)与
+// eligibleItems(进分片的全部条数)。此前只暴露 isAi 布尔 —— 任一片成功就是 true,
+// 于是「9 片里 8 片被限流打回关键词」的日子照样标着「AI 分析」。分片成功 ≠ 片内每条
+// 都研判过(见 tryAnalyzeSectorOnce 的 byId 逐条合并),两层降级都要能看见。
 export function mergeShardResults(shards, results) {
   const analyzed = [];
   const keyPoints = [];
   const marketParts = [];
   let anyAi = false;
+  let aiItems = 0;
+  let eligibleItems = 0;
 
   for (let i = 0; i < shards.length; i++) {
     const value = results[i];
+    eligibleItems += shards[i].items.length;
     if (value) {
       anyAi = true;
+      aiItems += value.aiItems ?? value.analyzed.length;
       analyzed.push(...value.analyzed);
       keyPoints.push(...(value.keyPoints || []));
       if (value.marketSummary) marketParts.push(value.marketSummary);
@@ -516,6 +531,8 @@ export function mergeShardResults(shards, results) {
 
   return {
     analyzed,
+    aiItems,
+    eligibleItems,
     // 大分片二次拆分后多个块会各自产出【板块】要点,先精确去重再截断,避免重复卡片
     keyPoints: [...new Set(keyPoints)].slice(0, 6),
     marketSummary: marketParts.length > 0
@@ -523,6 +540,14 @@ export function mergeShardResults(shards, results) {
       : `本日报聚焦半导体、光模块、创新药、黄金四大赛道，${analyzed.length} 条新闻经关键词引擎自动分析生成。`,
     isAi: anyAi,
   };
+}
+
+// 进分片的条目里真被 AI 研判过的占比(整数百分比)。
+// 分母用「进分片的条数」而不是当日全部新闻:非四板块条目按设计从不进 AI,
+// 把它们算进来会让覆盖率常年卡在 60% 上下,把「今天到底降级没有」淹掉。
+export function aiCoveragePct(aiItems, eligibleItems) {
+  if (!eligibleItems) return 0;
+  return Math.round(aiItems / eligibleItems * 100);
 }
 
 // ── Entry point: AI analysis with retry, keyword engine as hard fallback ──
@@ -589,7 +614,14 @@ export async function analyzeWithClaude(newsItems, etfData) {
   const results = settled.map(r => r.status === 'fulfilled' ? r.value : null);
 
   const merged = mergeShardResults(shards, results);
-  console.log(`  AI 逐条研判: ${merged.analyzed.length} 条（原始 ${newsItems.length} 条，筛选 ${targets.length} 条）`);
+  const aiCoverage = aiCoveragePct(merged.aiItems, merged.eligibleItems);
+  console.log(`  AI 逐条研判: ${merged.analyzed.length} 条（原始 ${newsItems.length} 条，筛选 ${targets.length} 条）`
+    + ` · AI 覆盖 ${merged.aiItems}/${merged.eligibleItems} = ${aiCoverage}%`);
+  // 覆盖率不满就是有降级,必须明说:免费档限流会把整片打回关键词,而 isAi 布尔在
+  // 这种日子里照样是 true。
+  if (merged.eligibleItems > 0 && merged.aiItems < merged.eligibleItems) {
+    console.warn(`  ⚠ AI 覆盖率 ${aiCoverage}%：${merged.eligibleItems - merged.aiItems} 条退回关键词引擎评级`);
+  }
 
   return {
     analyzed: merged.analyzed,
@@ -597,6 +629,7 @@ export async function analyzeWithClaude(newsItems, etfData) {
     keyPoints: merged.keyPoints,
     marketSummary: merged.marketSummary,
     isAi: merged.isAi,
+    aiCoverage,
     fullNews: newsItems,
   };
 }
@@ -741,6 +774,8 @@ export async function analyzeWithKeywords(newsItems, etfData) {
     keyPoints: points,
     marketSummary: `本日报聚焦半导体、光模块、创新药、黄金四大赛道，${reRated.length} 条新闻经关键词引擎自动分析生成。`,
     isAi: false,
+    // 整条链路都是关键词引擎 → 真实覆盖率为 0,与 isAi=false 同义但口径统一
+    aiCoverage: 0,
     fullNews: newsItems,
   };
 }

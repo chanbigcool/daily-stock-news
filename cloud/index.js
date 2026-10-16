@@ -31,7 +31,8 @@ const SECRET = process.env.SHARED_SECRET || '';
 // 即使下个 commit 删掉 blob 也永久留在历史里(一年 700MB+)。
 const CACHE_BRANCH = process.env.FETCH_CACHE_BRANCH || 'fetch-cache';
 const CACHE_PATH = 'payload.json';
-const KLINE_DAYS = 30; // 与 scripts/build-daily.mjs 的 fetchETFHistoryKLine(30) 对齐
+// K 线取数长度不再本地定义 —— 它由指标回测的样本需求决定,和本地构建共用
+// pipeline/charts.mjs 的 KLINE_DAYS(见 loadPipeline 的解构)。
 
 // 内存限流: 10 分钟窗口最多 2 次
 const recent = [];
@@ -55,13 +56,13 @@ async function loadPipeline() {
     load('fetch.mjs'), load('charts.mjs'), load('utils.mjs'),
   ]);
   // 合并成一个命名空间:三个模块的导出名互不冲突(fetchAllNews/fetchETFData/
-  // fetchETFHistoryKLine/getTodayStr/beijingNowString)。
+  // fetchETFHistoryKLine/getTodayStr/beijingNowString/KLINE_DAYS)。
   pipelineModules = Object.assign({}, utilsMod, fetchMod, chartsMod);
   return pipelineModules;
 }
 
 async function scrapeAll() {
-  const { fetchAllNews, fetchETFData, fetchETFHistoryKLine, getTodayStr, beijingNowString } = await loadPipeline();
+  const { fetchAllNews, fetchETFData, fetchETFHistoryKLine, getTodayStr, beijingNowString, KLINE_DAYS } = await loadPipeline();
   const t0 = Date.now();
   const notes = [];
 

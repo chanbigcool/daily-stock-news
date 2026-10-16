@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join, basename } from 'node:path';
-import { zipSingle, zipFiles, bundleManifest, PIPELINE_FILES, TIMER_SPECS } from '../cloud/deploy.mjs';
+import { zipSingle, zipFiles, bundleManifest, PIPELINE_FILES, TIMER_SPECS, cronOf } from '../cloud/deploy.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = readFileSync(join(ROOT, 'cloud', 'index.js'));
@@ -181,5 +181,24 @@ test('TIMER_SPECS:TC_TIMER_CRONS 可覆盖,补零与触发器名由时段推导'
 test('TIMER_SPECS:非法时段在模块加载时就抛(而不是等建触发器时才失败)', () => {
   for (const bad of ['25:00', '09:60', '0900', '09:0x']) {
     assert.throws(() => timerSpecsWith(bad), /TC_TIMER_CRONS/, `「${bad}」应当被拒`);
+  }
+});
+
+// TriggerDesc 读写信封不对称(2026-10-16 实测),不归一化就会永远认不出「已存在」,
+// 每次部署都去重设一遍 —— 而重设的调用还少一个必填的 Qualifier,于是日志里会出现
+// 「定时器建失败」的假警报。两条一起测,避免只修一半。
+test('cronOf:读回来的 JSON 信封能拆成裸 cron,裸 cron 原样返回', () => {
+  assert.equal(cronOf('{"cron":"0 0 9 * * * *"}'), '0 0 9 * * * *');
+  assert.equal(cronOf('{"cron":"0 30 12 * * * *"}'), '0 30 12 * * * *');
+  // 写进去的就是裸 cron(ListTriggers 会加信封,Create/Update 不接受信封)
+  assert.equal(cronOf('0 0 9 * * * *'), '0 0 9 * * * *');
+  // 兜底:畸形/空值不能把「已存在」误判成「要重设」而拦不住,也不能抛
+  assert.equal(cronOf('{坏 json'), '{坏 json');
+  assert.equal(cronOf('{"cron":""}'), '');
+  assert.equal(cronOf(null), '');
+  assert.equal(cronOf(undefined), '');
+  // 与 TIMER_SPECS 的产物对得上 —— 这是实际比较的那一对值
+  for (const spec of TIMER_SPECS) {
+    assert.equal(cronOf(JSON.stringify({ cron: spec.cron })), spec.cron);
   }
 });

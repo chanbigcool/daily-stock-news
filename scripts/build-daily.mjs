@@ -1178,6 +1178,9 @@ function saveHistoryArchive(dateStr, todayDisplay, result, etfData, chartData) {
     keyPoints: result.keyPoints || [],
     marketSummary: result.marketSummary || '',
     isAi: result.isAi,
+    // AI 真实覆盖率(百分比整数,分母为「进分片的四板块条目」)。isAi 是「任一片成功」的
+    // 布尔,限流把大半分片打回关键词时它照样是 true —— 覆盖率才是能看出降级的那个数。
+    aiCoverage: typeof result.aiCoverage === 'number' ? result.aiCoverage : 0,
     // 当日抓取健康(源条数/问题列表)——quality 回看页与静态历史页都读它
     sourceHealth: result.sourceHealth || null,
     fullNews: (result.fullNews || []).map(n => ({
@@ -1507,7 +1510,7 @@ async function main() {
     history = loadETFHistory(OUTPUT_DIR);
   } else {
     try {
-      history = await fetchETFHistoryKLine(30);
+      history = await fetchETFHistoryKLine();
     } catch (err) {
       console.warn(`  K线回填失败，使用本地历史: ${err.message}`);
       history = loadETFHistory(OUTPUT_DIR);

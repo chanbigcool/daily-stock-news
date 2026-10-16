@@ -115,10 +115,17 @@ TC_SECRET_ID=AKID... TC_SECRET_KEY=... GITHUB_PAT=github_pat_... SHARED_SECRET=.
 
 时段可用 `TC_TIMER_CRONS='09:00,12:30,20:00'` 覆盖（逗号分隔，`H:MM` 或 `HH:MM` 都行）。
 
-> ⚠️ **时区未核实。** 腾讯云文档说定时器按北京时间，但这条链路上没量过。
-> 建完**必须观察一次真实触发时刻**（控制台 → 云函数 → daily-stock-refresh → 「触发管理」，
-> 那里有「上次触发时间」），别假定。若发现整体偏了 8 小时，把 `TC_TIMER_CRONS` 里的时段
-> 整体平移 8 小时即可，**不要**去改 cron 的段数。
+> ✅ **时区已核实为北京时间**（2026-10-16）。取证不靠控制台：线上函数抓完会往
+> `fetch-cache` 写 payload 并 dispatch `daily.yml`，那个 dispatch 提交的时间戳就是
+> 触发时刻 + 十几秒到一分钟的网络耗时。实际读到的是 09:00:54 / 12:31:04 / 20:00:12 /
+> 20:01:04，三个时段都贴着整点 —— 相差 8 小时的时区不会是这个样子。复核命令：
+>
+> ```bash
+> git log --pretty='%h %ad %s' --date=format-local:'%Y-%m-%d %H:%M:%S' | grep 自动构建
+> ```
+>
+> 以后若怀疑时区被改，同法复核。真偏了 8 小时，把 `TC_TIMER_CRONS` 里的时段整体平移
+> 8 小时即可，**不要**去改 cron 的段数。
 
 ## SHARED_SECRET 轮换
 
@@ -193,7 +200,7 @@ TC_SECRET_ID=AKID... TC_SECRET_KEY=... GITHUB_PAT=github_pat_... SHARED_SECRET=.
 | `items` | `fetchAllNews` | 原始条目，**未清洗未去重**。`description` 是载荷字段，别省 |
 | `stats` | `fetchAllNews` | 含各源成功数；Actions 的健康判定读它 |
 | `etfData` | `fetchETFData` | 12 只 ETF 当前行情 |
-| `etfHistory` | `fetchETFHistoryKLine` | 30 日 K 线；**抓失败时为 `null`**，Actions 回退到仓库里的累积历史 |
+| `etfHistory` | `fetchETFHistoryKLine` | `KLINE_DAYS` 日 K 线（`pipeline/charts.mjs` 导出，2026-10-16 起 30→250，供质量回测的样本量）；**抓失败时为 `null`**，Actions 回退到仓库里的累积历史 |
 | `notes` | `scrapeAll` | 云端发生的降级（如 K 线失败）；会打进取数日志，不静默 |
 | `elapsedMs` `beijingDay` `beijingTime` | `scrapeAll` | 只是日志与溯源 |
 

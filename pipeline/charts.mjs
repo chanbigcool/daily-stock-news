@@ -5,6 +5,15 @@ import { SECTORS, SECTOR_COLORS } from './sectors.mjs';
 import { beijingDateKey, fetchWithRetry } from './utils.mjs';
 import { CONFIG } from './config.mjs';
 
+// ── ETF 历史窗口 ────────────────────────────────────────
+// 历史保留长度由**指标回测**决定,不由图表决定:回看页的「研判准确率」要拿板块方向
+// 比次日行情,样本量就等于可比对的天数 —— 30 天时只有 27 天能与日报归档对齐,
+// 44% 和 66% 这种差距在这么小的样本上判不出显著性。
+// 图表另用 CHART_DAYS 截断:250 个点画在手机上是一团毛刺,60 天趋势已经够看。
+export const KLINE_DAYS = 250;      // 取数长度(云函数 + 本地回填共用)
+export const HISTORY_MAX_DAYS = 260; // 落盘保留上限,留出 KLINE_DAYS 的余量
+export const CHART_DAYS = 60;        // 走势图实际绘制的天数
+
 // Pick representative ETF per sector
 const SECTOR_ETF = {
   '半导体': '159995',
@@ -50,7 +59,7 @@ function pickEtfPrice(etfData, sector) {
 // Append today's ETF data to the history and keep last N entries.
 // The bucket date follows the Beijing day (not the host's local date), so a CI
 // build before 08:00 Beijing writes into the correct day.
-export function accumulateETF(history, etfData, maxDays = 60) {
+export function accumulateETF(history, etfData, maxDays = HISTORY_MAX_DAYS) {
   const today = new Date();
   const key = beijingDateKey(today);
   const dateStr = `${key.slice(0,4)}-${key.slice(4,6)}-${key.slice(6,8)}`;
@@ -101,9 +110,13 @@ export function normalizeSeries(prices) {
 
 // Build Chart.js datasets for the ETF price trend chart
 export function buildETFChartData(history) {
+  // 先切片再归一化:normalizeSeries 按第一个非空值定基准 100,若先归一化再切片,
+  // 基准日会落在图的中间,曲线起点不再是 100。
+  const cut = Math.max(0, history.dates.length - CHART_DAYS);
+  const dates = history.dates.slice(cut);
   const datasets = Object.keys(SECTOR_ETF).map(sector => ({
     label: sector,
-    data: normalizeSeries(history.prices[sector]),
+    data: normalizeSeries((history.prices[sector] || []).slice(cut)),
     borderColor: SECTOR_COLORS[sector],
     backgroundColor: SECTOR_COLORS[sector] + '22',
     borderWidth: 2,
@@ -115,9 +128,9 @@ export function buildETFChartData(history) {
   }));
 
   return {
-    dates: history.dates,
+    dates,
     datasets,
-    hasData: history.dates.length >= 1,
+    hasData: dates.length >= 1,
   };
 }
 
@@ -214,9 +227,9 @@ export function buildTimeWindowData(analyzed) {
   };
 }
 
-// Fetch ~30 days of daily close prices for the representative ETF of each sector
+// Fetch KLINE_DAYS of daily close prices for the representative ETF of each sector
 // from Sina K-line API, returning a history object in loadETFHistory's shape.
-export async function fetchETFHistoryKLine(days = 30) {
+export async function fetchETFHistoryKLine(days = KLINE_DAYS) {
   const byDate = {};
   const allDates = new Set();
   for (const sector of Object.keys(SECTOR_ETF)) {

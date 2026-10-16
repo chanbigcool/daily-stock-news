@@ -3,18 +3,37 @@
 // 从 history/ 存档 + output/etf_history.json 提炼量化指标,生成 quality/index.html
 // 静态页 + quality/report.json(机器可读),供「数据质量·历史表现」回看。
 //
-// 指标:
+// 指标(2026-10-16 重构):
 //   coverage   每日四板块是否都有产出(完整性)
 //   newsVolume 每日简讯条数/板块条数/影响等级分布(活跃度)
-//   direction  板块方向分布(情绪概览)
-//   consistency 板块方向 与 对应 ETF 次日实际涨跌 的一致性(信号可验证性)
+//   research   研判准确率:纯新闻方向 vs 次日 ETF 涨跌(真实预测力) ← 主指标
+//   abstain    回避率:方向为中性/分化的比例(敢不敢表态)
+//   recap      回述一致率:ETF 校准推出的方向 vs 当日实际涨跌(校准自洽性,应≈100%)
 //   signalHit  评分引擎命中信号比例
+//
+// 为什么主指标是 research:
+//   板块方向按设计会被当日 ETF 涨跌硬校准(见 README「板块方向硬校准」),它的产品
+//   语义是「复盘当日」而不是「研判次日」。此前唯一的指标拿这个复盘值去比次日涨跌,
+//   秩相关结构性接近 0(2026-10-16 实测 0.015)。
+//   系统里唯一按内容判断、可被次日行情验证的信号,是「单条新闻方向聚合出的板块方向」
+//   ——所以这里从 analyzed 条目重算一次未校准方向单独评分,它此前从没被单独测量过。
+//
+// 前瞻回测的两条口径(2026-10-16 与用户确认):
+//   1. 剔除「行情」信号:关键词引擎的行情组(大涨/涨停/走强、暴跌/跳水…)命中的是
+//      **复述当日涨跌**的新闻,不是前瞻判断。见 sentiment.mjs 的 hasForwardSignal。
+//   2. 窗口用「当日收盘 → 次日收盘」。日报晚间发布,这个窗口衡量的是「日报说的方向
+//      与随后一个交易日整体走势的关系」,不区分隔夜跳空。
+//
+// ETF 历史的长度决定样本量,而它只有一个来源:pipeline/charts.mjs 导出的
+// KLINE_DAYS(取数)与 HISTORY_MAX_DAYS(落盘)。云函数与本地构建都从那里读,
+// 改了不会有一边悄悄落后。
 //
 // 零 npm 依赖,构建后自动调用: node scripts/quality-report.mjs
 
 import { readFileSync, readdirSync, existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join, dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
+import { aggregateDirection, directionScore, hasForwardSignal, etfDirectionFor } from '../pipeline/sentiment.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -23,20 +42,15 @@ const OUTPUT_DIR = join(ROOT, 'output');
 const QUALITY_DIR = join(ROOT, 'quality');
 const ETF_HISTORY_PATH = join(OUTPUT_DIR, 'etf_history.json');
 
-// 板块 → 代表 ETF(与 config.mjs ETFS 前几只对应,用于一致性对比)
-const SECTOR_ETF = {
-  '半导体': '159995',
-  '光模块': '515050',
-  '创新药': '515120',
-  '黄金': '518880',
-};
+const SECTORS = ['半导体', '光模块', '创新药', '黄金'];
 
-// 供单测注入:history/ 与 etf_history 的读取可被测试替身覆盖
+// 供单测注入:history/ 与 etf_history 的读取可被测试替身覆盖。
+// 不传(或传 falsy)则恢复默认路径,方便测试收尾时还原。
 let _historyDir = HISTORY_DIR;
 let _etfHistoryPath = ETF_HISTORY_PATH;
 export function _setPaths(historyDir, etfPath) {
-  _historyDir = historyDir;
-  _etfHistoryPath = etfPath;
+  _historyDir = historyDir || HISTORY_DIR;
+  _etfHistoryPath = etfPath || ETF_HISTORY_PATH;
 }
 
 const SECTOR_COLORS = {
@@ -45,7 +59,20 @@ const SECTOR_COLORS = {
   '创新药': '#0d9488',
   '黄金': '#d97706',
 };
-const DIR_COLOR = { '利好': '#16a34a', '利空': '#dc2626', '分化': '#7c3aed', '中性': '#64748b' };
+
+// 表态样本低于此值不报准确率(只报样本数),避免 3 次里对 2 次就写 67% 误导
+const MIN_STATED_SAMPLE = 30;
+// 表态率门槛:中性/分化被剔出准确率分母(回避不算错),代价是系统可以靠大量回避刷高
+// 准确率。表态率低于此值时研判准确率判「不作数」,不参与与基线的对比。
+const MIN_STATED_SHARE = 0.60;
+
+// 回述一致率只在**当前校准规则生效之后**才有意义。
+// 存档是历史快照:早期日报的板块方向由当时那版校准规则发布。±1% 中性带是 2026-08-19
+// 才引入的(commit 346686f),而 2026-08-24 又调整过一次(f5fb95b)。拿今天的规则去审
+// 旧规则的产出会得到一堆假失配 —— 实测 08-06~08-20 有 21 例,且这些天真存档自己的
+// 三只 ETF 均值也落在中性档,证明是规则变了而非管线坏了。
+// 校准规则再改时更新此日期。
+const CALIBRATION_RULES_SINCE = '2026-08-19';
 
 // ── 数据加载 ────────────────────────────────────────────
 
@@ -56,22 +83,115 @@ function loadETFHistory() {
   } catch { return { dates: [], prices: {} }; }
 }
 
-// 按日期(YYYYMMDD)对齐 etf_history 的 dates(YYYY-MM-DD)索引 → 当日收盘价
-function etfPriceByDate(hist, sector, dateKey) {
-  const arr = hist.prices?.[sector];
-  const idx = hist.dates?.indexOf(dateKey);
-  if (!Array.isArray(arr) || idx < 0 || idx >= arr.length) return null;
-  const v = arr[idx];
-  return typeof v === 'number' && v > 0 ? v : null;
-}
+// ── 统计小工具 ──────────────────────────────────────────
+
+// 方向是否给出明确表态(利好/利空)。中性/分化都是回避,不进准确率分母。
+function isStated(dir) { return dir === '利好' || dir === '利空'; }
 
 // ── 指标计算 ────────────────────────────────────────────
+
+// 一组前瞻观测(每条 { sector, day, dir, ratio, change })的准确率与回避率
+function researchRate(obs) {
+  const stated = obs.filter(o => isStated(o.dir));
+  const correct = stated.filter(o => (o.dir === '利好' && o.change > 0) || (o.dir === '利空' && o.change < 0));
+  const statedShare = obs.length ? stated.length / obs.length : 0;
+  return {
+    total: obs.length,
+    stated: stated.length,
+    correct: correct.length,
+    abstained: obs.length - stated.length,
+    abstainRate: obs.length ? Math.round((1 - statedShare) * 100) : 0,
+    statedShare,
+    accuracy: stated.length ? Math.round(correct.length / stated.length * 100) : null,
+    lowSample: stated.length < MIN_STATED_SAMPLE,
+    // 两个门槛都过,数字才算数
+    reliable: stated.length >= MIN_STATED_SAMPLE && statedShare >= MIN_STATED_SHARE,
+  };
+}
+
+// Spearman 秩相关(带并列平均秩)。x 为预测侧(可为二值或连续),y 为实际涨跌幅。
+function spearman(xs, ys) {
+  const n = xs.length;
+  if (n < 3) return null;
+  return pearson(ranks(xs), ranks(ys));
+}
+
+function ranks(arr) {
+  const order = arr.map((v, i) => [v, i]).sort((a, b) => a[0] - b[0]);
+  const r = new Array(arr.length);
+  let i = 0;
+  while (i < order.length) {
+    let j = i;
+    while (j + 1 < order.length && order[j + 1][0] === order[i][0]) j++;
+    const avg = (i + j) / 2 + 1;
+    for (let k = i; k <= j; k++) r[order[k][1]] = avg;
+    i = j + 1;
+  }
+  return r;
+}
+
+function pearson(a, b) {
+  const n = a.length;
+  const ma = a.reduce((s, v) => s + v, 0) / n;
+  const mb = b.reduce((s, v) => s + v, 0) / n;
+  let num = 0, da = 0, db = 0;
+  for (let i = 0; i < n; i++) {
+    num += (a[i] - ma) * (b[i] - mb);
+    da += (a[i] - ma) ** 2;
+    db += (b[i] - mb) ** 2;
+  }
+  if (da === 0 || db === 0) return null;
+  return num / Math.sqrt(da * db);
+}
+
+// 事后多数类:同一批表态观测里,不做任何分析、闭眼挑一边的最优成绩
+function inSampleBaseline(obs) {
+  const stated = obs.filter(o => isStated(o.dir));
+  const n = stated.length;
+  if (n === 0) return null;
+  const up = stated.filter(o => o.change > 0).length;
+  const alwaysUp = Math.round(up / n * 100);
+  return {
+    alwaysUp,
+    alwaysDown: 100 - alwaysUp,
+    majority: Math.max(alwaysUp, 100 - alwaysUp),
+    // 模型自身的看多倾向:与「跟市场对赌」直接相关
+    bullishBias: Math.round(stated.filter(o => o.dir === '利好').length / n * 100),
+  };
+}
+
+// 无条件基线:不看任何新闻,在 ETF 全历史上「次日上涨」的占比。
+// 这是事先可预知的成绩,比事后多数类更严格。跨板块、跨日汇总,只作基准率,不作为
+// 独立样本量(同一天多板块、相邻日重叠都高度相关)。
+function unconditionalBaseline(hist) {
+  let up = 0, n = 0;
+  for (const sector of SECTORS) {
+    const p = hist.prices?.[sector];
+    if (!Array.isArray(p)) continue;
+    for (let i = 0; i + 1 < p.length; i++) {
+      if (typeof p[i] !== 'number' || typeof p[i + 1] !== 'number' || p[i] <= 0) continue;
+      n++;
+      if (p[i + 1] > p[i]) up++;
+    }
+  }
+  if (n === 0) return null;
+  return {
+    obs: n,
+    alwaysUp: Math.round(up / n * 100),
+    alwaysDown: Math.round((n - up) / n * 100),
+    majority: Math.round(Math.max(up, n - up) / n * 100),
+  };
+}
 
 export function computeDays() {
   const hist = loadETFHistory();
   const days = [];
   let coveredAll = 0;
   let totalImpactHigh = 0;
+  let matchedDays = 0;
+
+  const researchObs = []; // 纯新闻方向 vs 次日涨跌
+  const recapObs = [];    // ETF 校准推出的方向 vs 当日涨跌
 
   const files = readdirSync(_historyDir)
     .filter(f => /^日报_\d{8}\.json$/.test(f))
@@ -87,7 +207,7 @@ export function computeDays() {
     const sectors = new Set(analyzed.map(n => n.category));
 
     // 覆盖:四板块是否都有简讯
-    const missingSectors = ['半导体', '光模块', '创新药', '黄金'].filter(s => !sectors.has(s));
+    const missingSectors = SECTORS.filter(s => !sectors.has(s));
     const covered = missingSectors.length === 0;
     if (covered) coveredAll++;
 
@@ -95,11 +215,11 @@ export function computeDays() {
     const high = analyzed.filter(n => n.impact === '高').length;
     totalImpactHigh += high + vhigh;
 
-    // 评分引擎命中信号比例(notes 含「评分引擎:」)
+    // 评分引擎命中信号比例(notes 含「评分引擎:」且非「未命中明显信号」)
     const withSignal = analyzed.filter(n => /评分引擎:/.test(n.notes || '') && !/未命中明显信号/.test(n.notes || '')).length;
     const signalHitRate = analyzed.length ? Math.round(withSignal / analyzed.length * 100) : 0;
 
-    // 板块方向(来自 sectorMatrix,比 analyzed 更接近当日定调)
+    // 已公布板块方向(来自 sectorMatrix,含 ETF 硬校准 → 复盘口径)
     const dirCount = { '利好': 0, '利空': 0, '分化': 0, '中性': 0 };
     for (const s of matrix) {
       const dir = s.direction || '中性';
@@ -111,12 +231,57 @@ export function computeDays() {
       ? { level: d.sourceHealth.level || 'ok', issues: (d.sourceHealth.issues || []).map(i => i.message || String(i)) }
       : null;
 
+    // ── 逐板块采集观测 ──
+    const dateKey = String(d.date || '').replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+    const idx = hist.dates.indexOf(dateKey);
+    if (idx >= 0) matchedDays++;
+
+    for (const sector of SECTORS) {
+      const price = hist.prices?.[sector];
+      const pubDir = matrix.find(s => s.name === sector)?.direction;
+
+      // ① 回述一致率:ETF 校准会推出的方向 vs 当日实际涨跌。
+      //    用 etfDirectionFor 反推期望值 —— 校准在 |涨跌| 落在 1%~3% 时**故意**推出
+      //    「中性」,用「是否上涨」去判它必然判错,所以必须按校准自己的档位规则比。
+      //    只统计 CALIBRATION_RULES_SINCE 之后的日期(理由见该常量)。
+      //    ⚠ 参照系差异:校准用的是同板块 3 只 ETF 的涨跌幅均值,这里只有单只代表
+      //    ETF 的收盘价序列,所以在 ±1% / ±3% 分界附近会有少量不一致。
+      if (dateKey >= CALIBRATION_RULES_SINCE && Array.isArray(price) && idx >= 1 && pubDir) {
+        const prev = price[idx - 1], cur = price[idx];
+        if (typeof prev === 'number' && typeof cur === 'number' && prev > 0) {
+          const dayRet = (cur - prev) / prev;
+          const expected = etfDirectionFor(dayRet * 100);
+          if (expected !== null) {
+            recapObs.push({ sector, day: d.displayDate, pubDir, expected, dayRet, hit: expected === pubDir });
+          }
+        }
+      }
+
+      // ② 研判准确率:纯新闻方向 vs 次日涨跌。
+      //    先剔除「除行情外无任何信号」的条目(纯复述当日涨跌,对次日无预测含义)。
+      if (!Array.isArray(price) || idx < 0 || idx + 1 >= hist.dates.length) continue;
+      const fwd = analyzed
+        .filter(n => n.category === sector)
+        .filter(n => hasForwardSignal({ title: n.title_cn || n.title, description: n.description, guessedSector: sector }));
+      if (fwd.length === 0) continue;
+      const cur = price[idx], next = price[idx + 1];
+      if (typeof cur !== 'number' || typeof next !== 'number' || cur <= 0) continue;
+      researchObs.push({
+        sector,
+        day: d.displayDate,
+        dir: aggregateDirection(fwd),
+        // 连续方向分(加权投票的 net/total),秩相关用它才不丢幅度信息
+        ratio: directionScore(fwd).ratio,
+        change: (next - cur) / cur,
+      });
+    }
+
     days.push({
       date: d.date,
       displayDate: d.displayDate,
       isAi: !!d.isAi,
+      aiCoverage: typeof d.aiCoverage === 'number' ? d.aiCoverage : null,
       newsCount: analyzed.length,
-      sectorCount: matrix.length,
       missingSectors,
       covered,
       impact: { vhigh, high },
@@ -127,35 +292,24 @@ export function computeDays() {
     });
   }
 
-  // ETF 一致性:板块方向(利好/利空) vs 次日 ETF 收盘涨跌
-  const etfUp = {}, etfDown = {}, etfNeutral = {};
-  for (const day of days) {
-    const dateKey = day.date.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
-    const nextIdx = hist.dates?.indexOf(dateKey);
-    if (nextIdx < 0 || nextIdx + 1 >= (hist.dates || []).length) continue;
-    for (const s of day.matrix) {
-      const code = SECTOR_ETF[s.name];
-      if (!code) continue;
-      const cur = etfPriceByDate(hist, s.name, hist.dates[nextIdx]);
-      const next = etfPriceByDate(hist, s.name, hist.dates[nextIdx + 1]);
-      if (!cur || !next) continue;
-      const change = (next - cur) / cur;
-      const bucket = change > 0.002 ? etfUp : change < -0.002 ? etfDown : etfNeutral;
-      const prev = bucket[s.name] || { agree: 0, total: 0 };
-      bucket[s.name] = prev;
-      prev.total++;
-      const dir = s.direction;
-      if ((dir === '利好' && change > 0) || (dir === '利空' && change < 0)) prev.agree++;
-      else if (dir === '分化') prev.agree++; // 分化视为中性,计一致
-    }
+  const research = researchRate(researchObs);
+  const statedObs = researchObs.filter(o => isStated(o.dir));
+
+  // 回述一致率:校准触发次数 / 其中与当日实际涨跌的校准档位吻合的次数
+  const recapHit = recapObs.filter(o => o.hit).length;
+  const recapBySector = {};
+  for (const sector of SECTORS) {
+    const sub = recapObs.filter(o => o.sector === sector);
+    if (sub.length === 0) continue;
+    const h = sub.filter(o => o.hit).length;
+    recapBySector[sector] = { fired: sub.length, hit: h, rate: Math.round(h / sub.length * 100) };
   }
 
-  const consistency = {};
-  for (const sector of Object.keys(etfUp)) {
-    const up = etfUp[sector], down = etfDown[sector], neu = etfNeutral[sector];
-    const total = (up?.total || 0) + (down?.total || 0) + (neu?.total || 0);
-    const agree = (up?.agree || 0) + (down?.agree || 0) + (neu?.agree || 0);
-    consistency[sector] = total > 0 ? Math.round(agree / total * 100) : null;
+  const researchBySector = {};
+  for (const sector of SECTORS) {
+    const sub = researchObs.filter(o => o.sector === sector);
+    if (sub.length === 0) continue;
+    researchBySector[sector] = researchRate(sub);
   }
 
   return {
@@ -164,7 +318,30 @@ export function computeDays() {
     coveredAll,
     coverageRate: days.length ? Math.round(coveredAll / days.length * 100) : 0,
     avgImpactHigh: days.length ? Math.round(totalImpactHigh / days.length) : 0,
-    consistency,
+    // 样本可比性:ETF 历史只覆盖部分存档日,样本量由它决定而不是存档天数
+    matchedDays,
+    etfHistoryDays: hist.dates.length,
+    research: {
+      ...research,
+      bySector: researchBySector,
+      // 二值方向(±1)与连续方向分(net/total)两种秩相关,后者才用上幅度信息
+      spearmanBinary: spearman(statedObs.map(o => (o.dir === '利好' ? 1 : -1)), statedObs.map(o => o.change)),
+      spearmanWeighted: spearman(statedObs.map(o => o.ratio), statedObs.map(o => o.change)),
+      baselines: {
+        inSample: inSampleBaseline(researchObs),
+        unconditional: unconditionalBaseline(hist),
+      },
+    },
+    recap: {
+      fired: recapObs.length,
+      hit: recapHit,
+      rate: recapObs.length ? Math.round(recapHit / recapObs.length * 100) : null,
+      // 统计起点:此前由旧版校准规则发布的日报不计入(见 CALIBRATION_RULES_SINCE)
+      since: CALIBRATION_RULES_SINCE,
+      bySector: recapBySector,
+    },
+    minStatedSample: MIN_STATED_SAMPLE,
+    minStatedShare: MIN_STATED_SHARE,
   };
 }
 
@@ -172,6 +349,48 @@ export function computeDays() {
 
 function escHtml(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function pct(v) { return v === null || v === undefined ? '—' : `${v}%`; }
+
+// 准确率单元格:样本不足 / 表态率不足时都不报可信数字
+function accCell(r) {
+  if (r.accuracy === null) return '<span class="muted">—</span>';
+  if (r.lowSample) return `<span class="warn" title="表态样本不足 ${MIN_STATED_SAMPLE} 次">${r.accuracy}%<sup>*</sup></span>`;
+  return `<b>${r.accuracy}%</b>`;
+}
+
+function researchSectorTable(bySector) {
+  const rows = SECTORS.filter(s => bySector[s]).map(s => {
+    const r = bySector[s];
+    return `<tr>
+      <td><span style="color:${SECTOR_COLORS[s]}">■</span> ${s}</td>
+      <td>${accCell(r)}</td>
+      <td class="muted">${r.correct}/${r.stated}</td>
+      <td class="muted">${pct(r.abstainRate)}</td>
+    </tr>`;
+  }).join('\n');
+  if (!rows) return '<p class="muted">暂无数据</p>';
+  return `<table>
+    <tr><th>板块</th><th>研判准确率</th><th>对/表态</th><th>回避率</th></tr>
+    ${rows}
+  </table>`;
+}
+
+function recapSectorTable(bySector) {
+  const rows = SECTORS.filter(s => bySector[s]).map(s => {
+    const r = bySector[s];
+    return `<tr>
+      <td><span style="color:${SECTOR_COLORS[s]}">■</span> ${s}</td>
+      <td>${r.rate === null ? '<span class="muted">—</span>' : `<b>${r.rate}%</b>`}</td>
+      <td class="muted">${r.hit}/${r.fired}</td>
+    </tr>`;
+  }).join('\n');
+  if (!rows) return '<p class="muted">暂无可比对的校准样本</p>';
+  return `<table>
+    <tr><th>板块</th><th>校准吻合率</th><th>吻合/触发</th></tr>
+    ${rows}
+  </table>`;
 }
 
 function renderHTML(r) {
@@ -183,38 +402,50 @@ function renderHTML(r) {
       day.impact.vhigh ? `<b class="vhigh">极高${day.impact.vhigh}</b>` : '',
       day.impact.high ? `<b>高${day.impact.high}</b>` : '',
     ].filter(Boolean).join(' ');
-    const dirChips = Object.entries(day.directions)
-      .filter(([, v]) => v > 0)
-      .map(([k, v]) => `<span class="chip" style="color:${DIR_COLOR[k]}">${k}${v}</span>`).join('');
     const healthCell = !day.health
-      ? '<span style="color:#64748b">—</span>'
+      ? '<span class="muted">—</span>'
       : day.health.level === 'ok'
         ? '<span class="ok">正常</span>'
         : `<span class="${day.health.level === 'failed' ? 'bad' : 'warn'}" title="${escHtml(day.health.issues.join('；'))}">${day.health.level === 'failed' ? '异常' : '降级'}</span>`;
+    // AI 覆盖率:2026-10-16 起存档携带真实百分比;更早的存档只有布尔 isAi。
+    // 0% 就是整条链路走关键词,显示「关键词」徽标而不是刺眼的「AI 0%」。
+    const engineCell = day.aiCoverage === null
+      ? (day.isAi ? '<span class="badge-ai">AI</span>' : '<span class="badge-kw">关键词</span>')
+      : day.aiCoverage === 0
+        ? '<span class="badge-kw">关键词</span>'
+        : `<span class="${day.aiCoverage >= 80 ? 'ok' : day.aiCoverage >= 50 ? 'warn' : 'bad'}">AI ${day.aiCoverage}%</span>`;
     return `<tr>
       <td>${escHtml(day.displayDate)}</td>
-      <td>${day.isAi ? '<span class="badge-ai">AI</span>' : '<span class="badge-kw">关键词</span>'}</td>
+      <td>${engineCell}</td>
       <td>${day.newsCount}</td>
       <td>${missing}</td>
-      <td>${dirChips}</td>
       <td>${impactChips}</td>
       <td>${day.signalHitRate}%</td>
       <td>${healthCell}</td>
     </tr>`;
   }).join('\n');
 
-  const matrixRows = Object.entries(r.consistency)
-    .map(([sector, pct]) => `<tr>
-      <td><span style="color:${SECTOR_COLORS[sector]}">■</span> ${sector}</td>
-      <td>${pct === null ? '—' : pct + '%'}</td>
-    </tr>`).join('\n');
-
   const latest = r.days[r.days.length - 1];
-  // 最近一天的抓取健康 + 区间内降级天数(健康字段随 2026-09-13 起构建存档)
-  const healthDays = r.days.filter(d => d.health && d.health.level !== 'ok');
-  const lh = latest?.health;
-  const healthTone = !lh ? '#64748b' : lh.level === 'ok' ? '#4ade80' : lh.level === 'failed' ? '#ef4444' : '#fbbf24';
-  const healthText = !lh ? '—' : lh.level === 'ok' ? '正常' : lh.level === 'failed' ? '异常' : '降级';
+  const res = r.research;
+  const { inSample, unconditional } = res.baselines || {};
+  const bar = unconditional || inSample;
+  const spW = res.spearmanWeighted;
+  const spB = res.spearmanBinary;
+
+  // 门槛判定:表态率或样本量任一不足 → 数字不作数
+  const usable = res.reliable;
+  const accText = res.accuracy === null ? '—' : `${res.accuracy}%`;
+  const edge = (res.accuracy !== null && bar) ? res.accuracy - bar.majority : null;
+  const tone = !usable ? '#64748b' : edge > 5 ? '#4ade80' : edge > 0 ? '#fbbf24' : '#ef4444';
+
+  const verdict = !usable
+    ? `<b>研判准确率暂不作数。</b>表态率 ${Math.round(res.statedShare * 100)}%(门槛 ${Math.round(r.minStatedShare * 100)}%)、`
+      + `表态 ${res.stated} 次(门槛 ${r.minStatedSample} 次),未同时达标 —— 样本太小或回避太多时,准确率会被少数几次蒙对带偏。`
+    : `研判准确率 <b style="color:${tone}">${accText}</b>(表态 ${res.stated} 次 / 回避 ${pct(res.abstainRate)}),`
+      + `对照「${unconditional ? '无条件' : '事后'}多数类」基线 ${bar.majority}%:`
+      + `${edge > 0 ? `高出 <b style="color:${tone}">${edge} 个百分点</b>` : `<b class="bad">低于基线 ${Math.abs(edge)} 个百分点</b>`}。`
+      + `${spW === null ? '' : `加权方向分秩相关 ${spW.toFixed(3)}${Math.abs(spW) < 0.1 ? '(≈无相关)' : ''}。`}`;
+
   return `<!doctype html>
 <html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>数据质量·历史表现回看</title>
@@ -233,33 +464,50 @@ th{color:#94a3b8;font-weight:600;background:#172033}
 .ok{color:#4ade80;font-weight:600}
 .warn{color:#fbbf24;font-weight:600}
 .bad{color:#ef4444;font-weight:600;cursor:help}
-.chip{font-size:12px;margin-right:6px}
-.vhigh{color:#ef4444}.badge-ai{background:#7c3aed;color:#fff;padding:1px 6px;border-radius:6px;font-size:11px}.badge-kw{background:#475569;color:#fff;padding:1px 6px;border-radius:6px;font-size:11px}
+.muted{color:#94a3b8}
+.vhigh{color:#ef4444}
+.badge-ai{background:#7c3aed;color:#fff;padding:1px 6px;border-radius:6px;font-size:11px}
+.badge-kw{background:#475569;color:#fff;padding:1px 6px;border-radius:6px;font-size:11px}
 .section-title{font-size:15px;font-weight:700;margin:28px 0 10px;color:#f1f5f9}
 .note{color:#64748b;font-size:12px;margin-top:8px}
+.verdict{background:#1e293b;border:1px solid #334155;border-left:3px solid ${tone};border-radius:8px;padding:12px 14px;font-size:13px;margin-bottom:8px}
 </style></head><body><div class="wrap">
 <h1>📊 数据质量 · 历史表现回看</h1>
-<div class="sub">统计区间 ${r.days[0]?.displayDate || '—'} ~ ${latest?.displayDate || '—'} · 共 ${r.total} 个交易日 · 基于 history/ 存档</div>
+<div class="sub">统计区间 ${r.days[0]?.displayDate || '—'} ~ ${latest?.displayDate || '—'} · 存档 ${r.total} 个交易日 ·
+其中 ${r.matchedDays} 天有 ETF 行情可比对(ETF 历史 ${r.etfHistoryDays} 天)</div>
 
 <div class="cards">
-  <div class="card"><div class="num">${r.total}</div><div class="label">已存档交易日</div></div>
-  <div class="card"><div class="num">${r.coverageRate}%</div><div class="label">四板块完整覆盖率</div></div>
-  <div class="card"><div class="num">${r.avgImpactHigh}</div><div class="label">每日平均 高+极高影响事件</div></div>
-  <div class="card"><div class="num" style="color:${healthTone}">${healthText}</div><div class="label">最近一日抓取健康 · 区间内异常/降级 ${healthDays.length} 天</div></div>
+  <div class="card"><div class="num" style="color:${tone}">${accText}${usable ? '' : ' ?'}</div><div class="label">研判准确率 · 表态 ${res.stated} 次${usable ? '' : ' · 不作数'}</div></div>
+  <div class="card"><div class="num muted">${bar ? bar.majority + '%' : '—'}</div><div class="label">对照基线 · ${unconditional ? '无条件' : '事后'}多数类</div></div>
+  <div class="card"><div class="num">${pct(res.abstainRate)}</div><div class="label">回避率 · 中性+分化占比</div></div>
+  <div class="card"><div class="num" style="color:${r.recap.rate >= 90 ? '#4ade80' : r.recap.rate >= 70 ? '#fbbf24' : '#ef4444'}">${pct(r.recap.rate)}</div><div class="label">回述一致率 · 校准触发 ${r.recap.fired} 次</div></div>
 </div>
 
-<div class="section-title">板块方向 → 次日 ETF 实际涨跌 一致率</div>
-<table><tr><th>板块</th><th>信号方向一致率</th></tr>
-${matrixRows || '<tr><td colspan="2" style="color:#64748b">暂无跨日 ETF 数据(需连续多日存档)</td></tr>'}
-</table>
-<div class="note">说明:取当日 sectorMatrix 的板块方向,与该板块代表 ETF 次日收盘涨跌比对。一致率越高,说明信号方向与真实行情越吻合(分化视作一致)。数据随每日构建自动累积。</div>
+<div class="verdict">${verdict}</div>
+
+<div class="section-title">研判准确率 分板块(纯新闻方向 → 次日 ETF)</div>
+${researchSectorTable(res.bySector)}
+<div class="note">主指标。由当日该板块满足「除行情外仍有实质信号」的条目聚合出板块方向(不含 ETF 校准),再与次日 ETF 收盘涨跌比对 —— 衡量「新闻研判能不能预判行情」。
+回避率 = 该板块给出中性/分化的比例。<sup>*</sup> 表态样本不足 ${r.minStatedSample} 次,数字仅供参考。</div>
+
+<div class="section-title">回述一致率 分板块(ETF 校准推出的方向 → 当日 ETF)</div>
+${recapSectorTable(r.recap.bySector)}
+<div class="note">板块方向按设计会被当日 ETF 涨跌硬校准(见 README「板块方向硬校准」),所以这个数测的是<b>校准管线本身有没有 bug</b>,应接近 100%。
+它按校准自己的档位规则比对(涨跌 1%~3% 时校准故意推「中性」,不能用「是否上涨」去判),且<b>只统计 ${r.recap.since} 起的日报</b> —— 更早的日报由旧版校准规则发布,拿今天的规则去审会得到一堆假失配。
+理论上不会刚好 100%:校准用同板块 3 只 ETF 的均值,这里只有单只代表 ETF 的价格序列,±1%/±3% 分界附近会抖动。<b>它不代表预测能力。</b></div>
 
 <div class="section-title">逐日明细</div>
 <table>
-<tr><th>日期</th><th>引擎</th><th>简讯数</th><th>板块覆盖</th><th>方向分布</th><th>高影响</th><th>信号命中率</th><th>源健康</th></tr>
-${daysHtml || '<tr><td colspan="8" style="color:#64748b">暂无存档</td></tr>'}
+<tr><th>日期</th><th>引擎</th><th>简讯数</th><th>板块覆盖</th><th>高影响</th><th>信号命中率</th><th>源健康</th></tr>
+${daysHtml || '<tr><td colspan="7" class="muted">暂无存档</td></tr>'}
 </table>
-<div class="note">信号命中率 = 简讯中命中评分引擎信号(非「未命中明显信号」)的比例。源健康取自当日构建的抓取判定(悬停可看具体问题);2026-09-13 之前的存档无此字段。</div>
+<div class="note">
+  信号命中率 = 简讯中命中评分引擎信号(非「未命中明显信号」)的比例。源健康取自当日构建的抓取判定(悬停可看具体问题);2026-09-13 之前的存档无此字段。
+  引擎列的百分比为 AI 实际研判覆盖率(2026-10-16 起记录);更早的存档只有「AI 是否曾成功」的布尔标记,不能反映降级。
+  秩相关两种口径:二值方向 ±1 → ${spB === null ? '—' : spB.toFixed(3)},加权方向分 net/total → ${spW === null ? '—' : spW.toFixed(3)}(后者才用上幅度信息)。
+  ${inSample ? `事后多数类基线 ${inSample.majority}%(永远看涨 ${inSample.alwaysUp}%),模型看多倾向 ${inSample.bullishBias}%。` : ''}
+  ${unconditional ? `无条件基线基于 ETF 全历史 ${unconditional.obs} 个板块日:次日上涨 ${unconditional.alwaysUp}%。` : ''}
+</div>
 </div></body></html>`;
 }
 
@@ -270,7 +518,11 @@ function main() {
   if (!existsSync(QUALITY_DIR)) mkdirSync(QUALITY_DIR, { recursive: true });
   writeFileSync(join(QUALITY_DIR, 'report.json'), JSON.stringify(r, null, 2), 'utf-8');
   writeFileSync(join(QUALITY_DIR, 'index.html'), renderHTML(r), 'utf-8');
-  console.log(`📊 数据质量回看: ${QUALITY_DIR}/index.html (${r.total} 天, 覆盖 ${r.coverageRate}%, 一致性 ${JSON.stringify(r.consistency)})`);
+  const res = r.research;
+  const flag = res.reliable ? '' : ' [不作数]';
+  console.log(`📊 数据质量回看: ${QUALITY_DIR}/index.html (${r.total} 天, 覆盖 ${r.coverageRate}%, `
+    + `研判准确率 ${res.accuracy === null ? '—' : res.accuracy + '%'}${flag} (表态 ${res.stated}/${res.total}), `
+    + `回避率 ${res.abstainRate}%, 回述一致率 ${r.recap.rate === null ? '—' : r.recap.rate + '%'})`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

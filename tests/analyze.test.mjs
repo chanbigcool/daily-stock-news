@@ -7,7 +7,7 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../pipeline/config.mjs';
-import { analyzeWithKeywords, analyzeWithClaude, translateWithLocalDict, proxyReachable, deriveExplanation, parseSSEText, groupBySector, mergeShardResults, keywordItemShape, chunkShards } from '../pipeline/analyze.mjs';
+import { analyzeWithKeywords, analyzeWithClaude, translateWithLocalDict, proxyReachable, deriveExplanation, parseSSEText, groupBySector, mergeShardResults, keywordItemShape, chunkShards, aiCoveragePct } from '../pipeline/analyze.mjs';
 import { sanitizeExplanation, explanationToRating } from '../pipeline/sentiment.mjs';
 import { SECTORS } from '../pipeline/sectors.mjs';
 
@@ -30,6 +30,7 @@ test('关键词引擎:返回结构化结果(isAi=false, 四板块矩阵)', async
   ];
   const r = await analyzeWithKeywords(items);
   assert.equal(r.isAi, false);
+  assert.equal(r.aiCoverage, 0, '整条链路走关键词 → 真实覆盖率 0');
   assert.ok(Array.isArray(r.analyzed) && r.analyzed.length > 0);
   assert.ok(Array.isArray(r.sectorMatrix) && r.sectorMatrix.length === SECTORS.length);
   assert.ok(Array.isArray(r.keyPoints) && r.keyPoints.length > 0);
@@ -342,6 +343,7 @@ test('mergeShardResults:全成功 → 拼接 analyzed/keyPoints/marketSummary,is
   assert.equal(merged.analyzed.length, 2);
   assert.deepEqual(merged.keyPoints, ['【半导体】要点1', '【黄金】要点2', '【黄金】要点3']);
   assert.equal(merged.marketSummary, '半导体动态一句话；黄金动态一句话');
+  assert.equal(aiCoveragePct(merged.aiItems, merged.eligibleItems), 100);
 });
 
 test('mergeShardResults:一片失败 → 该片关键词兜底(全字段),isAi 仍 true', () => {
@@ -362,6 +364,22 @@ test('mergeShardResults:一片失败 → 该片关键词兜底(全字段),isAi �
   assert.equal(typeof fallback.confidence_score, 'number');
   assert.ok(fallback.notes.includes('评分引擎'), '兜底条目应走关键词评分');
   assert.equal(fallback.category, '半导体');
+  // isAi=true 掩盖的正是这个:一半的条目根本没被 AI 碰过
+  assert.equal(aiCoveragePct(merged.aiItems, merged.eligibleItems), 50);
+});
+
+test('mergeShardResults:分片成功但只回了部分 id → 覆盖率显形,isAi 仍 true', () => {
+  const items = [item('A', '', '半导体'), item('B', '', '半导体')];
+  const shards = groupBySector(items);
+  assert.equal(shards.length, 1);
+  // tryAnalyzeSectorOnce 按 id 逐条合并:AI 只回了 B,片内 A 退回关键词。
+  // 这是「分片成功」与「每条都研判过」之间的差距,也是旧 isAi 布尔盖掉的降级。
+  const merged = mergeShardResults(shards, [
+    { analyzed: shards[0].items.map(keywordItemShape), keyPoints: [], marketSummary: '', aiItems: 1 },
+  ]);
+  assert.equal(merged.isAi, true);
+  assert.equal(merged.analyzed.length, 2);
+  assert.equal(aiCoveragePct(merged.aiItems, merged.eligibleItems), 50);
 });
 
 test('mergeShardResults:全失败 → isAi=false,marketSummary 用兜底句', () => {
@@ -372,6 +390,13 @@ test('mergeShardResults:全失败 → isAi=false,marketSummary 用兜底句', ()
   assert.equal(merged.analyzed.length, 2);
   assert.ok(merged.marketSummary.includes('关键词引擎'));
   assert.deepEqual(merged.keyPoints, []);
+  assert.equal(aiCoveragePct(merged.aiItems, merged.eligibleItems), 0);
+});
+
+test('aiCoveragePct:没有条目进分片时返回 0(不是 NaN)', () => {
+  assert.equal(aiCoveragePct(0, 0), 0);
+  assert.equal(aiCoveragePct(3, 3), 100);
+  assert.equal(aiCoveragePct(1, 3), 33);
 });
 
 test('mergeShardResults:keyPoints 超 6 条截断', () => {

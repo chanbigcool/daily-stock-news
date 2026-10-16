@@ -154,9 +154,13 @@ async function waitActive(scf, name, tries = 30) {
 // cron 是 **7 段**(秒 分 时 日 月 星期 年),与 Linux 的 5 段不同 —— 写成 5 段会
 // 被当成非法表达式。用 TC_TIMER_CRONS='09:00,12:30,20:00' 可覆盖。
 //
-// ⚠️ **时区未核实**:腾讯云文档说定时器按北京时间,但没在这条链路上量过。
-// 建完必须观察一次真实触发时刻(控制台 → 函数 → 触发管理 有「上次触发时间」),
-// 别假定。若发现晚/早了 8 小时,把时段整体平移 8 小时即可,别改 cron 段数。
+// 时区已核实为北京时间(2026-10-16):不看控制台,看 git 里自动构建提交的本地时刻
+// —— 触发器发出的 dispatch 提交落在 09:00:54 / 12:31:04 / 20:00:12 / 20:01:04,
+// 三个时段都贴着整点,相差 8 小时的时区不会是这个样子。判别方法:线上函数抓完会
+// 往 fetch-cache 写 payload 并 dispatch daily.yml,而那个 dispatch 提交的时间戳
+// 就是触发时刻 + 十几秒到一分钟的网络耗时,用
+//   git log --pretty='%h %ad %s' --date=format-local:'%Y-%m-%d %H:%M:%S' | grep 自动构建
+// 就能读到。以后若怀疑时区被改,同法复核,别去猜控制台显示的是哪个时区。
 export const TIMER_SPECS = (process.env.TC_TIMER_CRONS || '09:00,12:30,20:00')
   .split(',')
   .map((s) => s.trim())
@@ -169,6 +173,17 @@ export const TIMER_SPECS = (process.env.TC_TIMER_CRONS || '09:00,12:30,20:00')
     const pad = (n) => String(n).padStart(2, '0');
     return { time: `${pad(h)}:${pad(m)}`, name: `daily-${pad(h)}${pad(m)}`, cron: `0 ${m} ${h} * * * *` };
   });
+
+// 定时触发器的 TriggerDesc 读写信封不一样 —— 这是个坑,2026-10-16 实测:
+//   读(ListTriggers)  → '{"cron":"0 0 9 * * * *"}'   带 JSON 信封
+//   写(Create/Update) → '0 0 9 * * * *'              裸 cron,套信封反而报
+//                       InvalidParameter: syntax error in second field: '{"cron":"0'
+// 不归一化就会永远认不出「触发器已存在」,每次部署都去重设一遍。
+export function cronOf(desc) {
+  const s = String(desc || '');
+  if (!s.startsWith('{')) return s;
+  try { return JSON.parse(s).cron || ''; } catch { return s; }
+}
 
 // 建/改定时触发器。**失败不让整个部署失败**:函数本身已经用上了,触发器没建上
 // 只是「不会自动出报」,这时最该做的是把控制台的操作步骤打清楚,而不是丢一个
@@ -186,11 +201,14 @@ async function ensureTimerTriggers(scf, fnName, log = console.log) {
   const existing = [];
   for (const spec of TIMER_SPECS) {
     const cur = byName.get(spec.name);
-    if (cur && cur.TriggerDesc === spec.cron) { existing.push(spec.name); continue; }
+    if (cur && cronOf(cur.TriggerDesc) === spec.cron) { existing.push(spec.name); continue; }
     try {
       if (cur) {
+        // Qualifier 必填:不带它 UpdateTrigger 报 ResourceNotFound(「未找到指定的资源」),
+        // 而那个错看起来像「触发器不存在」,实际是参数少了一个 —— 实测见上方 cronOf 注释。
         const r = (await scf('UpdateTrigger', {
-          FunctionName: fnName, TriggerName: spec.name, Type: 'timer', TriggerDesc: spec.cron,
+          FunctionName: fnName, TriggerName: spec.name, Type: 'timer',
+          TriggerDesc: spec.cron, Qualifier: '$DEFAULT',
         })).Response || {};
         if (r.Error) throw new Error(`${r.Error.Code} ${r.Error.Message}`);
         updated.push(spec.name);
@@ -339,11 +357,11 @@ export async function deploy() {
     console.log('  ① 云函数 → daily-stock-refresh → 「触发管理」→ 新建触发器');
     console.log('  ② 触发方式选「定时触发」,时间选北京时间,分别填:');
     for (const s of TIMER_SPECS) console.log(`       ${s.time}   触发器名 ${s.name}`);
-    console.log('  ③ 建完在同一个页面看「上次触发时间」,核对时区对不对(见 deploy.mjs 顶部注释)');
+    console.log('  ③ 建完在同一个页面看「上次触发时间」,确认新触发器真的会响(时区本身已核实过)');
   } else {
     console.log('定时器   :', TIMER_SPECS.map((s) => `${s.time}(北京)`).join(' / '),
       `· 新建 ${timer.created.length} 改 ${timer.updated.length} 已存在 ${timer.existing.length}`);
-    console.log('  ⚠ 时区未核实:过一两天回控制台看「上次触发时间」,确认真的是北京时间那三个点。');
+    console.log('  时区已核实为北京时间(取证方法见 deploy.mjs 顶部注释),不必再回控制台确认。');
   }
   if (url) {
     console.log('函数 URL :', url);

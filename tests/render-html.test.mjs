@@ -100,3 +100,25 @@ test('板块名做属性转义,不会撑破 data-sector 引号', () => {
   assert.match(html, /class="news-card" data-sector="半&quot;导体"/);
   assert.ok(!html.includes('data-sector="半"导体"'));
 });
+
+// ── 引擎标注:AI 覆盖率不上页面 ──────────────────────────
+// aiCoverage 是「进分片的四板块条目里真被 AI 研判过的占比」,用来在存档和 quality
+// 报告里看降级。它**不进渲染** —— 读者看的是内容,不是管线健康度;把「AI 覆盖 12%」
+// 印在页首只会让人以为新闻本身打了折。下面两条把这个边界钉住。
+
+test('引擎标注:关键词链路 → 「关键词引擎」', () => {
+  const html = render({ isAi: false });
+  assert.match(html, /<span class="src-tag">关键词引擎分类<\/span>/);
+  assert.doesNotMatch(html, /Claude API 分析/);
+});
+
+test('引擎标注:AI 链路 → 页面只说 AI,不暴露覆盖率', () => {
+  // 满覆盖和部分覆盖(12%)都必须只写 AI —— 覆盖率是内部指标,不上页面
+  for (const cov of [100, 12]) {
+    const html = render({ isAi: true, aiCoverage: cov });
+    assert.match(html, /<span class="src-tag">Claude API 分析 \+ 中文翻译<\/span>/);
+    assert.doesNotMatch(html, /AI 覆盖/, `aiCoverage=${cov} 时不该出现覆盖率文案`);
+  }
+  // 页尾那处措辞同样不能带
+  assert.doesNotMatch(render({ isAi: true, aiCoverage: 12 }), /智能分析 \+ 中文翻译 · AI 覆盖/);
+});

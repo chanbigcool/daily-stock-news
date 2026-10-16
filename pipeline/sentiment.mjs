@@ -147,9 +147,10 @@ export function sectorShock(items) {
   return '弱';
 }
 
-// 对单条新闻做评级。n 需含 title/description/guessedSector(分类结果由 classifier 决定)。
-// 返回 { direction, impact, certainty, time_window, notes, score, hitSignals }
-export function scoreNewsItem(n) {
+// 匹配所有适用信号,返回命中明细与正/负/冲击分。
+// excludeCats: 要跳过的 sig.cat 列表 —— 目前只用于前瞻回测剔除「行情」类
+// (见 hasForwardSignal)。其余调用方不传,行为与从前一致。
+function collectSignals(n, excludeCats = null) {
   const title = n.title || '';
   const desc = n.description || '';
   const sector = n.guessedSector || '';
@@ -160,6 +161,7 @@ export function scoreNewsItem(n) {
   let scoreImpact = 0;
 
   for (const sig of SIGNALS) {
+    if (excludeCats && excludeCats.includes(sig.cat)) continue;
     if (sig.sectors && !sig.sectors.includes(sector)) continue;
     let titleHit = false, descHit = false, hitKw = '';
     for (const k of sig.kw) {
@@ -185,32 +187,32 @@ export function scoreNewsItem(n) {
     hit.push({ cat: sig.cat, dir: sig.dir, pts, note: sig.note, kw: hitKw });
   }
 
+  return { hit, scorePos, scoreNeg, scoreImpact };
+}
+
+// 方向判定:正负分占比。hasSplit 为「命中显式分化信号」。
+function directionFromScores(scorePos, scoreNeg, hasSplit) {
+  if (hasSplit) return '分化';
+  const total = scorePos + scoreNeg;
+  if (total === 0) return '中性';
+  const max = Math.max(scorePos, scoreNeg);
+  const min = Math.min(scorePos, scoreNeg);
+  if (min > 0 && max / total < DIR_RATIO) return '分化';
+  if (max < WEAK_MAX) return '中性';
+  return scorePos > scoreNeg ? '利好' : '利空';
+}
+
+// 对单条新闻做评级。n 需含 title/description/guessedSector(分类结果由 classifier 决定)。
+// 返回 { direction, impact, certainty, time_window, notes, score, hitSignals }
+export function scoreNewsItem(n) {
+  const { hit, scorePos, scoreNeg, scoreImpact } = collectSignals(n);
+
   // 显式分化信号(制裁/政策)优先:利好与利空并存,或命中标注 direction=分化 的信号
   const hasSplit = hit.some(s => s.dir === '分化');
-
-  // direction
-  let direction;
-  const total = scorePos + scoreNeg;
-  if (hasSplit) {
-    direction = '分化';
-  } else if (total === 0) {
-    direction = '中性';
-  } else {
-    const max = Math.max(scorePos, scoreNeg);
-    const min = Math.min(scorePos, scoreNeg);
-    if (min > 0 && max / total < DIR_RATIO) {
-      direction = '分化';
-    } else if (max < WEAK_MAX) {
-      direction = '中性';
-    } else {
-      direction = scorePos > scoreNeg ? '利好' : '利空';
-    }
-  }
-
-  // impact
+  const direction = directionFromScores(scorePos, scoreNeg, hasSplit);
   const impact = impactFromScore(scoreImpact);
 
-  // certainty:硬信号(weight≥3 或 base≥25)→ 高;有命中 → 中;无命中 → 低
+  // certainty:硬信号(命中分 pts≥40)→ 高;有命中 → 中;无命中 → 低
   const hasHard = hit.some(s => s.pts >= 40);
   const certainty = hit.length === 0 ? '低' : hasHard ? '高' : '中';
 
@@ -227,13 +229,21 @@ export function scoreNewsItem(n) {
   }
 
   // 公司→ticker 映射(关键词路径 affected_companies/tickers 数据源)
-  const companies = extractCompanies(`${title}\n${desc}`, sector);
+  const companies = extractCompanies(`${n.title || ''}\n${n.description || ''}`, n.guessedSector || '');
 
   return {
     direction, impact, certainty, time_window: timeWindow, notes, score: scoreImpact, hitSignals: hit,
     companies: companies.map(c => c.name),
     tickers: companies.map(c => c.ticker ? `${c.name}(${c.ticker})` : c.name).join('、'),
   };
+}
+
+// 除「行情」信号外,这条新闻是否还有实质信号。
+// 「行情」组(大涨/涨停/走强→利好,跳水/暴跌→利空)命中的是**复述当日涨跌**的
+// 新闻,不是对未来的判断。把它算进「新闻方向 → 次日涨跌」的回测,等于拿已知的
+// 答案去猜明天,只会稀释前瞻指标。纯行情复述(除行情外无任何信号)在回测时整条剔除。
+export function hasForwardSignal(n) {
+  return collectSignals(n, ['行情']).hit.length > 0;
 }
 
 // 评级落点校验(防御):保证枚举合法,非法值回退默认
@@ -333,10 +343,10 @@ export function etfDirectionFor(avgChange) {
 // 设计哲学:板块看行情、新闻看内容 —— 单条新闻方向由内容判断,不被板块行情
 // 强制翻转;板块矩阵方向才由当日 ETF 涨跌硬校准。
 
-// 加权投票聚合板块方向,修复"最后写入胜出":利空比重大时不再被末条利好覆盖。
+// 加权投票的**连续量**结果:net/total ∈ [-1,1],正为看多、负为看空。
+// aggregateDirection 只取它的符号,但回测时(秩相关)需要幅度信息,故单独导出。
 // 按 impact 加权(极高4/高3/中2/低1),利好+1 / 利空-1 / 分化+0.2 / 中性0。
-// net/total 超 ±0.15 判单边方向,否则按票型(含分化票 → 分化;只含中性 → 中性)。
-export function aggregateDirection(items) {
+export function directionScore(items) {
   let net = 0, total = 0, hasSplit = false, hasPos = false, hasNeg = false;
   for (const n of items) {
     const w = IMPACT_VALUE[n.impact] ?? 1;
@@ -348,11 +358,17 @@ export function aggregateDirection(items) {
     if (d === '利好') hasPos = true;
     if (d === '利空') hasNeg = true;
   }
-  if (total === 0) return '中性';
-  const ratio = net / total;
-  if (ratio > 0.15) return '利好';
-  if (ratio < -0.15) return '利空';
-  if (hasSplit && (hasPos || hasNeg)) return '分化';
+  return { net, total, ratio: total === 0 ? 0 : net / total, hasSplit, hasPos, hasNeg };
+}
+
+// 加权投票聚合板块方向,修复"最后写入胜出":利空比重大时不再被末条利好覆盖。
+// net/total 超 ±0.15 判单边方向,否则按票型(含分化票 → 分化;只含中性 → 中性)。
+export function aggregateDirection(items) {
+  const s = directionScore(items);
+  if (s.total === 0) return '中性';
+  if (s.ratio > 0.15) return '利好';
+  if (s.ratio < -0.15) return '利空';
+  if (s.hasSplit && (s.hasPos || s.hasNeg)) return '分化';
   return '中性';
 }
 
