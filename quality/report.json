@@ -2760,20 +2760,20 @@
     {
       "date": "20261016",
       "displayDate": "2026-10-16",
-      "isAi": true,
-      "aiCoverage": null,
-      "newsCount": 104,
+      "isAi": false,
+      "aiCoverage": 0,
+      "newsCount": 122,
       "missingSectors": [],
       "covered": true,
       "impact": {
-        "vhigh": 12,
-        "high": 19
+        "vhigh": 5,
+        "high": 12
       },
-      "signalHitRate": 43,
+      "signalHitRate": 49,
       "directions": {
-        "利好": 3,
+        "利好": 2,
         "利空": 0,
-        "分化": 0,
+        "分化": 1,
         "中性": 1
       },
       "health": {
@@ -2788,7 +2788,7 @@
         },
         {
           "name": "黄金",
-          "direction": "利好",
+          "direction": "分化",
           "shock": "强"
         },
         {
@@ -2812,23 +2812,23 @@
   "etfHistoryDays": 250,
   "research": {
     "total": 141,
-    "stated": 122,
+    "stated": 121,
     "correct": 59,
-    "abstained": 19,
-    "abstainRate": 13,
-    "statedShare": 0.8652482269503546,
-    "accuracy": 48,
+    "abstained": 20,
+    "abstainRate": 14,
+    "statedShare": 0.8581560283687943,
+    "accuracy": 49,
     "lowSample": false,
     "reliable": true,
     "bySector": {
       "半导体": {
         "total": 41,
-        "stated": 39,
+        "stated": 38,
         "correct": 16,
-        "abstained": 2,
-        "abstainRate": 5,
-        "statedShare": 0.9512195121951219,
-        "accuracy": 41,
+        "abstained": 3,
+        "abstainRate": 7,
+        "statedShare": 0.926829268292683,
+        "accuracy": 42,
         "lowSample": false,
         "reliable": true
       },
@@ -2866,13 +2866,13 @@
         "reliable": true
       }
     },
-    "spearmanBinary": 0.004814057050449838,
-    "spearmanWeighted": -0.15700952582825273,
+    "spearmanBinary": 0.010405505448545807,
+    "spearmanWeighted": -0.1745486347960219,
     "baselines": {
       "inSample": {
-        "alwaysUp": 44,
-        "alwaysDown": 56,
-        "majority": 56,
+        "alwaysUp": 45,
+        "alwaysDown": 55,
+        "majority": 55,
         "bullishBias": 84
       },
       "unconditional": {
