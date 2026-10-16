@@ -7,7 +7,7 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../pipeline/config.mjs';
-import { analyzeWithKeywords, analyzeWithClaude, translateWithLocalDict, proxyReachable, deriveExplanation, parseSSEText, groupBySector, mergeShardResults, keywordItemShape, chunkShards, aiCoveragePct, parseRetryAfter, backoffDelay, buildSectorMatrix } from '../pipeline/analyze.mjs';
+import { analyzeWithKeywords, analyzeWithClaude, translateWithLocalDict, proxyReachable, deriveExplanation, parseSSEText, groupBySector, mergeShardResults, keywordItemShape, chunkShards, aiCoveragePct, parseRetryAfter, backoffDelay, buildSectorMatrix, interleaveBySector, aiBudgetMs } from '../pipeline/analyze.mjs';
 import { sanitizeExplanation, explanationToRating } from '../pipeline/sentiment.mjs';
 import { SECTORS } from '../pipeline/sectors.mjs';
 
@@ -571,6 +571,93 @@ test('全片失败 → 交回关键词引擎:isAi=false、覆盖率 0、条目�
       api.restore();
     }
   });
+});
+
+// ── 发起顺序与预算到期:损失不能固定砸在尾部板块上 ─────────
+// 背景(2026-10-16 CI 实测):123 条拆成 15 片,半导体独占 7 片且排在最前,20 分钟的
+// 预算恰好在第 9 片到期 → 尾部的创新药×3 + 黄金×3 = 45 条整片零 AI,aiCoverage 只有
+// 63%,这两个板块的当日方向退化成纯关键词口径。条目越多越必然,不是偶发。
+// 两条修法:预算抬到覆盖实测全量;发起顺序按板块轮流,让到期损失平摊。
+
+test('interleaveBySector:按板块轮流取块,而不是跑完一个板块再下一个', () => {
+  const shards = [
+    { sector: '半导体', label: '半导体#1' },
+    { sector: '半导体', label: '半导体#2' },
+    { sector: '半导体', label: '半导体#3' },
+    { sector: '黄金', label: '黄金' },
+    { sector: '创新药', label: '创新药#1' },
+    { sector: '创新药', label: '创新药#2' },
+  ];
+  // 半导体#1 → 黄金 → 创新药#1 → 半导体#2 → 创新药#2 → 半导体#3
+  assert.deepEqual(interleaveBySector(shards), [0, 3, 4, 1, 5, 2]);
+  const order = interleaveBySector(shards);
+  assert.equal(new Set(order).size, shards.length, '每个分片恰好排一次,漏一个就是漏一片 AI');
+  assert.equal(order.length, shards.length);
+});
+
+test('interleaveBySector:单板块(或本就均分)退化成原顺序,不引入意外', () => {
+  assert.deepEqual(interleaveBySector([{ sector: '半导体' }, { sector: '半导体' }]), [0, 1]);
+  assert.deepEqual(
+    interleaveBySector([{ sector: '半导体' }, { sector: '黄金' }]),
+    [0, 1],
+  );
+  assert.deepEqual(interleaveBySector([]), []);
+});
+
+test('发起顺序:第二片就跨到黄金,而不是先把半导体的 3 片跑完', () => {
+  return withFastRetry(async () => {
+    const calls = [];               // 每次调用记下板块 + 该片首条半导体的序号
+    const api = installFakeApi((prompt) => {
+      const sector = /条【([^】]+)】新闻/.exec(prompt)?.[1] || '?';
+      const idx = [...prompt.matchAll(/半导体公司(\d+)/g)].map(m => Number(m[1]));
+      calls.push({ sector, first: idx.length ? Math.min(...idx) : null });
+      return okReply(prompt);
+    }, { allowConcurrent: 1 });
+    try {
+      // 24 条半导体(拆 3 片:#1=0-9、#2=10-19、#3=20-23)+ 5 条黄金(1 片)
+      const r = await analyzeWithClaude(shardFixture());
+      assert.equal(api.stats.seen429, 0);
+      assert.deepEqual(calls.map(c => c.sector), ['半导体', '黄金', '半导体', '半导体'],
+        '轮流取块的顺序:半导体#1 → 黄金 → 半导体#2 → 半导体#3');
+      assert.deepEqual(calls.map(c => c.first), [0, null, 10, 20], '片内条目与拆块一致');
+      // 结果仍按分片原下标写回 → 合并顺序与改动前一致(前 24 条半导体,后 5 条黄金)
+      assert.equal(r.aiCoverage, 100);
+      assert.equal(r.analyzed.length, 29);
+      assert.equal(r.analyzed[0].category, '半导体');
+      assert.equal(r.analyzed[24].category, '黄金');
+    } finally {
+      api.restore();
+    }
+  });
+});
+
+test('预算到期:一开始就到期则一片都不发,全部交回关键词引擎', async () => {
+  const real = process.env.AI_BUDGET_MS;
+  process.env.AI_BUDGET_MS = '-1';   // 负数:deadline 落在过去,首次判定即到期
+  const api = installFakeApi(okReply, { allowConcurrent: 1 });
+  try {
+    const r = await analyzeWithClaude(shardFixture());
+    assert.equal(api.stats.requests, 0, '到期后不得再发起请求');
+    assert.equal(r.isAi, false);
+    assert.equal(r.aiCoverage, 0);
+    assert.equal(r.analyzed.length, 29, '条目一条不丢');
+  } finally {
+    api.restore();
+    if (real === undefined) delete process.env.AI_BUDGET_MS;
+    else process.env.AI_BUDGET_MS = real;
+  }
+});
+
+test('aiBudgetMs:默认 45 分钟,env 可覆盖(实测全量约 36 分钟)', () => {
+  const real = process.env.AI_BUDGET_MS;
+  const DEFAULT = 2_700_000;
+  delete process.env.AI_BUDGET_MS;
+  assert.equal(aiBudgetMs(), DEFAULT);
+  assert.ok(DEFAULT > 36 * 60 * 1000, '必须盖过 2026-10-16 实测的 15 片全量时长(~36 分钟)');
+  process.env.AI_BUDGET_MS = '1234';
+  assert.equal(aiBudgetMs(), 1234);
+  if (real === undefined) delete process.env.AI_BUDGET_MS;
+  else process.env.AI_BUDGET_MS = real;
 });
 
 

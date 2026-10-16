@@ -332,6 +332,28 @@ export function chunkShards(groups) {
   return out;
 }
 
+// 发起顺序:按板块轮流取块,而不是一个板块跑完再跑下一个。只改**发起顺序**,
+// 不改 results 的下标,所以合并结果与报告顺序和以前完全一样。
+//
+// 理由是预算到期时的损失形态。半导体永远是最大板块(实测 64 条 = 7 块),按板块
+// 顺序跑会让预算**每次**都死在尾部的黄金与创新药上 —— 2026-10-16 就是这两块整片
+// 45 条零 AI,两个板块的当日方向变成纯关键词口径,且这不是偶发:条目越多越必然。
+// 轮流取块把到期损失平摊到四个板块,而不是让固定两个板块整个掉队。
+export function interleaveBySector(shards) {
+  const buckets = new Map();
+  for (let i = 0; i < shards.length; i++) {
+    if (!buckets.has(shards[i].sector)) buckets.set(shards[i].sector, []);
+    buckets.get(shards[i].sector).push(i);
+  }
+  const order = [];
+  for (let round = 0; order.length < shards.length; round++) {
+    for (const idxs of buckets.values()) {
+      if (round < idxs.length) order.push(idxs[round]);
+    }
+  }
+  return order;
+}
+
 // 单板块 AI 研判:小 prompt(保留四板块行情对照),输出按片内 __id 合并回条目。
 // label 用于日志区分(大分片二次拆分后为"半导体#1"等);prompt 内【sector】仍用板块名。
 // 返回 { analyzed, keyPoints, marketSummary };任何失败返回 null 由调用方重试。
@@ -525,11 +547,26 @@ export function backoffDelay(attempt, retryAfterMs = 0) {
 // 接近完成的输出),超出的分片走关键词局部兜底。原则是"多数时刻出全量 AI,
 // 少部分情况掐断"。
 //
-// 默认值 5 分钟 → 20 分钟(2026-10-16):分片改串行后**总时长 ≈ 各片之和**
+// 默认值 5 分钟 → 20 分钟 → 45 分钟(2026-10-16)。分片改串行后**总时长 ≈ 各片之和**
 // (免费档并发上限约 1,并行省不出时间,只会互相踩踏),5 分钟的预算会在第 2-3 片
 // 就到期,覆盖率反而和并行时代那 20 条一样 —— 串行的收益只有在预算够跑完全部
-// 分片时才拿得到。env AI_BUDGET_MS 仍可覆盖。
-const AI_BUDGET_MS = Number(process.env.AI_BUDGET_MS) || 1_200_000;
+// 分片时才拿得到。
+//
+// 20 分钟仍然不够:当天 123 条 / 15 片实测逐片 95~184s(中位约 145s),全量需 ~36 分钟,
+// 于是预算恰好在第 9 片到期,后 6 片(创新药×3 + 黄金×3 = 45 条)整片打回关键词,
+// aiCoverage 只有 63%,黄金与创新药两个板块的方向是纯关键词口径。45 分钟 = 实测全量
+// 时长 + 一到两次重试的头寸。注意单条成本约 14.5s 且基本与分片大小无关,所以总时长由
+// **条目数**决定(约 123 条 × 14.5s),分片只加固定开销;条目数再翻倍才需要重新标定。
+// 服务端真限流时每片要烧满 4 次尝试,45 分钟会在第 4-5 片就掐断 —— 这正是想要的
+// 「快失败」,而不是陪着一个宕掉的服务端耗到底。
+const DEFAULT_AI_BUDGET_MS = 2_700_000;
+
+// 与 retryDelays() 同样读 env 而不是绑成常量,理由也是**可测**:预算到期这条路径
+// 只能在单测里靠 AI_BUDGET_MS 压到 0 才能触发,不然要真等 45 分钟。负数表示
+// 「一开始就到期」,用来钉住「到期不发新请求」。
+export function aiBudgetMs() {
+  return Number(process.env.AI_BUDGET_MS) || DEFAULT_AI_BUDGET_MS;
+}
 
 // 单片带重试。失败分两类,处置不同:
 //   429/5xx(限流、服务端错)→ 按 Retry-After/指数退避,重试**同一片**;
@@ -718,10 +755,11 @@ export async function analyzeWithClaude(newsItems, etfData) {
   // (20 条)成功、其余整片被打回关键词,就是这个形态。这不是模型能力问题,串行即可
   // 解决,且零成本(总时长由总输出量决定,并行省不出时间)。
   // AI_BUDGET_MS 软预算:到期后不再发起新尝试/重试(进行中请求照常跑完)。
-  const deadline = Date.now() + AI_BUDGET_MS;
-  const results = [];
-  for (const shard of shards) {
-    results.push(await runShard(shard, etfData, deadline));
+  // 发起顺序按板块轮流(见 interleaveBySector),results 仍按原下标写回。
+  const deadline = Date.now() + aiBudgetMs();
+  const results = new Array(shards.length);
+  for (const i of interleaveBySector(shards)) {
+    results[i] = await runShard(shards[i], etfData, deadline);
   }
 
   const merged = mergeShardResults(shards, results);
