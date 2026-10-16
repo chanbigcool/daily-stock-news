@@ -518,7 +518,6 @@ new Chart(document.getElementById('heatmapChart'), {
 <div class="nav">
   <a class="on" onclick="goToday()">今日日报</a>
   <a onclick="location.href=(window.BASE||'')+'/db.html'">数据查询</a>
-  <a onclick="location.href=(window.BASE||'')+'/quality/'">质量报告</a>
   <span class="ctrl">
     <label for="historySelect">历史</label>
     <select id="historySelect" onchange="showHistoryDate()">
