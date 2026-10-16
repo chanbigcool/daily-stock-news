@@ -18,11 +18,13 @@ export const CATEGORY_CLS = {
   '黄金': 'gold',
 };
 
+// ETF 走势对比图的四条线色。刻意避开红/绿:这两个色在本站是「涨/跌」的语义,
+// 拿来当板块标识会让一条上涨的红线读起来像下跌。
 export const SECTOR_COLORS = {
-  '半导体': '#7c3aed',
-  '光模块': '#0891b2',
-  '创新药': '#0d9488',
-  '黄金': '#d97706',
+  '半导体': '#003398',
+  '光模块': '#0f6e7a',
+  '创新药': '#6b3fa0',
+  '黄金': '#b26a00',
 };
 
 // Title hits count triple; description hits count once. Weighting the title

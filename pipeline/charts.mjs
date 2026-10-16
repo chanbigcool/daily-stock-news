@@ -13,9 +13,10 @@ const SECTOR_ETF = {
   '黄金': '518880',
 };
 
+// 通用分类色,供「无方向语义」的序列使用。刻意不含红/绿——见 SECTOR_COLORS 的说明。
 const SECTOR_PALETTE = [
-  '#7c3aed', '#0891b2', '#0d9488', '#d97706',
-  '#dc2626', '#16a34a', '#ea580c', '#2563eb',
+  '#003398', '#6b3fa0', '#0f6e7a', '#b26a00',
+  '#4a5568', '#2c7a7b', '#553c9a', '#975a16',
 ];
 
 // ── ETF 历史价格趋势 ───────────────────────────────────
@@ -130,7 +131,8 @@ export function buildSentimentData(analyzed) {
   return {
     datasets: [{
       data: [bull, bear, neutral, mixed].filter(c => c > 0),
-      backgroundColor: ['#16a34a', '#dc2626', '#9ca0af', '#ea580c'],
+      // 红涨绿跌,和页面上的涨跌幅、方向徽标同源
+      backgroundColor: ['#d91e18', '#0a9e4b', '#8c8c8c', '#b26a00'],
       borderWidth: 0,
     }],
     labels: ['利好', '利空', '中性', '分化'].filter((_, i) => [bull, bear, neutral, mixed][i] > 0),
@@ -185,7 +187,7 @@ export function buildDirectionChart(analyzed) {
     datasets: directions.filter(d => SECTORS.some(s => counts[s][d] > 0)).map(d => ({
       label: d,
       data: SECTORS.map(s => counts[s][d]),
-      backgroundColor: d === '利好' ? '#16a34a' : d === '利空' ? '#dc2626' : d === '中性' ? '#9ca0af' : '#ea580c',
+      backgroundColor: d === '利好' ? '#d91e18' : d === '利空' ? '#0a9e4b' : d === '中性' ? '#8c8c8c' : '#b26a00',
     })),
     hasData: SECTORS.some(s => Object.values(counts[s]).reduce((a, b) => a + b, 0) > 0),
   };
@@ -199,7 +201,8 @@ export function buildTimeWindowData(analyzed) {
     const w = n.time_window;
     if (counts[w] !== undefined) counts[w]++;
   }
-  const colors = { '短期': '#2563eb', '中期': '#ea580c', '长期': '#16a34a' };
+  // 时间窗口不是方向,所以不走红绿;三个中性色区分即可
+  const colors = { '短期': '#003398', '中期': '#b26a00', '长期': '#6b7280' };
   return {
     labels: windows.filter(w => counts[w] > 0),
     datasets: [{

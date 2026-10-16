@@ -6,65 +6,125 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>数据查询 · 行业板块日报</title>
 <style>
-  :root { --bg:#f0f2f5; --card-bg:#fff; --border:#e2e4e9; --text:#1a1d28; --text-dim:#5f6570; --text-muted:#9ca0af; --accent:#2563eb; --radius:12px; --shadow:0 1px 3px rgba(0,0,0,.04); }
+  /* 与 index.html 同一套令牌 —— 这里改了必须同步 scripts/build-daily.mjs 的 :root */
+  :root {
+    --bg:#eef0f4; --card-bg:#fff; --tint:#f7f8fa; --tint-red:#fceded;
+    --border:#e3e6eb; --border-strong:#cfd4db;
+    --text:#1a1a1a; --text-dim:#555555; --text-muted:#8c8c8c;
+    --accent:#c0171f;
+    /* 语义色 —— 红涨绿跌 */
+    --bull:#d91e18; --bear:#0a9e4b; --mixed:#b26a00;
+    --num:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased;}
-  .container{max-width:1000px;margin:0 auto;padding:16px 12px 40px;}
-  .header{text-align:center;padding:18px 16px 10px;}
-  .header h1{font-size:1.4rem;font-weight:800;color:#0f172a;letter-spacing:-0.02em;}
-  .header .subtitle{font-size:.76rem;color:var(--text-dim);margin-top:2px;}
-  .back-link{display:inline-block;margin-top:8px;font-size:.72rem;color:var(--accent);text-decoration:none;font-weight:600;}
-  .back-link:hover{text-decoration:underline;}
-  .tabs{display:flex;gap:6px;background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:4px;margin:14px 0;}
-  .tab{flex:1;padding:8px 0;border:none;background:transparent;font-size:.8rem;font-weight:600;color:var(--text-dim);border-radius:8px;cursor:pointer;transition:background .15s,color .15s;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh;-webkit-font-smoothing:antialiased;}
+  /* 查询结果几乎全是数字,一律等宽,列才对得齐 */
+  b,strong,time,.num{font-variant-numeric:tabular-nums;}
+  .container{max-width:1200px;margin:0 auto;background:var(--card-bg);border-left:1px solid var(--border);border-right:1px solid var(--border);min-height:100vh;padding-bottom:28px;}
+
+  /* Header —— 与日报同一版式:左对齐色块 logo + 元信息 + 右侧返回 */
+  .header{display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:2px solid var(--accent);flex-wrap:wrap;}
+  .header h1{background:var(--accent);color:#fff;font-size:21px;font-weight:700;letter-spacing:.02em;line-height:1.2;padding:6px 14px;white-space:nowrap;}
+  .head-meta{display:flex;flex-direction:column;gap:1px;font-size:12.5px;color:var(--text-dim);}
+  .head-meta .dim{font-size:12px;color:var(--text-muted);}
+  .head-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+  .back-link{font-size:12.5px;font-weight:600;color:var(--text-dim);text-decoration:none;border:1px solid var(--border);padding:4px 10px;white-space:nowrap;transition:color .15s,border-color .15s;}
+  .back-link:hover{color:var(--accent);border-color:var(--accent);}
+
+  /* Nav —— 站内三个页面,当前页走强调色下划线 */
+  .nav{display:flex;align-items:stretch;background:var(--tint);border-bottom:1px solid var(--border);padding:0 20px;flex-wrap:wrap;}
+  .nav a{display:inline-flex;align-items:center;font-size:13.5px;font-weight:600;color:var(--text);text-decoration:none;padding:9px 16px 8px;border-bottom:2px solid transparent;transition:color .15s;}
+  .nav a:first-child{padding-left:0;}
+  .nav a:hover{color:var(--accent);}
+  .nav a:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+  .nav a.on{color:var(--accent);border-bottom-color:var(--accent);}
+
+  /* 查询模式切换 —— 方形分段控件,不再是居中圆角药丸 */
+  .tabs{display:inline-flex;margin:14px 20px 0;border:1px solid var(--border-strong);}
+  .tab{padding:7px 20px;border:none;border-right:1px solid var(--border-strong);background:var(--card-bg);font:inherit;font-size:13px;font-weight:600;color:var(--text-dim);cursor:pointer;transition:background .15s,color .15s;}
+  .tab:last-child{border-right:0;}
+  .tab:hover{color:var(--accent);}
+  .tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
   .tab.active{background:var(--accent);color:#fff;}
   .panel{display:none;}
   .panel.active{display:block;}
-  .filter-form{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
-  @media(max-width:640px){.filter-form{grid-template-columns:repeat(2,1fr);}}
-  .filter-form label{display:flex;flex-direction:column;gap:4px;font-size:.64rem;color:var(--text-dim);font-weight:600;}
-  .filter-form input,.filter-form select{padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:.78rem;background:#fff;color:var(--text);}
-  .filter-form input:focus,.filter-form select:focus{outline:2px solid #bfdbfe;border-color:var(--accent);}
+
+  .filter-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;background:var(--tint);border:1px solid var(--border);padding:14px;margin:12px 20px 0;}
+  .filter-form label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-dim);font-weight:600;}
+  .filter-form input,.filter-form select{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--border-strong);background:var(--card-bg);color:var(--text);}
+  .filter-form input:focus-visible,.filter-form select:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
   .form-actions{display:flex;gap:8px;align-items:flex-end;}
-  .btn-primary{padding:7px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:.76rem;font-weight:600;cursor:pointer;}
-  .btn-primary:hover{opacity:.9;}
-  .btn-ghost{padding:7px 14px;background:#fff;border:1px solid var(--border);border-radius:8px;font-size:.76rem;color:var(--text-dim);cursor:pointer;}
-  .btn-ghost:hover{border-color:#c8cbd4;color:var(--text);}
-  .result-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;font-size:.74rem;color:var(--text-dim);}
-  .eq-sql{font-size:.66rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .eq-sql code{background:#f1f5f9;padding:1px 6px;border-radius:4px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;}
-  .table-wrap{overflow-x:auto;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);margin-top:8px;}
-  .table-wrap .result-header{margin-top:0;padding:8px 10px 0;}
-  .result-table{width:100%;border-collapse:collapse;font-size:.72rem;}
-  .result-table th{position:sticky;top:0;background:#f8fafc;color:var(--text-dim);font-weight:700;text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap;}
-  .result-table td{padding:6px 10px;border-bottom:1px solid #eef0f4;color:var(--text);vertical-align:top;}
+  .btn-primary{padding:6px 18px;font:inherit;font-size:13px;font-weight:600;color:#fff;background:var(--accent);border:1px solid var(--accent);cursor:pointer;transition:background .15s;}
+  .btn-primary:hover{background:#a01218;}
+  .btn-primary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .btn-ghost{padding:6px 14px;font:inherit;font-size:13px;color:var(--text-dim);background:var(--card-bg);border:1px solid var(--border-strong);cursor:pointer;transition:border-color .15s,color .15s;}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-ghost:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  .result-header{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12.5px;color:var(--text-dim);margin:12px 20px 0;}
+  .result-header>span:first-child{flex:none;white-space:nowrap;}
+  .eq-sql{flex:1 1 auto;min-width:0;font-size:11.5px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .eq-sql code{font-family:var(--num);background:var(--tint);border:1px solid var(--border);padding:1px 6px;}
+  .table-wrap{overflow-x:auto;background:var(--card-bg);border:1px solid var(--border);margin:8px 20px 0;}
+  .table-wrap .result-header{margin:0;padding:8px 10px 0;}
+  .result-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .result-table th{position:sticky;top:0;background:var(--tint);color:var(--text-dim);font-weight:700;text-align:left;padding:8px 10px;border-bottom:1px solid var(--border-strong);white-space:nowrap;}
+  /* auto 布局按 max-content 分配宽度,而 title 列的 max-content 能到上千像素,
+     会把 cat/dir 这类短列挤到 min-content —— 中文在 min-content 下是「一个字」,
+     「半导体」就被折成两行。给单元格加下限保住短列,再给上限不让长列吃掉全部。 */
+  .result-table td{padding:6px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:top;font-variant-numeric:tabular-nums;min-width:56px;max-width:360px;overflow-wrap:anywhere;}
   .result-table tr:last-child td{border-bottom:none;}
-  .result-table tr:hover td{background:#f8fafc;}
+  .result-table tr:hover td{background:var(--tint);}
   .null{color:var(--text-muted);font-style:italic;}
-  .sql-toolbar{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;}
-  #sql-input{width:100%;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.78rem;line-height:1.5;border:1px solid var(--border);border-radius:8px;padding:8px;resize:vertical;color:var(--text);background:#f8fafc;}
-  #sql-input:focus{outline:2px solid #bfdbfe;border-color:var(--accent);}
+
+  .sql-toolbar{background:var(--tint);border:1px solid var(--border);padding:12px;margin:12px 20px 0;}
+  #sql-input{width:100%;font-family:var(--num);font-size:13px;line-height:1.6;border:1px solid var(--border-strong);padding:8px;resize:vertical;color:var(--text);background:var(--card-bg);}
+  #sql-input:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
   .sql-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
-  .examples{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:.68rem;}
+  .examples{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;margin:10px 20px 0;}
   .ex-label{color:var(--text-muted);font-weight:600;}
-  .chip-example{padding:3px 10px;border-radius:12px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;font-size:.68rem;cursor:pointer;font-weight:600;}
-  .chip-example:hover{background:#dbeafe;}
-  .cheatsheet{margin-top:10px;font-size:.7rem;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-dim);}
-  .cheatsheet summary{cursor:pointer;font-weight:700;color:var(--text);font-size:.74rem;}
+  .chip-example{padding:3px 10px;border:1px solid var(--border-strong);background:var(--card-bg);color:var(--text-dim);font:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s,color .15s;}
+  .chip-example:hover{border-color:var(--accent);color:var(--accent);background:var(--tint-red);}
+  .chip-example:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+  .cheatsheet{font-size:12px;background:var(--tint);border:1px solid var(--border);padding:9px 12px;color:var(--text-dim);margin:10px 20px 0;}
+  .cheatsheet summary{cursor:pointer;font-weight:700;color:var(--text);font-size:13px;}
   .cheatsheet p{margin:4px 0;}
-  .cheatsheet code{background:#f1f5f9;padding:1px 5px;border-radius:4px;font-family:ui-monospace,Consolas,monospace;font-size:.68rem;}
-  .err{color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;font-size:.72rem;margin-top:10px;display:none;white-space:pre-wrap;font-family:ui-monospace,Consolas,monospace;}
+  .cheatsheet code{background:var(--card-bg);border:1px solid var(--border);padding:1px 5px;font-family:var(--num);font-size:11.5px;}
+  .err{color:var(--accent);background:var(--tint-red);border:1px solid #e8b7b6;padding:8px 12px;font-size:12.5px;display:none;white-space:pre-wrap;font-family:var(--num);margin:10px 20px 0;}
   .hidden{display:none;}
-  #form-chart{display:none;margin-top:10px;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;}
-  .disclaimer{font-size:.66rem;color:#b91c1c;margin-top:18px;text-align:center;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;}
+  #form-chart{display:none;background:var(--card-bg);border:1px solid var(--border);padding:12px;margin:10px 20px 0;}
+
+  .footer{margin-top:20px;padding:14px 20px;border-top:1px solid var(--border-strong);background:var(--tint);font-size:12px;color:var(--text-muted);line-height:1.8;}
+  .footer strong{color:var(--accent);}
+
+  @media(max-width:760px){
+    .filter-form{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .filter-form,.tabs,.result-header,.table-wrap,.sql-toolbar,.examples,.cheatsheet,.err,#form-chart{margin-left:12px;margin-right:12px;}
+    /* 窄屏让表格按内容定宽再横向滚动,而不是把每列压到 min-content ——
+       那样 title 会一个字一行。列少(如 SQL 的聚合结果)时 min-width:100% 兜底,
+       不会撑出一条没必要的横向滚动条。 */
+    .result-table{width:max-content;min-width:100%;}
+    .result-table td{max-width:280px;}
+  }
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <h1>📊 数据查询</h1>
-    <div class="subtitle">基于每日构建的真 SQLite 数据库 · <span id="meta-info">加载中…</span></div>
-    <a class="back-link" href="./">← 返回今日日报</a>
+    <h1>数据查询</h1>
+    <div class="head-meta">
+      <div>真 SQLite（sql.js / WASM）· 纯静态页面直查</div>
+      <div class="dim">基于每日构建的数据库 · <span id="meta-info">加载中…</span></div>
+    </div>
+    <div class="head-right">
+      <a class="back-link" href="./">← 返回今日日报</a>
+    </div>
+  </div>
+
+  <div class="nav">
+    <a href="./">今日日报</a>
+    <a class="on" href="./db.html">数据查询</a>
+    <a href="./quality/">质量报告</a>
   </div>
 
   <div class="tabs">
@@ -110,7 +170,7 @@
     <div class="sql-toolbar">
       <textarea id="sql-input" rows="4" spellcheck="false">SELECT cat, COUNT(*) AS 新闻数 FROM news GROUP BY cat ORDER BY 新闻数 DESC</textarea>
       <div class="sql-actions">
-        <button class="btn-primary" id="sql-run">▶ 运行</button>
+        <button class="btn-primary" id="sql-run">运行</button>
         <button class="btn-ghost" id="sql-explain">EXPLAIN 查询计划</button>
         <button class="btn-ghost" id="schema-btn">查看表结构</button>
         <button class="btn-ghost" id="sql-clear">清空</button>
@@ -149,7 +209,9 @@
     </div>
   </section>
 
-  <footer class="disclaimer">本页面为学习练手项目：演示真实 SQLite（sql.js / WASM）在纯静态页面的查询。数据来自公开资讯整理，不构成投资建议。</footer>
+  <div class="footer">
+    <strong>免责声明：</strong>本页面为学习练手项目，演示真实 SQLite（sql.js / WASM）在纯静态页面的查询。数据来自公开资讯整理，不构成投资建议。
+  </div>
 </div>
 <script src="./assets/chart.umd.min.js"></script>
 <script src="./assets/sql-wasm.js"></script>
