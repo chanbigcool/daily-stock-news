@@ -7,7 +7,7 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../pipeline/config.mjs';
-import { analyzeWithKeywords, analyzeWithClaude, translateWithLocalDict, proxyReachable, deriveExplanation, parseSSEText, groupBySector, mergeShardResults, keywordItemShape, chunkShards, aiCoveragePct, parseRetryAfter, backoffDelay, buildSectorMatrix, interleaveBySector, aiBudgetMs } from '../pipeline/analyze.mjs';
+import { analyzeWithKeywords, analyzeWithClaude, translateWithLocalDict, proxyReachable, deriveExplanation, parseSSEText, groupBySector, mergeShardResults, keywordItemShape, chunkShards, aiCoveragePct, parseRetryAfter, backoffDelay, buildSectorMatrix, interleaveBySector, aiBudgetMs, normalizeMarketSummary, hasUngroundedPercent } from '../pipeline/analyze.mjs';
 import { sanitizeExplanation, explanationToRating } from '../pipeline/sentiment.mjs';
 import { SECTORS } from '../pipeline/sectors.mjs';
 
@@ -342,8 +342,30 @@ test('mergeShardResults:全成功 → 拼接 analyzed/keyPoints/marketSummary,is
   assert.equal(merged.isAi, true);
   assert.equal(merged.analyzed.length, 2);
   assert.deepEqual(merged.keyPoints, ['【半导体】要点1', '【黄金】要点2', '【黄金】要点3']);
-  assert.equal(merged.marketSummary, '半导体动态一句话；黄金动态一句话');
+  assert.equal(merged.marketSummary, '半导体动态一句话；黄金动态一句话。');
   assert.equal(aiCoveragePct(merged.aiItems, merged.eligibleItems), 100);
+});
+
+// 导语历史上是各分片直接 join('；'),留下「。；」叠用和同板块自相矛盾两句。
+test('normalizeMarketSummary:去掉「。；」,同板块只留信息量最大的一句', () => {
+  const s = normalizeMarketSummary([
+    '半导体板块ETF下跌0.5%，但AI PC发布提供支撑。；半导体板块局部走弱，但资金持续流入硬科技领域。',
+    '黄金板块上涨0.9%，避险需求升温。',
+  ]);
+  assert.equal(s, '半导体板块ETF下跌0.5%，但AI PC发布提供支撑；黄金板块上涨0.9%，避险需求升温。');
+});
+
+test('normalizeMarketSummary:超长在标点处截断,不留半句', () => {
+  const s = normalizeMarketSummary(['半导体' + '甲'.repeat(80) + '，' + '乙'.repeat(80)], { maxLen: 60 });
+  assert.ok(s.endsWith('…。'));
+  assert.ok(s.length <= 62);
+});
+
+test('hasUngroundedPercent:只在百分比能找到出处时放行', () => {
+  const sources = ['半导体板块今日下跌0.5%', 'ETF平均 -0.5%'];
+  assert.equal(hasUngroundedPercent('半导体ETF下跌0.5%', sources), false);
+  assert.equal(hasUngroundedPercent('半导体ETF下跌3.7%', sources), true);
+  assert.equal(hasUngroundedPercent('半导体板块出现分化', sources), false);
 });
 
 test('mergeShardResults:一片失败 → 该片关键词兜底(全字段),isAi 仍 true', () => {

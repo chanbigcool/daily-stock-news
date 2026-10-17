@@ -10,79 +10,82 @@
 <title>行业板块日报 · 2026-09-12</title>
 <style>
   :root {
-    /* 颜色角色:地面 / 卡片 / 浅底;文字三级;分隔线两级。强调色只有一个。 */
-    --bg:#eef0f4; --card-bg:#fff; --tint:#f7f8fa; --tint-red:#fceded;
-    --border:#e3e6eb; --border-strong:#cfd4db;
-    --text:#1a1a1a; --text-dim:#555555; --text-muted:#8c8c8c;
+    /* 颜色角色:地面 / 卡片 / 浅底;文字三级;分隔线两级。
+       红是信号不是底色 —— 全页只给品牌字标、「极高」、利好、当前页签和「新」。 */
+    --bg:#f1f2f4; --card-bg:#fff; --tint:#f7f8f9; --tint-ink:#eceef1;
+    --border:#e7e9ed; --border-strong:#c9ced6;
+    --text:#14171c; --text-dim:#4e5661; --text-muted:#8b929c;
     --accent:#c0171f;
+    /* 文本链接:低饱和蓝,只用于「原文链接/相关报道」,不参与强调 */
+    --link:#2e5b85;
     /* 语义色 —— 红涨绿跌 */
     --bull:#d91e18; --bear:#0a9e4b; --mixed:#b26a00;
     /* 数字与代码位走等宽;中文正文留在系统中文栈,不引外部字体 */
     --num:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh;-webkit-font-smoothing:antialiased;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased;}
   /* 报价/涨跌幅/代码全是数字,一律等宽,纵向对得齐 */
   b,strong,time,.num{font-variant-numeric:tabular-nums;}
-  .container{max-width:1200px;margin:0 auto;background:var(--card-bg);border-left:1px solid var(--border);border-right:1px solid var(--border);min-height:100vh;padding-bottom:28px;}
+  .container{max-width:1200px;margin:0 auto;background:var(--card-bg);border-left:1px solid var(--border);border-right:1px solid var(--border);min-height:100vh;padding-bottom:32px;}
 
-  /* Header —— 左对齐色块 logo + 右侧元信息,取代原来的居中 hero + 徽章行 */
-  .header{display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:2px solid var(--accent);flex-wrap:wrap;}
-  .header h1{background:var(--accent);color:#fff;font-size:21px;font-weight:700;letter-spacing:.02em;line-height:1.2;padding:6px 14px;white-space:nowrap;}
-  .head-meta{display:flex;flex-direction:column;gap:1px;font-size:12.5px;color:var(--text-dim);}
+  /* Header —— 报头式:白底红字标 + 顶部红线,红色不再占一整块面积 */
+  .header{display:flex;align-items:flex-end;gap:16px;padding:18px 22px 14px;border-top:3px solid var(--accent);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .header h1{font-size:26px;font-weight:800;letter-spacing:-.01em;line-height:1.1;color:var(--accent);white-space:nowrap;}
+  .head-meta{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--text-dim);padding-bottom:2px;}
   .head-meta b{color:var(--text);font-weight:600;}
-  .head-meta .dim{font-size:12px;color:var(--text-muted);}
-  .head-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+  .head-meta .dim{font-size:11.5px;color:var(--text-muted);}
+  .head-right{margin-left:auto;display:flex;align-items:center;gap:8px;padding-bottom:2px;}
   .src-tag{font-size:11.5px;color:var(--text-muted);border:1px solid var(--border);padding:2px 8px;white-space:nowrap;}
-  .refresh-btn{min-width:88px;text-align:center;padding:6px 16px;font:inherit;font-size:12.5px;font-weight:600;color:#fff;background:var(--accent);border:1px solid var(--accent);cursor:pointer;transition:background .15s;}
-  .refresh-btn:hover{background:#a01218;}
+  .refresh-btn{min-width:88px;text-align:center;padding:6px 16px;font:inherit;font-size:12.5px;font-weight:600;color:var(--text);background:var(--card-bg);border:1px solid var(--text);cursor:pointer;transition:background .15s,color .15s;}
+  .refresh-btn:hover{background:var(--text);color:#fff;}
   .refresh-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
-  .refresh-btn:disabled{background:#d8b7b9;border-color:#d8b7b9;cursor:progress;animation:pulse 1.4s ease-in-out infinite;}
-  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+  .refresh-btn:disabled{color:var(--text-muted);border-color:var(--border-strong);cursor:progress;animation:pulse 1.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.55;}}
   @media(prefers-reduced-motion:reduce){.refresh-btn:disabled{animation:none;}}
   .refresh-toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:999;padding:9px 18px;font-size:12.5px;font-weight:600;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:opacity .3s;}
   .toast-ok{background:var(--bear);}
   .toast-err{background:var(--accent);}
 
-  /* Nav —— 导航 + 功能控件收进一行,不再居中排开 */
-  .nav{display:flex;align-items:stretch;background:var(--tint);border-bottom:1px solid var(--border);padding:0 20px;flex-wrap:wrap;}
-  .nav a{display:inline-flex;align-items:center;font-size:13.5px;font-weight:600;color:var(--text);text-decoration:none;padding:9px 16px 8px;border-bottom:2px solid transparent;cursor:pointer;transition:color .15s;}
+  /* Nav —— 白底下划线页签,贴近财联社的导航处理 */
+  .nav{display:flex;align-items:stretch;background:var(--card-bg);border-bottom:1px solid var(--border);padding:0 22px;flex-wrap:wrap;}
+  .nav a{display:inline-flex;align-items:center;font-size:13.5px;font-weight:600;color:var(--text-dim);text-decoration:none;padding:10px 14px 9px;margin-bottom:-1px;border-bottom:2px solid transparent;cursor:pointer;transition:color .15s;}
   .nav a:first-child{padding-left:0;}
-  .nav a:hover{color:var(--accent);}
+  .nav a:hover{color:var(--text);}
   .nav a:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
   .nav a.on{color:var(--accent);border-bottom-color:var(--accent);}
   .nav .ctrl{margin-left:auto;display:flex;align-items:center;gap:6px;padding:5px 0;font-size:12.5px;color:var(--text-dim);}
   .nav select{font:inherit;font-size:12.5px;padding:3px 8px;border:1px solid var(--border-strong);background:var(--card-bg);color:var(--text);cursor:pointer;max-width:190px;}
   .nav select:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
-  .nav button{font:inherit;font-size:12.5px;font-weight:600;padding:3px 12px;border:1px solid var(--border-strong);background:var(--card-bg);color:var(--text);cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
-  .nav button:hover{border-color:var(--accent);color:var(--accent);}
-  .nav button.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .nav button{font:inherit;font-size:12.5px;font-weight:600;padding:3px 12px;border:1px solid var(--border-strong);background:var(--card-bg);color:var(--text-dim);cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
+  .nav button:hover{border-color:var(--text);color:var(--text);}
+  .nav button.active{background:var(--text);border-color:var(--text);color:#fff;}
 
-  /* Stats —— 五格网格,数字大到一眼能扫,不再是五个圆角胶囊 */
-  .stats-mini{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--tint);border-bottom:1px solid var(--border);}
-  .st{display:block;padding:9px 20px 11px;border-right:1px solid var(--border);font-size:11.5px;color:var(--text-muted);}
+  /* Stats —— 数字承担层级,颜色只留给涨跌和「极高」 */
+  .stats-mini{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-bottom:1px solid var(--border);}
+  .st{display:block;padding:12px 22px 14px;border-right:1px solid var(--border);font-size:11.5px;color:var(--text-muted);letter-spacing:.02em;}
   .st:last-child{border-right:0;}
-  .st b{display:block;font-size:23px;font-weight:700;line-height:1.2;color:var(--text);font-family:var(--num);}
+  .st b{display:block;font-size:26px;font-weight:700;line-height:1.2;color:var(--text);font-family:var(--num);letter-spacing:-.01em;}
   .st.bull b{color:var(--bull);}
   .st.bear b{color:var(--bear);}
   .st.vhigh b{color:var(--accent);}
-  .st.high b{color:var(--mixed);}
+  .st.high b{color:var(--text);}
   @media(max-width:640px){
     .stats-mini{grid-template-columns:repeat(3,minmax(0,1fr));}
-    .st{padding:8px 12px 9px;border-bottom:1px solid var(--border);}
-    .st b{font-size:19px;}
+    .st{padding:9px 14px 10px;border-bottom:1px solid var(--border);}
+    .st b{font-size:21px;}
   }
 
   /* ETF —— 四栏并排报价表;净值挪进 title 提示,主视觉只留涨跌幅 */
-  .etf-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:12px 20px 0;border:1px solid var(--border);}
+  .etf-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:12px 22px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
   @media(max-width:640px){
-    .etf-grid{grid-template-columns:repeat(2,minmax(0,1fr));margin:10px 12px 0;}
+    .etf-grid{grid-template-columns:repeat(2,minmax(0,1fr));margin:10px 14px 0;}
     .etf-group:nth-child(2n){border-right:0;}
     .etf-group:nth-child(-n+2){border-bottom:1px solid var(--border);}
   }
-  .etf-group{background:var(--tint);padding:9px 12px 7px;border-right:1px solid var(--border);}
+  .etf-group{background:var(--card-bg);padding:11px 14px 9px;border-right:1px solid var(--border);}
   .etf-group:last-child{border-right:0;}
-  .etf-group-name{font-size:13px;font-weight:700;color:var(--accent);padding-bottom:5px;margin-bottom:3px;border-bottom:1px solid var(--border-strong);}
+  .etf-group-name{font-size:12.5px;font-weight:700;color:var(--text);letter-spacing:.04em;padding-bottom:6px;margin-bottom:2px;border-bottom:1px solid var(--border);}
   .etf-item{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px dashed var(--border);}
   .etf-item:last-child{border-bottom:0;}
   .etf-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;color:var(--text);}
@@ -93,65 +96,79 @@
   .etf-change.neu{color:var(--text-muted);}
 
   /* Sector summary row — .sc 是可点的板块筛选按钮,行为见页尾脚本「板块筛选」 */
-  .sector-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 20px 0;}
-  @media(max-width:640px){.sector-row{grid-template-columns:repeat(2,minmax(0,1fr));margin:12px 12px 0;}}
-  .sc{display:block;width:100%;text-align:left;background:var(--tint);border:1px solid var(--border);padding:9px 12px 10px;cursor:pointer;font:inherit;color:inherit;transition:border-color .15s,background .15s;}
-  .sc:hover{border-color:var(--accent);}
+  .sector-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 22px 0;}
+  @media(max-width:640px){.sector-row{grid-template-columns:repeat(2,minmax(0,1fr));margin:12px 14px 0;}}
+  .sc{display:block;width:100%;text-align:left;background:var(--card-bg);border:1px solid var(--border);padding:11px 13px 12px;cursor:pointer;font:inherit;color:inherit;transition:border-color .15s,background .15s;}
+  .sc:hover{border-color:var(--border-strong);background:var(--tint);}
   .sc:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
-  .sc.active{background:var(--tint-red);border-color:var(--accent);}
-  .sc-name{display:flex;align-items:baseline;justify-content:space-between;gap:6px;font-size:14px;font-weight:700;color:var(--text);}
-  .sc-name b{font-size:19px;font-weight:700;font-family:var(--num);color:var(--accent);}
-  .sc-stat{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:3px;font-size:12px;color:var(--text-dim);}
+  .sc.active{background:var(--tint-ink);border-color:var(--text);}
+  .sc-name{display:flex;align-items:baseline;justify-content:space-between;gap:6px;font-size:14px;font-weight:600;color:var(--text);}
+  .sc-name b{font-size:20px;font-weight:700;font-family:var(--num);color:var(--text);letter-spacing:-.01em;}
+  .sc-stat{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:4px;font-size:12px;color:var(--text-dim);}
+  /* 板块速览一行四张卡:程度标记不再填色,否则四块实心红会把红色预算一次吃光 */
+  .sc .impact-vhigh{background:none;color:var(--accent);padding:0;font-weight:700;}
 
-  /* Section divider —— 红方块 + 下划线,替代原来的彩色左竖条 */
-  .sec-title{display:flex;align-items:center;gap:8px;margin:16px 20px 0;padding-bottom:8px;border-bottom:1px solid var(--border-strong);font-size:15px;font-weight:700;color:var(--text);}
-  .sec-title::before{content:'';width:13px;height:13px;background:var(--accent);flex:none;}
-  @media(max-width:640px){.sec-title{margin-left:12px;margin-right:12px;}}
+  /* Section divider —— 细红竖条 + 黑体标题,红只占 3px */
+  .sec-title{display:flex;align-items:center;gap:9px;margin:26px 22px 0;padding-bottom:9px;border-bottom:1px solid var(--border);font-size:16px;font-weight:700;color:var(--text);letter-spacing:.01em;}
+  .sec-title::before{content:'';width:3px;height:15px;background:var(--accent);flex:none;}
+  @media(max-width:640px){.sec-title{margin-left:14px;margin-right:14px;font-size:15px;}}
   .sec-hint{margin-left:auto;font-size:12px;font-weight:400;color:var(--text-muted);}
+  /* 「今日复盘 / 次日倾向」两个方向的释义条:两者语义不同,必须让读者一眼看出差别 */
+  .dir-legend{margin:8px 22px 0;font-size:12px;line-height:1.6;color:var(--text-muted);}
+  .dir-legend b{font-weight:700;color:var(--text-dim);}
+  @media(max-width:640px){.dir-legend{margin-left:14px;margin-right:14px;}}
 
-  /* News cards —— 改成由分隔线分组的列表行,不再是白底圆角阴影的通用卡片 */
-  .news-grid{display:grid;gap:0;margin:0 20px;}
-  /* 筛选靠 hidden 属性,但 .news-card 的 display:flex 特异性高于 UA 的
+  /* News cards —— 电报式:左侧独立时间列,右侧标题/摘要,细分隔线
+     标题用字号和字重压住场,元信息一律退到灰色。 */
+  .news-grid{display:grid;gap:0;margin:0 22px;}
+  /* 筛选靠 hidden 属性,但 .news-card 的 display:grid 特异性高于 UA 的
      [hidden]{display:none} —— 不显式补这条,设了 hidden 也藏不住。 */
   .news-card[hidden]{display:none;}
-  .news-empty{margin:10px 20px 0;padding:14px;text-align:center;font-size:12.5px;color:var(--text-dim);border:1px dashed var(--border-strong);}
+  .news-empty{margin:10px 22px 0;padding:16px;text-align:center;font-size:12.5px;color:var(--text-dim);border:1px dashed var(--border-strong);}
   .news-count{margin-left:auto;font-size:12px;font-weight:400;color:var(--text-muted);white-space:nowrap;}
-  /* 新闻列表上方的筛选胶囊条:常驻可见,是筛选功能主要的入口 */
-  .news-filter{display:flex;flex-wrap:wrap;gap:6px;margin:12px 20px 0;}
-  @media(max-width:640px){.news-filter,.news-grid,.news-empty{margin-left:12px;margin-right:12px;}}
-  .fchip{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:12.5px;font-weight:600;color:var(--text-dim);background:var(--tint);border:1px solid var(--border);padding:3px 11px;cursor:pointer;transition:background .15s,border-color .15s,color .15s;}
-  .fchip:hover{border-color:var(--accent);color:var(--accent);}
-  .fchip:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
-  .fchip b{margin-left:1px;font-weight:700;font-family:var(--num);color:var(--text-muted);}
-  /* 选中态整颗上强调色,不再按板块各配一种颜色 */
-  .fchip.active{color:#fff;background:var(--accent);border-color:var(--accent);}
-  .fchip.active b{color:rgba(255,255,255,.8);}
-  .news-card{padding:11px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;}
-  .news-card:hover,.news-card:focus-within{background:var(--tint);}
-  .news-card.expanded{background:var(--tint);}
-  .card-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;}
-  .card-cat{font-size:11.5px;font-weight:700;color:var(--accent);background:var(--tint-red);padding:1px 7px;white-space:nowrap;}
+  /* 新闻列表上方的筛选页签:选中用墨色文字 + 红色短线,不再整颗填红 */
+  .news-filter{display:flex;flex-wrap:wrap;gap:0 20px;margin:10px 22px 0;border-bottom:1px solid var(--border);}
+  @media(max-width:640px){.news-filter,.news-grid,.news-empty{margin-left:14px;margin-right:14px;}}
+  .fchip{display:inline-flex;align-items:center;font:inherit;font-size:13px;font-weight:600;color:var(--text-muted);background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;padding:6px 0 8px;cursor:pointer;transition:color .15s,border-color .15s;}
+  .fchip:hover{color:var(--text);}
+  .fchip:focus-visible{outline:2px solid var(--accent);outline-offset:-1px;}
+  .fchip b{margin-left:5px;font-weight:600;font-family:var(--num);color:var(--text-muted);}
+  .fchip.active{color:var(--text);border-bottom-color:var(--accent);}
+  .fchip.active b{color:var(--text-dim);}
+  .news-card{display:grid;grid-template-columns:74px minmax(0,1fr);gap:14px;padding:15px 10px 16px;margin:0 -10px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;}
+  .news-card:hover,.news-card:focus-within,.news-card.expanded{background:var(--tint);}
+  .card-aside{padding-top:2px;font-family:var(--num);font-size:11.5px;line-height:1.5;color:var(--text-muted);white-space:nowrap;}
+  .card-aside time{display:block;font-size:12px;font-weight:600;color:var(--text-dim);}
+  .card-aside .d{display:block;}
+  @media(max-width:640px){
+    .news-card{grid-template-columns:1fr;gap:3px;padding:13px 8px 14px;margin:0 -8px;}
+    .card-aside{display:flex;align-items:baseline;gap:7px;padding-top:0;}
+    .card-aside time{font-size:11.5px;}
+  }
+  .card-body{min-width:0;}
+  .card-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:5px;}
+  .card-cat{font-size:11.5px;font-weight:600;color:var(--text-dim);background:var(--tint-ink);padding:1px 6px;white-space:nowrap;}
   .card-time{margin-left:auto;font-size:11.5px;color:var(--text-muted);font-family:var(--num);}
-  .fresh-badge{font-size:11px;font-weight:700;color:#fff;background:var(--accent);padding:1px 5px;}
+  .fresh-badge{font-size:10.5px;font-weight:700;color:var(--accent);border:1px solid currentColor;padding:0 4px;line-height:1.45;}
 
-  .card-title{font-size:14.5px;font-weight:700;color:var(--text);line-height:1.45;margin-bottom:3px;}
-  .card-original-title{font-size:12px;color:var(--text-muted);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .card-summary{font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-  .card-meta{display:flex;flex-wrap:wrap;gap:7px;align-items:center;font-size:12px;color:var(--text-muted);}
-  .card-meta a{color:var(--accent);text-decoration:none;font-weight:600;}
+  .card-title{font-size:16px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:4px;letter-spacing:.005em;text-wrap:pretty;}
+  .card-original-title{font-size:12px;color:var(--text-muted);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .card-summary{font-size:13px;color:var(--text-dim);line-height:1.65;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-wrap:pretty;}
+  .card-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:11.5px;color:var(--text-muted);}
+  .card-meta a{color:var(--link);text-decoration:none;}
   .card-meta a:hover{text-decoration:underline;}
   .src-link{padding-left:2px;}
-  /* 方向徽标:红涨绿跌。程度徽标:填充色只给「极高/高」,中低一律灰,避免和涨跌撞色 */
-  .badge{display:inline-flex;align-items:center;padding:1px 7px;font-size:11.5px;font-weight:700;}
-  .badge-bull{background:#fdecec;color:var(--bull);}
-  .badge-bear{background:#e8f6ee;color:var(--bear);}
-  .badge-neutral{background:#f1f2f5;color:#6b7280;}
-  .badge-mixed{background:#fdf3e6;color:var(--mixed);}
-  .impact-tag{font-size:11.5px;font-weight:700;padding:1px 6px;}
-  .impact-vhigh{background:var(--accent);color:#fff;}
-  .impact-high{background:#fdecec;color:var(--accent);}
-  .impact-mid{background:#f1f2f5;color:#6b7280;}
-  .impact-low{background:#f1f2f5;color:#8c8c8c;}
+  /* 方向徽标:色点 + 同色文字,不做底色;程度徽标只给「极高」实心红 */
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:0;font-size:11.5px;font-weight:600;background:none;}
+  .badge::before{content:'';width:5px;height:5px;background:currentColor;flex:none;}
+  .badge-bull{color:var(--bull);}
+  .badge-bear{color:var(--bear);}
+  .badge-neutral{color:var(--text-muted);}
+  .badge-mixed{color:var(--mixed);}
+  .impact-tag{font-size:11.5px;font-weight:600;color:var(--text-muted);}
+  .impact-vhigh{background:var(--accent);color:#fff;font-weight:700;padding:1px 6px;}
+  .impact-high{color:var(--accent);}
+  .impact-mid,.impact-low{color:var(--text-muted);}
   .ticker-inline{color:var(--text-dim);font-family:var(--num);font-size:11.5px;}
 
   /* Expand detail */
@@ -164,19 +181,19 @@
   .expl-text{font-size:13px;}
   .expl-list{margin:2px 0 0;padding-left:17px;font-size:12.5px;}
   .expl-list li{margin-bottom:2px;}
-  .verify-note{font-size:12px;color:var(--mixed);padding:6px 9px;background:#fdf8ee;border-left:2px solid var(--mixed);}
+  .verify-note{font-size:12px;color:var(--text-dim);padding:6px 9px;background:var(--tint);border-left:2px solid var(--border-strong);}
 
   /* 事件级去重:来源徽标 + 相关报道 */
   .ev-src-badges{display:inline-flex;flex-wrap:wrap;gap:4px;}
   .ev-src-badge{font-size:11.5px;padding:1px 7px;background:var(--tint);color:var(--text-dim);border:1px solid var(--border);white-space:nowrap;}
   .event-sources,.event-related{margin-top:4px;}
   .related-list li{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .related-list a{color:var(--accent);text-decoration:none;font-size:12px;font-family:var(--num);}
+  .related-list a{color:var(--link);text-decoration:none;font-size:12px;font-family:var(--num);}
   .related-list a:hover{text-decoration:underline;}
 
   /* Matrix table */
-  .table-wrap{overflow-x:auto;margin:12px 20px 0;border:1px solid var(--border);}
-  @media(max-width:640px){.table-wrap{margin-left:12px;margin-right:12px;}}
+  .table-wrap{overflow-x:auto;margin:12px 22px 0;border:1px solid var(--border);}
+  @media(max-width:640px){.table-wrap{margin-left:14px;margin-right:14px;}}
   table{width:100%;border-collapse:collapse;font-size:12.5px;}
   th{background:var(--tint);color:var(--text-dim);padding:7px 10px;text-align:left;font-weight:600;white-space:nowrap;border-bottom:1px solid var(--border-strong);font-size:11.5px;}
   td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
@@ -186,29 +203,38 @@
   .dir-bear{color:var(--bear);font-weight:600;}
   .dir-flat{color:var(--text-dim);}
   .dir-mixed{color:var(--mixed);font-weight:600;}
-  /* 冲击程度不用红绿——那两色在本站已被「涨/跌」占用 */
+  /* 冲击程度不用红绿——那两色在本站已被「涨/跌」占用;只有最强档保留红字 */
   .shock-strong{color:var(--accent);font-weight:700;}
-  .shock-mid{color:var(--mixed);font-weight:600;}
-  .shock-weak{color:var(--text-dim);}
+  .shock-mid{color:var(--text-dim);font-weight:600;}
+  .shock-weak{color:var(--text-muted);}
 
-  /* Key points */
-  .key-points{display:grid;gap:8px;margin:12px 20px 0;}
-  @media(max-width:640px){.key-points,.market-summary{margin-left:12px;margin-right:12px;}}
-  .kp-card{background:var(--tint);padding:10px 14px;font-size:13px;line-height:1.6;}
-  .kp-card::before{content:'—';margin-right:7px;font-weight:700;color:var(--accent);}
+  /* Key points —— 细竖线列表,不再是浅灰块 */
+  .key-points{display:grid;gap:9px;margin:14px 22px 0;}
+  .kp-card{border-left:2px solid var(--border-strong);padding:1px 0 1px 13px;font-size:13.5px;line-height:1.65;color:var(--text);}
+  .kp-card::before{content:'—';margin-right:7px;font-weight:700;color:var(--text-muted);}
 
-  .market-summary{margin:12px 20px 0;padding:11px 14px;background:var(--tint-red);font-size:13.5px;line-height:1.65;color:var(--text);}
+  /* 今日复盘 —— 全页导语:3px 红竖线 + 15px 正文,靠位置和字号抢注意力 */
+  .market-summary{display:flex;gap:16px;margin:16px 22px 0;padding:16px 18px 17px 16px;border-left:3px solid var(--accent);background:var(--tint);}
+  .ms-label{flex:none;font-size:11.5px;font-weight:700;color:var(--text);letter-spacing:.08em;padding-top:4px;white-space:nowrap;}
+  .market-summary p{font-size:15px;line-height:1.75;color:var(--text);max-width:76ch;text-wrap:pretty;}
+  .market-summary b{font-weight:700;font-family:var(--num);}
+  @media(max-width:640px){
+    .key-points{margin-left:14px;margin-right:14px;}
+    .market-summary{flex-direction:column;gap:5px;margin:14px 14px 0;padding:13px 14px 14px;}
+    .ms-label{padding-top:0;}
+    .market-summary p{font-size:14px;}
+  }
 
   /* Footer */
-  .footer{margin-top:20px;padding:14px 20px;border-top:1px solid var(--border-strong);background:var(--tint);font-size:12px;color:var(--text-muted);line-height:1.8;}
-  .footer strong{color:var(--accent);}
+  .footer{margin-top:24px;padding:14px 22px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);line-height:1.8;}
+  .footer strong{color:var(--text-dim);}
 
   /* Charts */
-  .chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 20px 0;}
-  @media(max-width:640px){.chart-grid{grid-template-columns:1fr;margin:12px 12px 0;}}
-  .chart-card{border:1px solid var(--border);padding:11px 14px;}
+  .chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 22px 0;}
+  @media(max-width:640px){.chart-grid{grid-template-columns:1fr;margin:12px 14px 0;}}
+  .chart-card{border:1px solid var(--border);background:var(--card-bg);padding:13px 15px;}
   .wide-chart{grid-column:1/-1;}
-  .chart-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;}
+  .chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;}
   .chart-wrap{position:relative;width:100%;}
   .wide-chart .chart-wrap{height:240px;}
   .chart-card .chart-wrap{height:200px;}
@@ -268,6 +294,12 @@
 </div>
 
 
+<div class="market-summary">
+  <span class="ms-label">今日复盘</span>
+  <p>半导体板块呈现分化，国产算力增长利好，但HBM需求担忧和NAND大涨并存。</p>
+</div>
+
+
 <div class="sec-title">板块 ETF 指标<span class="sec-hint">悬停查看净值</span></div>
 <div class="etf-grid">
 <div class="etf-group"><div class="etf-group-name">半导体</div><div class="etf-item" title="芯片ETF华夏 159995 · 净值 1.077"><span class="etf-name">芯片ETF华夏<i>159995</i></span><span class="etf-change down">-1.64%</span></div><div class="etf-item" title="芯片ETF国泰 512760 · 净值 1.022"><span class="etf-name">芯片ETF国泰<i>512760</i></span><span class="etf-change down">-1.35%</span></div><div class="etf-item" title="科创芯片ETF嘉实 588200 · 净值 1.089"><span class="etf-name">科创芯片ETF嘉实<i>588200</i></span><span class="etf-change down">-1.54%</span></div></div><div class="etf-group"><div class="etf-group-name">光模块</div><div class="etf-item" title="通信ETF华夏 515050 · 净值 1.047"><span class="etf-name">通信ETF华夏<i>515050</i></span><span class="etf-change up">+0.29%</span></div><div class="etf-item" title="通信ETF国泰 515880 · 净值 0.675"><span class="etf-name">通信ETF国泰<i>515880</i></span><span class="etf-change up">+0.60%</span></div><div class="etf-item" title="5GETF博时 159811 · 净值 3.010"><span class="etf-name">5GETF博时<i>159811</i></span><span class="etf-change up">+0.97%</span></div></div><div class="etf-group"><div class="etf-group-name">创新药</div><div class="etf-item" title="创新药ETF广发 515120 · 净值 0.602"><span class="etf-name">创新药ETF广发<i>515120</i></span><span class="etf-change down">-2.11%</span></div><div class="etf-item" title="创新药ETF南方 159858 · 净值 0.649"><span class="etf-name">创新药ETF南方<i>159858</i></span><span class="etf-change down">-2.11%</span></div><div class="etf-item" title="创新药ETF银华 159992 · 净值 0.803"><span class="etf-name">创新药ETF银华<i>159992</i></span><span class="etf-change down">-2.19%</span></div></div><div class="etf-group"><div class="etf-group-name">黄金</div><div class="etf-item" title="黄金ETF华安 518880 · 净值 8.943"><span class="etf-name">黄金ETF华安<i>518880</i></span><span class="etf-change down">-1.54%</span></div><div class="etf-item" title="黄金ETF易方达 159934 · 净值 9.342"><span class="etf-name">黄金ETF易方达<i>159934</i></span><span class="etf-change down">-1.58%</span></div><div class="etf-item" title="黄金ETF国泰 518800 · 净值 9.374"><span class="etf-name">黄金ETF国泰<i>518800</i></span><span class="etf-change down">-1.61%</span></div></div>
@@ -281,6 +313,7 @@
   <button type="button" class="sc" data-sector="半导体" data-cat="semi" aria-pressed="false">
     <span class="sc-name">半导体<b>32</b></span>
     <span class="sc-stat">
+      
       <span class="badge badge-neutral">中性</span>
       <span class="impact-tag impact-vhigh">强冲击</span>
     </span>
@@ -289,6 +322,7 @@
   <button type="button" class="sc" data-sector="黄金" data-cat="gold" aria-pressed="false">
     <span class="sc-name">黄金<b>32</b></span>
     <span class="sc-stat">
+      
       <span class="badge badge-neutral">中性</span>
       <span class="impact-tag impact-vhigh">强冲击</span>
     </span>
@@ -297,6 +331,7 @@
   <button type="button" class="sc" data-sector="光模块" data-cat="optics" aria-pressed="false">
     <span class="sc-name">光模块<b>15</b></span>
     <span class="sc-stat">
+      
       <span class="badge badge-bull">利好</span>
       <span class="impact-tag impact-vhigh">强冲击</span>
     </span>
@@ -305,6 +340,7 @@
   <button type="button" class="sc" data-sector="创新药" data-cat="pharma" aria-pressed="false">
     <span class="sc-name">创新药<b>11</b></span>
     <span class="sc-stat">
+      
       <span class="badge badge-neutral">中性</span>
       <span class="impact-tag impact-vhigh">强冲击</span>
     </span>
@@ -313,7 +349,6 @@
 </div>
 
 
-<div class="market-summary">半导体板块呈现分化，国产算力增长利好，但HBM需求担忧和NAND大涨并存。；半导体板块受算力大会和技术突破推动，但ETF平均下跌1.5%。</div>
 
 
 <div class="sec-title">市场数据可视化</div>
@@ -358,12 +393,13 @@
 </div>
 <div class="news-grid" id="newsGrid">
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>22:42</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 22:42</span>
 </div>
 <div class="card-title">新易盛：今年800G产品出货量持续提升 已成为出货主力产品</div>
 
@@ -389,13 +425,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>21:08</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-12 21:08</span>
 </div>
 <div class="card-title">周评：定了！下周美联储加息概率超90%，金价承压明显 - 新浪财经</div>
 
@@ -421,13 +459,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>22:01</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 22:01</span>
 </div>
 <div class="card-title">黄金 价格 Today: A Huge Options Bet Just Appeared at $5,225 - </div>
 <div class="card-original-title">原文：Gold Price Today: A Huge Options Bet Just Appeared at $5,225 - captainaltcoin.com</div>
@@ -453,13 +493,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>20:17</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-vhigh">极高</span>
 
-<span class="card-time">09-12 20:17</span>
 </div>
 <div class="card-title">早报</div>
 
@@ -485,13 +527,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>20:09</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 20:09</span>
 </div>
 <div class="card-title">北京丰台发布文化产业新政 聚焦数字出版创新等六大方向</div>
 
@@ -517,13 +561,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>19:23</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 19:23</span>
 </div>
 <div class="card-title">（经济观察）中国金融业界稳步推进跨境服务</div>
 
@@ -549,13 +595,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>19:56</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 19:56</span>
 </div>
 <div class="card-title">Per Tola 黄金 价格 in Pakistan Back at Rs4.57 Lac; Check New </div>
 <div class="card-original-title">原文：Per Tola Gold Price in Pakistan Back at Rs4.57 Lac; Check New Rates - Pakistan Observer</div>
@@ -581,13 +629,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>18:27</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-12 18:27</span>
 </div>
 <div class="card-title">中国算力大会“年度重大突破成果”揭晓</div>
 
@@ -613,13 +663,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:22</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-12 16:22</span>
 </div>
 <div class="card-title">【新易盛：1.6T和800G光模块是今年交付主力产品，NPO产品预计明年有批量订单交付需求】9月11日下午，新易盛在</div>
 
@@ -645,13 +697,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:38</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-12 16:38</span>
 </div>
 <div class="card-title">今日金价：全球金价暴跌，国内金价保持不变。</div>
 
@@ -677,13 +731,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:08</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 17:08</span>
 </div>
 <div class="card-title">三星 is closing in on 40% HBM share - Sammy Fans</div>
 
@@ -709,13 +765,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:16</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 17:16</span>
 </div>
 <div class="card-title">日本的富士通将向美国和亚洲出口AI芯片。</div>
 
@@ -749,13 +807,15 @@
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:37</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 16:37</span>
 </div>
 <div class="card-title">首个“太空算力关键技术与场景验证实验室”正式成立</div>
 
@@ -781,13 +841,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:22</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 17:22</span>
 </div>
 <div class="card-title">上海概念验证平台联盟成立</div>
 
@@ -813,13 +875,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:53</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 16:53</span>
 </div>
 <div class="card-title">港股IPO市场火热 今年以来募资超3600亿港元</div>
 
@@ -845,13 +909,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:36</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-vhigh">极高</span>
 
-<span class="card-time">09-12 15:36</span>
 </div>
 <div class="card-title">早报</div>
 
@@ -877,13 +943,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:32</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-12 15:32</span>
 </div>
 <div class="card-title">沃格光电与艾玮得生物达成战略合作 共同推动玻璃基器官芯片产业化</div>
 
@@ -909,13 +977,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:16</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 16:16</span>
 </div>
 <div class="card-title">新易盛：今年800G产品出货量持续提升 已成为出货主力产品</div>
 
@@ -941,13 +1011,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:13</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-12 15:13</span>
 </div>
 <div class="card-title">算力词元贷加速全国推广</div>
 
@@ -973,13 +1045,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:40</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-12 15:40</span>
 </div>
 <div class="card-title">法兴银行：实物、期货、期权头寸同步增仓驱动金价持续上行 - 新浪网</div>
 
@@ -1005,13 +1079,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:37</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 15:37</span>
 </div>
 <div class="card-title">LG化学与江化微签署谅解备忘录，拟联合开发生产高纯度异丙醇</div>
 
@@ -1037,13 +1113,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:34</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 16:34</span>
 </div>
 <div class="card-title">新易盛：与客户NPO产品合作进展顺利 预计2027年有批量交付需求</div>
 
@@ -1077,13 +1155,15 @@
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:31</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 15:31</span>
 </div>
 <div class="card-title">图灵量子发布大规模芯片级可扩展光量子计算机TuringQ Gen3</div>
 
@@ -1109,13 +1189,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:27</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 15:27</span>
 </div>
 <div class="card-title">海光芯正全栈自研硅光1.6T光模块和6.4T NPO领衔亮相CIOE 2026 - iccsz.com</div>
 
@@ -1141,13 +1223,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:20</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 16:20</span>
 </div>
 <div class="card-title">At its results briefing Xinyisheng said 800G shipments </div>
 
@@ -1173,13 +1257,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:22</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 15:22</span>
 </div>
 <div class="card-title">（经济观察）多点开花齐提速 中国服务出海动力足</div>
 
@@ -1205,13 +1291,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:57</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 15:57</span>
 </div>
 <div class="card-title">黄金周评：一周巨震近230美元！</div>
 
@@ -1237,13 +1325,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>14:00</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-mixed">分化</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-12 14:00</span>
 </div>
 <div class="card-title">今日股市！核心消息！对应板块！美股上涨！科技上涨！</div>
 
@@ -1273,13 +1363,15 @@
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>14:05</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-12 14:05</span>
 </div>
 <div class="card-title">国家超算互联网用户突破170万</div>
 
@@ -1313,13 +1405,15 @@
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:20</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-12 13:20</span>
 </div>
 <div class="card-title">加息概率升至90%，黄金为何不跌反涨？</div>
 
@@ -1353,13 +1447,15 @@
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:39</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 13:39</span>
 </div>
 <div class="card-title">SpaceX、AMD财报出炉；大基金三期出手！</div>
 
@@ -1385,13 +1481,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:39</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 13:39</span>
 </div>
 <div class="card-title">黄金定价逻辑正在改变 - 新浪网</div>
 
@@ -1417,13 +1515,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>11:42</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-12 11:42</span>
 </div>
 <div class="card-title">9月12日上午：黄金价格在大幅下跌后回升。</div>
 
@@ -1449,13 +1549,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>11:43</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 11:43</span>
 </div>
 <div class="card-title">黄仁勋执锹现身！英伟达投资的磷化铟工厂奠基了 - 财联社</div>
 
@@ -1481,13 +1583,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>12:32</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 12:32</span>
 </div>
 <div class="card-title">直击光博会！芯片、光引擎、设备密集上新</div>
 
@@ -1513,13 +1617,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>12:29</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 12:29</span>
 </div>
 <div class="card-title">黄金 rate today, September 12: Yellow metal 价格 大涨s across </div>
 <div class="card-original-title">原文：Gold rate today, September 12: Yellow metal price jumps across 24K, 22K and 18K - Mathrubhumi English</div>
@@ -1545,13 +1651,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:43</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-vhigh">极高</span>
 
-<span class="card-time">09-12 10:43</span>
 </div>
 <div class="card-title">黄金本周大跌80美元！美联储加息箭在弦上，华尔街为何仍坚定看多？</div>
 
@@ -1577,13 +1685,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>11:07</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-mixed">分化</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-12 11:07</span>
 </div>
 <div class="card-title">【中国信通院总工程师何宝宏：构建差异化算力布局体系，推动算力建设由规模扩张转向质效提升】9月12日，中国信息通信研究</div>
 
@@ -1609,13 +1719,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:25</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 10:25</span>
 </div>
 <div class="card-title">딥시크, 초저가 신모델 'V4.1 플래시' 공개… HBM 需求 둔화 우려에 半导体주 출렁 - CBC뉴스</div>
 
@@ -1641,13 +1753,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:42</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 10:42</span>
 </div>
 <div class="card-title">京津冀智算供需清单发布 三地将加快构建环京算力供给走廊</div>
 
@@ -1673,13 +1787,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>08:45</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-vhigh">极高</span>
 
-<span class="card-time">09-12 08:45</span>
 </div>
 <div class="card-title">阿斯利康乳腺癌药物Etcamah三期临床未达主要终点</div>
 
@@ -1705,13 +1821,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>09:19</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-vhigh">极高</span>
 
-<span class="card-time">09-12 09:19</span>
 </div>
 <div class="card-title">【华泰证券：若9月沃什不能兑现其鹰派承诺，美联储公信力将明显受挫、长端利率将更难以控制】据华泰证券，8月核心CPI通</div>
 
@@ -1737,13 +1855,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>09:23</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-12 09:23</span>
 </div>
 <div class="card-title">熵旋芯智雷坤：MRAM存算一体芯片可使AI推理Token成本降低约10倍</div>
 
@@ -1769,13 +1889,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>09:04</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 09:04</span>
 </div>
 <div class="card-title">华为Mate XT 2非凡大师全渠道开售</div>
 
@@ -1801,13 +1923,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:04</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 10:04</span>
 </div>
 <div class="card-title">工业和信息化部总工程师钟志红：加快算力标准体系建设指南编制</div>
 
@@ -1833,13 +1957,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>08:23</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-12 08:23</span>
 </div>
 <div class="card-title">光模块，利好！机构力挺，龙头强势涨停！</div>
 
@@ -1865,13 +1991,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>08:21</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-12 08:21</span>
 </div>
 <div class="card-title">玻利维亚央行回笼74亿玻利维亚诺 货币投放规模激增</div>
 
@@ -1897,13 +2025,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>08:34</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 08:34</span>
 </div>
 <div class="card-title">机构力挺光模块 13只绩优潜力股曝光</div>
 
@@ -1929,13 +2059,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>08:47</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 08:47</span>
 </div>
 <div class="card-title">高盛上调光模块市场预测 A股13只绩优潜力股曝光 - 新浪财经</div>
 
@@ -1961,13 +2093,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>09:00</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 09:00</span>
 </div>
 <div class="card-title">Will 黄金 价格 下跌 Below $4,000 Amid Renewed Economic Risks? - </div>
 <div class="card-original-title">原文：Will Gold Price Fall Below $4,000 Amid Renewed Economic Risks? - BeInCrypto</div>
@@ -1993,13 +2127,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>07:15</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 07:15</span>
 </div>
 <div class="card-title">万元折叠手机扎堆上市 手机行业探索技术溢价新路径</div>
 
@@ -2025,13 +2161,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>07:16</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 07:16</span>
 </div>
 <div class="card-title">资金瞄准硬科技 上市公司密集出手做LP</div>
 
@@ -2057,13 +2195,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>07:33</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 07:33</span>
 </div>
 <div class="card-title">Rapidus拟考虑2040年前后在月球建设半导体工厂</div>
 
@@ -2089,13 +2229,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>07:13</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 07:13</span>
 </div>
 <div class="card-title">市场消息：英伟达正洽谈向Anthropic公司IPO投资至多100亿美元。</div>
 
@@ -2121,13 +2263,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>07:14</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 07:14</span>
 </div>
 <div class="card-title">报道：Anthropic正洽谈引入英伟达作为锚定投资者，或将缔造史上最大IPO，英伟达或投100亿美元</div>
 
@@ -2153,13 +2297,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>07:48</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 07:48</span>
 </div>
 <div class="card-title">如何看待“国产GPU四小龙”齐聚资本市场</div>
 
@@ -2185,13 +2331,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>07:52</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 07:52</span>
 </div>
 <div class="card-title">算力“提速”背后 精密测试守住毫厘关口</div>
 
@@ -2217,13 +2365,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>07:28</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 07:28</span>
 </div>
 <div class="card-title">文化贸易增速领跑 出海产业链加速成型</div>
 
@@ -2249,13 +2399,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>07:12</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 07:12</span>
 </div>
 <div class="card-title">广东机器人“军团”半年考：三条变化脉络清晰可见</div>
 
@@ -2281,13 +2433,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>07:44</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 07:44</span>
 </div>
 <div class="card-title">【尹力、殷勇走进亦庄综保区、跨国药企、出海基地，调研“两区”建设工作，要求不断增强北京开放发展新动能】9月11日上午</div>
 
@@ -2313,13 +2467,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>08:09</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 08:09</span>
 </div>
 <div class="card-title">道明证券警告：黄金若失守两道防线，抛售可能加速 - 新浪网</div>
 
@@ -2345,13 +2501,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>07:37</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 07:37</span>
 </div>
 <div class="card-title">瞄准中秋、国庆黄金档期多地发放消费券</div>
 
@@ -2377,13 +2535,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>06:25</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-vhigh">极高</span>
 
-<span class="card-time">09-12 06:25</span>
 </div>
 <div class="card-title">Scholar Rock宣布FDA批准ISEMBYLD™(APITEGROMAB-MSTN)，这是首个且唯一针对儿童和成人脊髓性肌萎缩症(SMA)的肌肉靶向疗法。</div>
 
@@ -2409,13 +2569,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>05:00</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-vhigh">极高</span>
 
-<span class="card-time">09-12 05:00</span>
 </div>
 <div class="card-title">国际金价在美国CPI数据发布日涨约0.7%，一度突破4400美元，本周纽约铜跌1.8%</div>
 
@@ -2441,13 +2603,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>06:00</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-12 06:00</span>
 </div>
 <div class="card-title">暗盘金价突破4350美元/盎司，日内涨幅0.8%。</div>
 
@@ -2473,13 +2637,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>05:14</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-12 05:14</span>
 </div>
 <div class="card-title">반도체 ETF에도 급이란 게 있습니다…HBM 넘어 613% 오른 낸드株 - 매일경제 마켓</div>
 
@@ -2505,13 +2671,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>06:01</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 06:01</span>
 </div>
 <div class="card-title">Citrini创始人出售公司并筹划新基金 此前其报告曾震动市场</div>
 
@@ -2537,13 +2705,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>06:57</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 06:57</span>
 </div>
 <div class="card-title">美联储加息新动向！道指涨逾500点；沙特东西输油管道遭袭后关闭；</div>
 
@@ -2569,13 +2739,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>05:52</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 05:52</span>
 </div>
 <div class="card-title">Kalshi拟进军美股与商品市场</div>
 
@@ -2601,13 +2773,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>06:33</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 06:33</span>
 </div>
 <div class="card-title">黄金 Tops $5K, Beating US Treasuries And Bitcoin As The </div>
 <div class="card-original-title">原文：Gold Tops $5K, Beating US Treasuries And Bitcoin As The Safe Haven Of Choice - Yellow.com</div>
@@ -2641,13 +2815,15 @@
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>05:22</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 05:22</span>
 </div>
 <div class="card-title">美国食品药品监督管理局(FDA)批准Isemblyd用于治疗2岁及以上患者的脊髓性肌萎缩症。</div>
 
@@ -2673,13 +2849,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>05:34</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 05:34</span>
 </div>
 <div class="card-title">黄金价格小幅上涨，但仍比世界价格高出1000万越南盾/盎司以上。</div>
 
@@ -2705,13 +2883,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>05:27</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 05:27</span>
 </div>
 <div class="card-title">黄金 价格 holds $4,300 support as CPI lifts 美联储-hike odds - </div>
 <div class="card-original-title">原文：Gold price holds $4,300 support as CPI lifts Fed-hike odds - Kitco PM Report - kitco.com</div>
@@ -2745,13 +2925,15 @@
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>04:24</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-vhigh">极高</span>
 
-<span class="card-time">09-12 04:24</span>
 </div>
 <div class="card-title">新兴市场ETF收涨超1.2%，领跑美股大类资产类ETF，布油基金跌约2.8%</div>
 
@@ -2777,13 +2959,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>05:23</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 05:23</span>
 </div>
 <div class="card-title">Marvell targets $30B opportunity in 光通信 networking as AI 数</div>
 <div class="card-original-title">原文：Marvell targets $30B opportunity in optical networking as AI data centers reshape chip demand - cryptobriefing.com</div>
@@ -2809,13 +2993,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>04:02</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-12 04:02</span>
 </div>
 <div class="card-title">本周，标普累跌0.4%，道指跌1.5%，纳指跌0.5%。</div>
 
@@ -2841,13 +3027,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>04:00</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-12 04:00</span>
 </div>
 <div class="card-title">美股收盘：三大股指集体收涨</div>
 
@@ -2873,13 +3061,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>04:19</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-12 04:19</span>
 </div>
 <div class="card-title">阿斯利康股价盘后下跌2%，因三期临床试验结果令人失望。</div>
 
@@ -2905,13 +3095,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>03:45</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 03:45</span>
 </div>
 <div class="card-title">黄金价格小幅上涨，但可能仍将“停滞”在盘整区间内。</div>
 
@@ -2937,13 +3129,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>02:39</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-vhigh">极高</span>
 
-<span class="card-time">09-12 02:39</span>
 </div>
 <div class="card-title">高盛：美联储加息预期再度升温，可能触发交易商解除对冲头寸，并引发金价出现超出常规幅度的回调。</div>
 
@@ -2969,13 +3163,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>02:39</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-12 02:39</span>
 </div>
 <div class="card-title">Report: 台积电 to Double CoWoS Capacity by 2028 as AI 芯片 </div>
 
@@ -3001,13 +3197,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>02:38</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-12 02:38</span>
 </div>
 <div class="card-title">高盛：若 ETF 投资者资金流入回暖，且当前偏高的看涨期权持仓维持不变，交易商对冲行为或将从机制上放大上涨行情，推动金价大幅超出我们的预测。</div>
 
@@ -3033,13 +3231,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>02:36</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-12 02:36</span>
 </div>
 <div class="card-title">高盛仍认为其 2026 年底金价 4900 美元 / 盎司预测存在上行净风险，但金价走势也将面临更大的双向波动。</div>
 
@@ -3065,13 +3265,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>02:22</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 02:22</span>
 </div>
 <div class="card-title">Positron AI Lands $875 Million to Challenge 英伟达 With </div>
 
@@ -3097,13 +3299,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>02:10</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 02:10</span>
 </div>
 <div class="card-title">广西社科院东南亚研究所副所长雷小华：激活通道红利 赋能中国—东盟经贸协同</div>
 
@@ -3129,13 +3333,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>02:37</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 02:37</span>
 </div>
 <div class="card-title">高盛：我们给出的 2026 年底黄金公允估值 4900 美元 / 盎司，前提是各国央行持续强劲购金。</div>
 
@@ -3161,13 +3367,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>00:31</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-12 00:31</span>
 </div>
 <div class="card-title">黄金价格走势预测：金价跌破4000美元代表牛市结束了？2026年下半年还会涨吗？</div>
 
@@ -3193,13 +3401,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>00:00</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 00:00</span>
 </div>
 <div class="card-title">黄金 价格s today, September 12, 2026, are fluctuating wildly. </div>
 <div class="card-original-title">原文：Gold prices today, September 12, 2026, are fluctuating wildly. What is causing gold rings to surpass gold bars in price?</div>
@@ -3233,13 +3443,15 @@
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>00:56</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 00:56</span>
 </div>
 <div class="card-title">美联储 Hike Odds Just Hit 90%. 黄金 Didn't Care. - 黄金Silver</div>
 <div class="card-original-title">原文：Fed Hike Odds Just Hit 90%. Gold Didn't Care. - GoldSilver</div>
@@ -3265,13 +3477,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>00:57</time><span class="d">09-12</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-12 00:57</span>
 </div>
 <div class="card-title">黄金重获资金加仓 - 新浪财经</div>
 
@@ -3295,6 +3509,7 @@
 <div class="verify-note">未命中明显信号,中性</div>
 
 
+</div>
 </div>
 </div>
 </div>
@@ -3720,7 +3935,7 @@ new Chart(document.getElementById('heatmapChart'), {
   type: 'bar',
   data: {
     labels: ["半导体","光模块","创新药","黄金"],
-    datasets: [{"label":"低","data":[21,12,8,16],"backgroundColor":"#f4d9d7"},{"label":"中","data":[5,1,1,4],"backgroundColor":"#e08a86"},{"label":"高","data":[6,1,0,6],"backgroundColor":"#c0171f"},{"label":"极高","data":[0,1,2,6],"backgroundColor":"#8f1017"}],
+    datasets: [{"label":"低","data":[21,12,8,16],"backgroundColor":"#dde1e6"},{"label":"中","data":[5,1,1,4],"backgroundColor":"#a8b0ba"},{"label":"高","data":[6,1,0,6],"backgroundColor":"#5c6570"},{"label":"极高","data":[0,1,2,6],"backgroundColor":"#23272e"}],
   },
   options: {
     responsive: true, maintainAspectRatio: false,

@@ -278,6 +278,51 @@ function marketContext(etfData) {
   return `当日各板块 ETF 实际涨跌:\n${parts.join('\n')}`;
 }
 
+// 导语口径:各分片各给一句「本板块当日产业动态」,拼接时曾直接 join('；'),
+// 于是出现「…积极支撑。；半导体…」这种标点叠用;同一板块被拆成两片时,
+// 还会留下两句互相矛盾的同板块总结。这里统一收口:
+//   - 按 ； 拆句,去掉句尾残留标点,再拼成一句;
+//   - 同一板块只保留信息量最大的一句(按开头板块名判定),避免自相矛盾;
+//   - 总长超过 maxLen 时在最近的标点处截断,不把半句话留在页面上。
+const SUMMARY_SECTORS = ['半导体', '光模块', '创新药', '黄金'];
+
+export function normalizeMarketSummary(parts, { maxLen = 160 } = {}) {
+  const sentences = [];
+  for (const part of parts || []) {
+    for (const raw of String(part || '').split(/[；;]/)) {
+      const s = raw.trim().replace(/[。；;，,\s]+$/g, '');
+      if (!s || sentences.includes(s)) continue;
+      const sector = SUMMARY_SECTORS.find(x => s.startsWith(x));
+      if (sector) {
+        const idx = sentences.findIndex(x => x.startsWith(sector));
+        if (idx >= 0) {
+          if (s.length > sentences[idx].length) sentences[idx] = s;
+          continue;
+        }
+      }
+      sentences.push(s);
+    }
+  }
+  if (!sentences.length) return '';
+  let out = sentences.join('；');
+  if (out.length > maxLen) {
+    out = out.slice(0, maxLen).replace(/[；;，,][^；;，,]*$/, '') + '…';
+  }
+  return out + '。';
+}
+
+// 摘要里的百分比必须能在输入里找到出处。行情数字是这类自动导语最容易编造、
+// 也最伤可信度的部分 —— 宁可整句不要,也不让假数字上页面。
+export function hasUngroundedPercent(summary, sources) {
+  const pcts = [...String(summary || '').matchAll(/(\d+(?:\.\d+)?)\s*%/g)].map(m => parseFloat(m[1]));
+  if (!pcts.length) return false;
+  const pool = [];
+  for (const src of sources || []) {
+    for (const m of String(src || '').matchAll(/\d+(?:\.\d+)?/g)) pool.push(parseFloat(m[0]));
+  }
+  return pcts.some(n => !pool.some(p => Math.abs(p - n) < 0.051));
+}
+
 // 从关键词评级派生可解释字段(关键词路径与 AI 缺 id 兜底共用,字段语义与
 // AI 路径对齐,渲染层无需区分来源)。confidence_score 按 certainty 映射。
 const KW_CONFIDENCE = { '高': 0.8, '中': 0.6, '低': 0.4 };
@@ -378,6 +423,14 @@ async function tryAnalyzeSectorOnce(sector, sectorItems, etfData, label = sector
     `[${n.__id}]【${n.guessedSector || '未分类'}】标题: ${n.title}\n    描述: ${n.description}\n    关键词预判: ${n.keyword.direction}/${n.keyword.impact}\n    日期: ${n.pubDate.toISOString()}\n    来源: ${n.source}`
   ).join('\n\n');
 
+  // 导语里出现的任何百分比都得在这里找到出处:新闻原文,或本板块 ETF 的实际涨跌。
+  const groundingSources = [
+    ...sectorItems.flatMap(n => [n.title, n.description]),
+    ...(Array.isArray(etfData) ? etfData
+      .filter(e => e.category === sector && Number.isFinite(e.change))
+      .flatMap(e => [Math.abs(e.change).toFixed(1), Math.abs(e.change).toFixed(2)]) : []),
+  ];
+
   const prompt = `你是资深金融分析师，专注半导体、光模块、创新药、黄金四大赛道。以下 ${rated.length} 条【${sector}】新闻已按板块预分类，每条标题前的【】标签为板块提示。每条附了本地关键词引擎的预判（方向/影响），供你参考，但以你的专业判断为准。
 
 ${marketContext(etfData)}
@@ -414,7 +467,9 @@ ${marketContext(etfData)}
 
 另外生成：
 - key_points：1-2 条，以【${sector}】开头，包含具体数据或标的
-- market_summary：一句话总结本板块当日产业动态
+- market_summary：一句话总结本板块当日产业动态，不超过 40 字。只能陈述上面新闻里出现的事实；
+  【禁止编造数字、涨跌幅、公司或事件】。若引用 ETF 行情，必须逐字使用上方「当日各板块 ETF 实际涨跌」里的数值，
+  不得自行计算或约等于。句末不要加标点。
 
 输出 JSON，不要 markdown 包裹，不要任何其他文字：
 {"analyzed": [{"id": 0, "sentiment": "利空", "market_impact": "高", "affected_companies": [], "reasoning": [""], "evidence": ["原文摘句"], "confidence_score": 0.8, "uncertainty": "", "time_window": "短期"}], "key_points": ["【${sector}】..."], "market_summary": "..."}
@@ -512,12 +567,20 @@ ${newsText}`;
     };
   });
 
+  // 编造的涨跌幅比没有导语更糟 —— 丢弃整句,由合并阶段决定是否还有别的板块可拼。
+  const rawSummary = typeof result.market_summary === 'string' ? result.market_summary.trim() : '';
+  let marketSummary = rawSummary;
+  if (rawSummary && hasUngroundedPercent(rawSummary, groundingSources)) {
+    console.log(`  ⚠ [${label}] 导语含无法溯源的涨跌幅，已丢弃: ${rawSummary}`);
+    marketSummary = '';
+  }
+
   return {
     ok: true,
     analyzed,
     aiItems,
     keyPoints: Array.isArray(result.key_points) ? result.key_points : [],
-    marketSummary: typeof result.market_summary === 'string' ? result.market_summary : '',
+    marketSummary,
   };
 }
 
@@ -636,7 +699,7 @@ async function runShard(shard, etfData, deadline) {
     }
     if (anyAi) {
       console.log(`  ✅ ${name} 拆半后取得 AI 结果 (${aiItems}/${shard.items.length} 条)`);
-      return { ok: true, analyzed, aiItems, keyPoints, marketSummary: marketParts.join('；') };
+      return { ok: true, analyzed, aiItems, keyPoints, marketSummary: normalizeMarketSummary(marketParts) };
     }
   }
 
@@ -681,7 +744,7 @@ export function mergeShardResults(shards, results) {
     // 大分片二次拆分后多个块会各自产出【板块】要点,先精确去重再截断,避免重复卡片
     keyPoints: [...new Set(keyPoints)].slice(0, 6),
     marketSummary: marketParts.length > 0
-      ? marketParts.join('；')
+      ? normalizeMarketSummary(marketParts)
       : `本日报聚焦半导体、光模块、创新药、黄金四大赛道，${analyzed.length} 条新闻经关键词引擎自动分析生成。`,
     isAi: anyAi,
   };

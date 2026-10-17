@@ -10,79 +10,82 @@
 <title>行业板块日报 · 2026-09-15</title>
 <style>
   :root {
-    /* 颜色角色:地面 / 卡片 / 浅底;文字三级;分隔线两级。强调色只有一个。 */
-    --bg:#eef0f4; --card-bg:#fff; --tint:#f7f8fa; --tint-red:#fceded;
-    --border:#e3e6eb; --border-strong:#cfd4db;
-    --text:#1a1a1a; --text-dim:#555555; --text-muted:#8c8c8c;
+    /* 颜色角色:地面 / 卡片 / 浅底;文字三级;分隔线两级。
+       红是信号不是底色 —— 全页只给品牌字标、「极高」、利好、当前页签和「新」。 */
+    --bg:#f1f2f4; --card-bg:#fff; --tint:#f7f8f9; --tint-ink:#eceef1;
+    --border:#e7e9ed; --border-strong:#c9ced6;
+    --text:#14171c; --text-dim:#4e5661; --text-muted:#8b929c;
     --accent:#c0171f;
+    /* 文本链接:低饱和蓝,只用于「原文链接/相关报道」,不参与强调 */
+    --link:#2e5b85;
     /* 语义色 —— 红涨绿跌 */
     --bull:#d91e18; --bear:#0a9e4b; --mixed:#b26a00;
     /* 数字与代码位走等宽;中文正文留在系统中文栈,不引外部字体 */
     --num:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh;-webkit-font-smoothing:antialiased;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased;}
   /* 报价/涨跌幅/代码全是数字,一律等宽,纵向对得齐 */
   b,strong,time,.num{font-variant-numeric:tabular-nums;}
-  .container{max-width:1200px;margin:0 auto;background:var(--card-bg);border-left:1px solid var(--border);border-right:1px solid var(--border);min-height:100vh;padding-bottom:28px;}
+  .container{max-width:1200px;margin:0 auto;background:var(--card-bg);border-left:1px solid var(--border);border-right:1px solid var(--border);min-height:100vh;padding-bottom:32px;}
 
-  /* Header —— 左对齐色块 logo + 右侧元信息,取代原来的居中 hero + 徽章行 */
-  .header{display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:2px solid var(--accent);flex-wrap:wrap;}
-  .header h1{background:var(--accent);color:#fff;font-size:21px;font-weight:700;letter-spacing:.02em;line-height:1.2;padding:6px 14px;white-space:nowrap;}
-  .head-meta{display:flex;flex-direction:column;gap:1px;font-size:12.5px;color:var(--text-dim);}
+  /* Header —— 报头式:白底红字标 + 顶部红线,红色不再占一整块面积 */
+  .header{display:flex;align-items:flex-end;gap:16px;padding:18px 22px 14px;border-top:3px solid var(--accent);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .header h1{font-size:26px;font-weight:800;letter-spacing:-.01em;line-height:1.1;color:var(--accent);white-space:nowrap;}
+  .head-meta{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--text-dim);padding-bottom:2px;}
   .head-meta b{color:var(--text);font-weight:600;}
-  .head-meta .dim{font-size:12px;color:var(--text-muted);}
-  .head-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+  .head-meta .dim{font-size:11.5px;color:var(--text-muted);}
+  .head-right{margin-left:auto;display:flex;align-items:center;gap:8px;padding-bottom:2px;}
   .src-tag{font-size:11.5px;color:var(--text-muted);border:1px solid var(--border);padding:2px 8px;white-space:nowrap;}
-  .refresh-btn{min-width:88px;text-align:center;padding:6px 16px;font:inherit;font-size:12.5px;font-weight:600;color:#fff;background:var(--accent);border:1px solid var(--accent);cursor:pointer;transition:background .15s;}
-  .refresh-btn:hover{background:#a01218;}
+  .refresh-btn{min-width:88px;text-align:center;padding:6px 16px;font:inherit;font-size:12.5px;font-weight:600;color:var(--text);background:var(--card-bg);border:1px solid var(--text);cursor:pointer;transition:background .15s,color .15s;}
+  .refresh-btn:hover{background:var(--text);color:#fff;}
   .refresh-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
-  .refresh-btn:disabled{background:#d8b7b9;border-color:#d8b7b9;cursor:progress;animation:pulse 1.4s ease-in-out infinite;}
-  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+  .refresh-btn:disabled{color:var(--text-muted);border-color:var(--border-strong);cursor:progress;animation:pulse 1.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.55;}}
   @media(prefers-reduced-motion:reduce){.refresh-btn:disabled{animation:none;}}
   .refresh-toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:999;padding:9px 18px;font-size:12.5px;font-weight:600;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:opacity .3s;}
   .toast-ok{background:var(--bear);}
   .toast-err{background:var(--accent);}
 
-  /* Nav —— 导航 + 功能控件收进一行,不再居中排开 */
-  .nav{display:flex;align-items:stretch;background:var(--tint);border-bottom:1px solid var(--border);padding:0 20px;flex-wrap:wrap;}
-  .nav a{display:inline-flex;align-items:center;font-size:13.5px;font-weight:600;color:var(--text);text-decoration:none;padding:9px 16px 8px;border-bottom:2px solid transparent;cursor:pointer;transition:color .15s;}
+  /* Nav —— 白底下划线页签,贴近财联社的导航处理 */
+  .nav{display:flex;align-items:stretch;background:var(--card-bg);border-bottom:1px solid var(--border);padding:0 22px;flex-wrap:wrap;}
+  .nav a{display:inline-flex;align-items:center;font-size:13.5px;font-weight:600;color:var(--text-dim);text-decoration:none;padding:10px 14px 9px;margin-bottom:-1px;border-bottom:2px solid transparent;cursor:pointer;transition:color .15s;}
   .nav a:first-child{padding-left:0;}
-  .nav a:hover{color:var(--accent);}
+  .nav a:hover{color:var(--text);}
   .nav a:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
   .nav a.on{color:var(--accent);border-bottom-color:var(--accent);}
   .nav .ctrl{margin-left:auto;display:flex;align-items:center;gap:6px;padding:5px 0;font-size:12.5px;color:var(--text-dim);}
   .nav select{font:inherit;font-size:12.5px;padding:3px 8px;border:1px solid var(--border-strong);background:var(--card-bg);color:var(--text);cursor:pointer;max-width:190px;}
   .nav select:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
-  .nav button{font:inherit;font-size:12.5px;font-weight:600;padding:3px 12px;border:1px solid var(--border-strong);background:var(--card-bg);color:var(--text);cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
-  .nav button:hover{border-color:var(--accent);color:var(--accent);}
-  .nav button.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .nav button{font:inherit;font-size:12.5px;font-weight:600;padding:3px 12px;border:1px solid var(--border-strong);background:var(--card-bg);color:var(--text-dim);cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
+  .nav button:hover{border-color:var(--text);color:var(--text);}
+  .nav button.active{background:var(--text);border-color:var(--text);color:#fff;}
 
-  /* Stats —— 五格网格,数字大到一眼能扫,不再是五个圆角胶囊 */
-  .stats-mini{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--tint);border-bottom:1px solid var(--border);}
-  .st{display:block;padding:9px 20px 11px;border-right:1px solid var(--border);font-size:11.5px;color:var(--text-muted);}
+  /* Stats —— 数字承担层级,颜色只留给涨跌和「极高」 */
+  .stats-mini{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-bottom:1px solid var(--border);}
+  .st{display:block;padding:12px 22px 14px;border-right:1px solid var(--border);font-size:11.5px;color:var(--text-muted);letter-spacing:.02em;}
   .st:last-child{border-right:0;}
-  .st b{display:block;font-size:23px;font-weight:700;line-height:1.2;color:var(--text);font-family:var(--num);}
+  .st b{display:block;font-size:26px;font-weight:700;line-height:1.2;color:var(--text);font-family:var(--num);letter-spacing:-.01em;}
   .st.bull b{color:var(--bull);}
   .st.bear b{color:var(--bear);}
   .st.vhigh b{color:var(--accent);}
-  .st.high b{color:var(--mixed);}
+  .st.high b{color:var(--text);}
   @media(max-width:640px){
     .stats-mini{grid-template-columns:repeat(3,minmax(0,1fr));}
-    .st{padding:8px 12px 9px;border-bottom:1px solid var(--border);}
-    .st b{font-size:19px;}
+    .st{padding:9px 14px 10px;border-bottom:1px solid var(--border);}
+    .st b{font-size:21px;}
   }
 
   /* ETF —— 四栏并排报价表;净值挪进 title 提示,主视觉只留涨跌幅 */
-  .etf-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:12px 20px 0;border:1px solid var(--border);}
+  .etf-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:12px 22px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
   @media(max-width:640px){
-    .etf-grid{grid-template-columns:repeat(2,minmax(0,1fr));margin:10px 12px 0;}
+    .etf-grid{grid-template-columns:repeat(2,minmax(0,1fr));margin:10px 14px 0;}
     .etf-group:nth-child(2n){border-right:0;}
     .etf-group:nth-child(-n+2){border-bottom:1px solid var(--border);}
   }
-  .etf-group{background:var(--tint);padding:9px 12px 7px;border-right:1px solid var(--border);}
+  .etf-group{background:var(--card-bg);padding:11px 14px 9px;border-right:1px solid var(--border);}
   .etf-group:last-child{border-right:0;}
-  .etf-group-name{font-size:13px;font-weight:700;color:var(--accent);padding-bottom:5px;margin-bottom:3px;border-bottom:1px solid var(--border-strong);}
+  .etf-group-name{font-size:12.5px;font-weight:700;color:var(--text);letter-spacing:.04em;padding-bottom:6px;margin-bottom:2px;border-bottom:1px solid var(--border);}
   .etf-item{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px dashed var(--border);}
   .etf-item:last-child{border-bottom:0;}
   .etf-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;color:var(--text);}
@@ -93,65 +96,79 @@
   .etf-change.neu{color:var(--text-muted);}
 
   /* Sector summary row — .sc 是可点的板块筛选按钮,行为见页尾脚本「板块筛选」 */
-  .sector-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 20px 0;}
-  @media(max-width:640px){.sector-row{grid-template-columns:repeat(2,minmax(0,1fr));margin:12px 12px 0;}}
-  .sc{display:block;width:100%;text-align:left;background:var(--tint);border:1px solid var(--border);padding:9px 12px 10px;cursor:pointer;font:inherit;color:inherit;transition:border-color .15s,background .15s;}
-  .sc:hover{border-color:var(--accent);}
+  .sector-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 22px 0;}
+  @media(max-width:640px){.sector-row{grid-template-columns:repeat(2,minmax(0,1fr));margin:12px 14px 0;}}
+  .sc{display:block;width:100%;text-align:left;background:var(--card-bg);border:1px solid var(--border);padding:11px 13px 12px;cursor:pointer;font:inherit;color:inherit;transition:border-color .15s,background .15s;}
+  .sc:hover{border-color:var(--border-strong);background:var(--tint);}
   .sc:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
-  .sc.active{background:var(--tint-red);border-color:var(--accent);}
-  .sc-name{display:flex;align-items:baseline;justify-content:space-between;gap:6px;font-size:14px;font-weight:700;color:var(--text);}
-  .sc-name b{font-size:19px;font-weight:700;font-family:var(--num);color:var(--accent);}
-  .sc-stat{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:3px;font-size:12px;color:var(--text-dim);}
+  .sc.active{background:var(--tint-ink);border-color:var(--text);}
+  .sc-name{display:flex;align-items:baseline;justify-content:space-between;gap:6px;font-size:14px;font-weight:600;color:var(--text);}
+  .sc-name b{font-size:20px;font-weight:700;font-family:var(--num);color:var(--text);letter-spacing:-.01em;}
+  .sc-stat{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:4px;font-size:12px;color:var(--text-dim);}
+  /* 板块速览一行四张卡:程度标记不再填色,否则四块实心红会把红色预算一次吃光 */
+  .sc .impact-vhigh{background:none;color:var(--accent);padding:0;font-weight:700;}
 
-  /* Section divider —— 红方块 + 下划线,替代原来的彩色左竖条 */
-  .sec-title{display:flex;align-items:center;gap:8px;margin:16px 20px 0;padding-bottom:8px;border-bottom:1px solid var(--border-strong);font-size:15px;font-weight:700;color:var(--text);}
-  .sec-title::before{content:'';width:13px;height:13px;background:var(--accent);flex:none;}
-  @media(max-width:640px){.sec-title{margin-left:12px;margin-right:12px;}}
+  /* Section divider —— 细红竖条 + 黑体标题,红只占 3px */
+  .sec-title{display:flex;align-items:center;gap:9px;margin:26px 22px 0;padding-bottom:9px;border-bottom:1px solid var(--border);font-size:16px;font-weight:700;color:var(--text);letter-spacing:.01em;}
+  .sec-title::before{content:'';width:3px;height:15px;background:var(--accent);flex:none;}
+  @media(max-width:640px){.sec-title{margin-left:14px;margin-right:14px;font-size:15px;}}
   .sec-hint{margin-left:auto;font-size:12px;font-weight:400;color:var(--text-muted);}
+  /* 「今日复盘 / 次日倾向」两个方向的释义条:两者语义不同,必须让读者一眼看出差别 */
+  .dir-legend{margin:8px 22px 0;font-size:12px;line-height:1.6;color:var(--text-muted);}
+  .dir-legend b{font-weight:700;color:var(--text-dim);}
+  @media(max-width:640px){.dir-legend{margin-left:14px;margin-right:14px;}}
 
-  /* News cards —— 改成由分隔线分组的列表行,不再是白底圆角阴影的通用卡片 */
-  .news-grid{display:grid;gap:0;margin:0 20px;}
-  /* 筛选靠 hidden 属性,但 .news-card 的 display:flex 特异性高于 UA 的
+  /* News cards —— 电报式:左侧独立时间列,右侧标题/摘要,细分隔线
+     标题用字号和字重压住场,元信息一律退到灰色。 */
+  .news-grid{display:grid;gap:0;margin:0 22px;}
+  /* 筛选靠 hidden 属性,但 .news-card 的 display:grid 特异性高于 UA 的
      [hidden]{display:none} —— 不显式补这条,设了 hidden 也藏不住。 */
   .news-card[hidden]{display:none;}
-  .news-empty{margin:10px 20px 0;padding:14px;text-align:center;font-size:12.5px;color:var(--text-dim);border:1px dashed var(--border-strong);}
+  .news-empty{margin:10px 22px 0;padding:16px;text-align:center;font-size:12.5px;color:var(--text-dim);border:1px dashed var(--border-strong);}
   .news-count{margin-left:auto;font-size:12px;font-weight:400;color:var(--text-muted);white-space:nowrap;}
-  /* 新闻列表上方的筛选胶囊条:常驻可见,是筛选功能主要的入口 */
-  .news-filter{display:flex;flex-wrap:wrap;gap:6px;margin:12px 20px 0;}
-  @media(max-width:640px){.news-filter,.news-grid,.news-empty{margin-left:12px;margin-right:12px;}}
-  .fchip{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:12.5px;font-weight:600;color:var(--text-dim);background:var(--tint);border:1px solid var(--border);padding:3px 11px;cursor:pointer;transition:background .15s,border-color .15s,color .15s;}
-  .fchip:hover{border-color:var(--accent);color:var(--accent);}
-  .fchip:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
-  .fchip b{margin-left:1px;font-weight:700;font-family:var(--num);color:var(--text-muted);}
-  /* 选中态整颗上强调色,不再按板块各配一种颜色 */
-  .fchip.active{color:#fff;background:var(--accent);border-color:var(--accent);}
-  .fchip.active b{color:rgba(255,255,255,.8);}
-  .news-card{padding:11px 12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;}
-  .news-card:hover,.news-card:focus-within{background:var(--tint);}
-  .news-card.expanded{background:var(--tint);}
-  .card-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;}
-  .card-cat{font-size:11.5px;font-weight:700;color:var(--accent);background:var(--tint-red);padding:1px 7px;white-space:nowrap;}
+  /* 新闻列表上方的筛选页签:选中用墨色文字 + 红色短线,不再整颗填红 */
+  .news-filter{display:flex;flex-wrap:wrap;gap:0 20px;margin:10px 22px 0;border-bottom:1px solid var(--border);}
+  @media(max-width:640px){.news-filter,.news-grid,.news-empty{margin-left:14px;margin-right:14px;}}
+  .fchip{display:inline-flex;align-items:center;font:inherit;font-size:13px;font-weight:600;color:var(--text-muted);background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;padding:6px 0 8px;cursor:pointer;transition:color .15s,border-color .15s;}
+  .fchip:hover{color:var(--text);}
+  .fchip:focus-visible{outline:2px solid var(--accent);outline-offset:-1px;}
+  .fchip b{margin-left:5px;font-weight:600;font-family:var(--num);color:var(--text-muted);}
+  .fchip.active{color:var(--text);border-bottom-color:var(--accent);}
+  .fchip.active b{color:var(--text-dim);}
+  .news-card{display:grid;grid-template-columns:74px minmax(0,1fr);gap:14px;padding:15px 10px 16px;margin:0 -10px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;}
+  .news-card:hover,.news-card:focus-within,.news-card.expanded{background:var(--tint);}
+  .card-aside{padding-top:2px;font-family:var(--num);font-size:11.5px;line-height:1.5;color:var(--text-muted);white-space:nowrap;}
+  .card-aside time{display:block;font-size:12px;font-weight:600;color:var(--text-dim);}
+  .card-aside .d{display:block;}
+  @media(max-width:640px){
+    .news-card{grid-template-columns:1fr;gap:3px;padding:13px 8px 14px;margin:0 -8px;}
+    .card-aside{display:flex;align-items:baseline;gap:7px;padding-top:0;}
+    .card-aside time{font-size:11.5px;}
+  }
+  .card-body{min-width:0;}
+  .card-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:5px;}
+  .card-cat{font-size:11.5px;font-weight:600;color:var(--text-dim);background:var(--tint-ink);padding:1px 6px;white-space:nowrap;}
   .card-time{margin-left:auto;font-size:11.5px;color:var(--text-muted);font-family:var(--num);}
-  .fresh-badge{font-size:11px;font-weight:700;color:#fff;background:var(--accent);padding:1px 5px;}
+  .fresh-badge{font-size:10.5px;font-weight:700;color:var(--accent);border:1px solid currentColor;padding:0 4px;line-height:1.45;}
 
-  .card-title{font-size:14.5px;font-weight:700;color:var(--text);line-height:1.45;margin-bottom:3px;}
-  .card-original-title{font-size:12px;color:var(--text-muted);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .card-summary{font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-  .card-meta{display:flex;flex-wrap:wrap;gap:7px;align-items:center;font-size:12px;color:var(--text-muted);}
-  .card-meta a{color:var(--accent);text-decoration:none;font-weight:600;}
+  .card-title{font-size:16px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:4px;letter-spacing:.005em;text-wrap:pretty;}
+  .card-original-title{font-size:12px;color:var(--text-muted);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .card-summary{font-size:13px;color:var(--text-dim);line-height:1.65;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-wrap:pretty;}
+  .card-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:11.5px;color:var(--text-muted);}
+  .card-meta a{color:var(--link);text-decoration:none;}
   .card-meta a:hover{text-decoration:underline;}
   .src-link{padding-left:2px;}
-  /* 方向徽标:红涨绿跌。程度徽标:填充色只给「极高/高」,中低一律灰,避免和涨跌撞色 */
-  .badge{display:inline-flex;align-items:center;padding:1px 7px;font-size:11.5px;font-weight:700;}
-  .badge-bull{background:#fdecec;color:var(--bull);}
-  .badge-bear{background:#e8f6ee;color:var(--bear);}
-  .badge-neutral{background:#f1f2f5;color:#6b7280;}
-  .badge-mixed{background:#fdf3e6;color:var(--mixed);}
-  .impact-tag{font-size:11.5px;font-weight:700;padding:1px 6px;}
-  .impact-vhigh{background:var(--accent);color:#fff;}
-  .impact-high{background:#fdecec;color:var(--accent);}
-  .impact-mid{background:#f1f2f5;color:#6b7280;}
-  .impact-low{background:#f1f2f5;color:#8c8c8c;}
+  /* 方向徽标:色点 + 同色文字,不做底色;程度徽标只给「极高」实心红 */
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:0;font-size:11.5px;font-weight:600;background:none;}
+  .badge::before{content:'';width:5px;height:5px;background:currentColor;flex:none;}
+  .badge-bull{color:var(--bull);}
+  .badge-bear{color:var(--bear);}
+  .badge-neutral{color:var(--text-muted);}
+  .badge-mixed{color:var(--mixed);}
+  .impact-tag{font-size:11.5px;font-weight:600;color:var(--text-muted);}
+  .impact-vhigh{background:var(--accent);color:#fff;font-weight:700;padding:1px 6px;}
+  .impact-high{color:var(--accent);}
+  .impact-mid,.impact-low{color:var(--text-muted);}
   .ticker-inline{color:var(--text-dim);font-family:var(--num);font-size:11.5px;}
 
   /* Expand detail */
@@ -164,19 +181,19 @@
   .expl-text{font-size:13px;}
   .expl-list{margin:2px 0 0;padding-left:17px;font-size:12.5px;}
   .expl-list li{margin-bottom:2px;}
-  .verify-note{font-size:12px;color:var(--mixed);padding:6px 9px;background:#fdf8ee;border-left:2px solid var(--mixed);}
+  .verify-note{font-size:12px;color:var(--text-dim);padding:6px 9px;background:var(--tint);border-left:2px solid var(--border-strong);}
 
   /* 事件级去重:来源徽标 + 相关报道 */
   .ev-src-badges{display:inline-flex;flex-wrap:wrap;gap:4px;}
   .ev-src-badge{font-size:11.5px;padding:1px 7px;background:var(--tint);color:var(--text-dim);border:1px solid var(--border);white-space:nowrap;}
   .event-sources,.event-related{margin-top:4px;}
   .related-list li{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .related-list a{color:var(--accent);text-decoration:none;font-size:12px;font-family:var(--num);}
+  .related-list a{color:var(--link);text-decoration:none;font-size:12px;font-family:var(--num);}
   .related-list a:hover{text-decoration:underline;}
 
   /* Matrix table */
-  .table-wrap{overflow-x:auto;margin:12px 20px 0;border:1px solid var(--border);}
-  @media(max-width:640px){.table-wrap{margin-left:12px;margin-right:12px;}}
+  .table-wrap{overflow-x:auto;margin:12px 22px 0;border:1px solid var(--border);}
+  @media(max-width:640px){.table-wrap{margin-left:14px;margin-right:14px;}}
   table{width:100%;border-collapse:collapse;font-size:12.5px;}
   th{background:var(--tint);color:var(--text-dim);padding:7px 10px;text-align:left;font-weight:600;white-space:nowrap;border-bottom:1px solid var(--border-strong);font-size:11.5px;}
   td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
@@ -186,29 +203,38 @@
   .dir-bear{color:var(--bear);font-weight:600;}
   .dir-flat{color:var(--text-dim);}
   .dir-mixed{color:var(--mixed);font-weight:600;}
-  /* 冲击程度不用红绿——那两色在本站已被「涨/跌」占用 */
+  /* 冲击程度不用红绿——那两色在本站已被「涨/跌」占用;只有最强档保留红字 */
   .shock-strong{color:var(--accent);font-weight:700;}
-  .shock-mid{color:var(--mixed);font-weight:600;}
-  .shock-weak{color:var(--text-dim);}
+  .shock-mid{color:var(--text-dim);font-weight:600;}
+  .shock-weak{color:var(--text-muted);}
 
-  /* Key points */
-  .key-points{display:grid;gap:8px;margin:12px 20px 0;}
-  @media(max-width:640px){.key-points,.market-summary{margin-left:12px;margin-right:12px;}}
-  .kp-card{background:var(--tint);padding:10px 14px;font-size:13px;line-height:1.6;}
-  .kp-card::before{content:'—';margin-right:7px;font-weight:700;color:var(--accent);}
+  /* Key points —— 细竖线列表,不再是浅灰块 */
+  .key-points{display:grid;gap:9px;margin:14px 22px 0;}
+  .kp-card{border-left:2px solid var(--border-strong);padding:1px 0 1px 13px;font-size:13.5px;line-height:1.65;color:var(--text);}
+  .kp-card::before{content:'—';margin-right:7px;font-weight:700;color:var(--text-muted);}
 
-  .market-summary{margin:12px 20px 0;padding:11px 14px;background:var(--tint-red);font-size:13.5px;line-height:1.65;color:var(--text);}
+  /* 今日复盘 —— 全页导语:3px 红竖线 + 15px 正文,靠位置和字号抢注意力 */
+  .market-summary{display:flex;gap:16px;margin:16px 22px 0;padding:16px 18px 17px 16px;border-left:3px solid var(--accent);background:var(--tint);}
+  .ms-label{flex:none;font-size:11.5px;font-weight:700;color:var(--text);letter-spacing:.08em;padding-top:4px;white-space:nowrap;}
+  .market-summary p{font-size:15px;line-height:1.75;color:var(--text);max-width:76ch;text-wrap:pretty;}
+  .market-summary b{font-weight:700;font-family:var(--num);}
+  @media(max-width:640px){
+    .key-points{margin-left:14px;margin-right:14px;}
+    .market-summary{flex-direction:column;gap:5px;margin:14px 14px 0;padding:13px 14px 14px;}
+    .ms-label{padding-top:0;}
+    .market-summary p{font-size:14px;}
+  }
 
   /* Footer */
-  .footer{margin-top:20px;padding:14px 20px;border-top:1px solid var(--border-strong);background:var(--tint);font-size:12px;color:var(--text-muted);line-height:1.8;}
-  .footer strong{color:var(--accent);}
+  .footer{margin-top:24px;padding:14px 22px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);line-height:1.8;}
+  .footer strong{color:var(--text-dim);}
 
   /* Charts */
-  .chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 20px 0;}
-  @media(max-width:640px){.chart-grid{grid-template-columns:1fr;margin:12px 12px 0;}}
-  .chart-card{border:1px solid var(--border);padding:11px 14px;}
+  .chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 22px 0;}
+  @media(max-width:640px){.chart-grid{grid-template-columns:1fr;margin:12px 14px 0;}}
+  .chart-card{border:1px solid var(--border);background:var(--card-bg);padding:13px 15px;}
   .wide-chart{grid-column:1/-1;}
-  .chart-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;}
+  .chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;}
   .chart-wrap{position:relative;width:100%;}
   .wide-chart .chart-wrap{height:240px;}
   .chart-card .chart-wrap{height:200px;}
@@ -268,6 +294,12 @@
 </div>
 
 
+<div class="market-summary">
+  <span class="ms-label">今日复盘</span>
+  <p>板块ETF平均涨<b>1.9%</b>，但个股波动加剧，显示市场对AI节奏分歧加大；半导体板块AI合作与技术升级积极，但AI降速担忧显现。</p>
+</div>
+
+
 <div class="sec-title">板块 ETF 指标<span class="sec-hint">悬停查看净值</span></div>
 <div class="etf-grid">
 <div class="etf-group"><div class="etf-group-name">半导体</div><div class="etf-item" title="芯片ETF华夏 159995 · 净值 1.077"><span class="etf-name">芯片ETF华夏<i>159995</i></span><span class="etf-change up">+1.99%</span></div><div class="etf-item" title="芯片ETF国泰 512760 · 净值 1.024"><span class="etf-name">芯片ETF国泰<i>512760</i></span><span class="etf-change up">+1.89%</span></div><div class="etf-item" title="科创芯片ETF嘉实 588200 · 净值 1.092"><span class="etf-name">科创芯片ETF嘉实<i>588200</i></span><span class="etf-change up">+1.96%</span></div></div><div class="etf-group"><div class="etf-group-name">光模块</div><div class="etf-item" title="通信ETF华夏 515050 · 净值 1.011"><span class="etf-name">通信ETF华夏<i>515050</i></span><span class="etf-change down">-0.49%</span></div><div class="etf-item" title="通信ETF国泰 515880 · 净值 0.653"><span class="etf-name">通信ETF国泰<i>515880</i></span><span class="etf-change down">-0.61%</span></div><div class="etf-item" title="5GETF博时 159811 · 净值 2.932"><span class="etf-name">5GETF博时<i>159811</i></span><span class="etf-change down">-0.14%</span></div></div><div class="etf-group"><div class="etf-group-name">创新药</div><div class="etf-item" title="创新药ETF广发 515120 · 净值 0.616"><span class="etf-name">创新药ETF广发<i>515120</i></span><span class="etf-change down">-0.96%</span></div><div class="etf-item" title="创新药ETF南方 159858 · 净值 0.664"><span class="etf-name">创新药ETF南方<i>159858</i></span><span class="etf-change down">-1.04%</span></div><div class="etf-item" title="创新药ETF银华 159992 · 净值 0.822"><span class="etf-name">创新药ETF银华<i>159992</i></span><span class="etf-change down">-0.96%</span></div></div><div class="etf-group"><div class="etf-group-name">黄金</div><div class="etf-item" title="黄金ETF华安 518880 · 净值 8.829"><span class="etf-name">黄金ETF华安<i>518880</i></span><span class="etf-change down">-0.52%</span></div><div class="etf-item" title="黄金ETF易方达 159934 · 净值 9.224"><span class="etf-name">黄金ETF易方达<i>159934</i></span><span class="etf-change down">-0.52%</span></div><div class="etf-item" title="黄金ETF国泰 518800 · 净值 9.260"><span class="etf-name">黄金ETF国泰<i>518800</i></span><span class="etf-change down">-0.53%</span></div></div>
@@ -281,6 +313,7 @@
   <button type="button" class="sc" data-sector="半导体" data-cat="semi" aria-pressed="false">
     <span class="sc-name">半导体<b>60</b></span>
     <span class="sc-stat">
+      
       <span class="badge badge-neutral">中性</span>
       <span class="impact-tag impact-vhigh">强冲击</span>
     </span>
@@ -289,6 +322,7 @@
   <button type="button" class="sc" data-sector="黄金" data-cat="gold" aria-pressed="false">
     <span class="sc-name">黄金<b>32</b></span>
     <span class="sc-stat">
+      
       <span class="badge badge-bear">利空</span>
       <span class="impact-tag impact-vhigh">强冲击</span>
     </span>
@@ -297,6 +331,7 @@
   <button type="button" class="sc" data-sector="创新药" data-cat="pharma" aria-pressed="false">
     <span class="sc-name">创新药<b>25</b></span>
     <span class="sc-stat">
+      
       <span class="badge badge-bull">利好</span>
       <span class="impact-tag impact-vhigh">强冲击</span>
     </span>
@@ -305,6 +340,7 @@
   <button type="button" class="sc" data-sector="光模块" data-cat="optics" aria-pressed="false">
     <span class="sc-name">光模块<b>19</b></span>
     <span class="sc-stat">
+      
       <span class="badge badge-bull">利好</span>
       <span class="impact-tag impact-vhigh">强冲击</span>
     </span>
@@ -313,7 +349,6 @@
 </div>
 
 
-<div class="market-summary">板块ETF平均涨1.9%，但个股波动加剧，显示市场对AI节奏分歧加大。；半导体板块AI合作与技术升级积极，但AI降速担忧显现。</div>
 
 
 <div class="sec-title">市场数据可视化</div>
@@ -358,12 +393,13 @@
 </div>
 <div class="news-grid" id="newsGrid">
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>22:31</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 22:31</span>
 </div>
 <div class="card-title">思科(CSCO.O)和英伟达(NVDA.O)扩大Splunk智能代理人工智能合作协议。</div>
 
@@ -389,13 +425,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>22:55</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 22:55</span>
 </div>
 <div class="card-title">美国财长贝森特：美国总统特朗普与英伟达CEO黄仁勋完全一致。</div>
 
@@ -429,13 +467,15 @@
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>23:06</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 23:06</span>
 </div>
 <div class="card-title">建设粤港澳大湾区数据特区 广东放大招</div>
 
@@ -461,13 +501,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>21:25</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 21:25</span>
 </div>
 <div class="card-title">MediaTek Unveils Dimensity 9600 Pro: 台积电’s 2nm Tech </div>
 
@@ -493,13 +535,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>21:27</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 21:27</span>
 </div>
 <div class="card-title">世界500强10天内两度加仓广州</div>
 
@@ -525,13 +569,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>22:10</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 22:10</span>
 </div>
 <div class="card-title">META计划明年上半年部署新款自研ARKE芯片 展示自研芯片降本优势</div>
 
@@ -557,13 +603,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>21:30</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 21:30</span>
 </div>
 <div class="card-title">美股光通信股开盘普涨</div>
 
@@ -589,13 +637,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>21:27</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 21:27</span>
 </div>
 <div class="card-title">从CPI落地到利率狂飙黄金下跌元凶分析_外汇动态报道 - 汇通网 Fx678</div>
 
@@ -629,13 +679,15 @@
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>22:00</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 22:00</span>
 </div>
 <div class="card-title">Meta称，自研芯片相比英伟达产品将节省成本与能耗。</div>
 
@@ -661,13 +713,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>22:00</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 22:00</span>
 </div>
 <div class="card-title">Meta将于 2027 年上半年部署自研新一代 Arke 芯片。</div>
 
@@ -697,13 +751,15 @@
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>22:33</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 22:33</span>
 </div>
 <div class="card-title">华为郭平：华为差异化布局AI</div>
 
@@ -729,13 +785,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>22:31</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 22:31</span>
 </div>
 <div class="card-title">思科与英伟达扩大Splunk Agentic AI协议。</div>
 
@@ -761,13 +819,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>22:09</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 22:09</span>
 </div>
 <div class="card-title">市场消息：美国食品药品监督管理局启动加速新药临床试验申请试点项目，开始受理相关申请。</div>
 
@@ -793,13 +853,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>20:48</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-mixed">分化</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 20:48</span>
 </div>
 <div class="card-title">周二美股盘前你需要了解的全球要闻</div>
 
@@ -829,13 +891,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>21:06</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 21:06</span>
 </div>
 <div class="card-title">KOA：Salesforce首个基于NVIDIA NeMoTron构建的CRM推理模型。</div>
 
@@ -861,13 +925,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>22:01</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 22:01</span>
 </div>
 <div class="card-title">Meta：明年上半年将部署AI芯片Arke，下半年将发布下一代产品Astrid</div>
 
@@ -893,13 +959,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>20:33</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 20:33</span>
 </div>
 <div class="card-title">华瓷股份：MLCC粉体尚处小量验证阶段陶瓷新材料业务收入占比仅1.15%</div>
 
@@ -925,13 +993,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>20:53</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 20:53</span>
 </div>
 <div class="card-title">华为高层内部万字长文刷屏</div>
 
@@ -961,13 +1031,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>20:56</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 20:56</span>
 </div>
 <div class="card-title">华为高层内部万字长文：对于ICT业务及计算领域，华为的目标是成为英伟达</div>
 
@@ -993,13 +1065,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>21:23</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 21:23</span>
 </div>
 <div class="card-title">加拿大总理卡尼表示，目前三分之二的资产都符合机器设备投资的认定标准，具体涵盖生产设备、软件、专利、研发、光纤、铁路、管道及其他基础设施。</div>
 
@@ -1025,13 +1099,15 @@
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>20:22</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 20:22</span>
 </div>
 <div class="card-title">Salesforce与谷歌云扩大企业AI合作。
 
@@ -1061,13 +1137,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>21:01</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 21:01</span>
 </div>
 <div class="card-title">加拿大将税收减免范围扩大至广泛的投资领域</div>
 
@@ -1095,13 +1173,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>21:40</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 21:40</span>
 </div>
 <div class="card-title">美国食品药品监督管理局（FDA）：已于9月4日向博士伦公司发出警告函。</div>
 
@@ -1127,13 +1207,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>21:39</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 21:39</span>
 </div>
 <div class="card-title">上海二类疫苗医保支付新政落地：首日预约接种平稳，流感疫苗接种需求较高</div>
 
@@ -1159,13 +1241,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>19:35</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 19:35</span>
 </div>
 <div class="card-title">黄金 and Silver Crashed to 5-Week Lows, Wiping Out $650B in </div>
 <div class="card-original-title">原文：Gold and Silver Crashed to 5-Week Lows, Wiping Out $650B in Hours - Cryptonews.net</div>
@@ -1191,13 +1275,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>18:55</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 18:55</span>
 </div>
 <div class="card-title">黄金价格小幅上涨，但仍比世界价格高出1000万越南盾/盎司以上。</div>
 
@@ -1223,13 +1309,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:47</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-vhigh">极高</span>
 
-<span class="card-time">09-15 17:47</span>
 </div>
 <div class="card-title">从涨价到“扩产+国产化”，半导体机遇怎么投？</div>
 
@@ -1255,13 +1343,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>18:30</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 18:30</span>
 </div>
 <div class="card-title">中金公司缪延亮：AI革命将深刻重塑全球经济</div>
 
@@ -1287,13 +1377,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:30</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 17:30</span>
 </div>
 <div class="card-title">电报解读</div>
 
@@ -1319,13 +1411,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:31</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 17:31</span>
 </div>
 <div class="card-title">Southbound 股票 Connect net bought RMB 881 mln today. </div>
 <div class="card-original-title">原文：Southbound Stock Connect net bought RMB 881 mln to</div>
@@ -1351,13 +1445,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:31</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 17:31</span>
 </div>
 <div class="card-title">南向资金今日净买入8.81亿元。港股通（沪）方面，智谱、中国海洋石油分别获净买入5.92亿港元、1.38亿港元；</div>
 
@@ -1383,13 +1479,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:32</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 17:32</span>
 </div>
 <div class="card-title">沪电股份：适配224Gbps传输速率的核心产品已实现小批量供货</div>
 
@@ -1415,13 +1513,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:15</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 16:15</span>
 </div>
 <div class="card-title">机构调研丨PCB+EDA概念+机器人这家公司光模块PCBA业务已进入量产ATE全年业务增速或超两倍 - 新浪财经</div>
 
@@ -1447,13 +1547,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:22</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 16:22</span>
 </div>
 <div class="card-title">英伟达RTX 5090官方渠道断货 第三方要价高达9500美元</div>
 
@@ -1479,13 +1581,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:46</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 16:46</span>
 </div>
 <div class="card-title">全球首个MW级单相冷板全液冷超节点方案发布</div>
 
@@ -1511,13 +1615,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:39</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 16:39</span>
 </div>
 <div class="card-title">搭载Rubin架构的英伟达GeForce RTX 60系列预计明年推出</div>
 
@@ -1543,13 +1649,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:10</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 17:10</span>
 </div>
 <div class="card-title">金字火腿跨界光通信：子公司追加1.74亿投资中晟微电子 - 虎嗅网</div>
 
@@ -1575,13 +1683,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:52</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 16:52</span>
 </div>
 <div class="card-title">通鼎互联成立精密技术公司 含光纤制造业务</div>
 
@@ -1607,13 +1717,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:24</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 16:24</span>
 </div>
 <div class="card-title">Telxius借助诺基亚800G相干可插拔部署提升全球网络容量与效率。</div>
 
@@ -1639,13 +1751,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:19</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 17:19</span>
 </div>
 <div class="card-title">Novo walks away from $285M pact to develop monthly GLP-1 </div>
 <div class="card-original-title">原文：Novo walks away from $285M pact to develop monthly GLP-1 obesity drug with Ascendis - Fierce Biotech</div>
@@ -1671,13 +1785,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:16</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 17:16</span>
 </div>
 <div class="card-title">Electra seeks $325m Nasdaq debut to fund rare immune </div>
 <div class="card-original-title">原文：Electra seeks $325m Nasdaq debut to fund rare immune disorder push - The Pharma Letter</div>
@@ -1703,13 +1819,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:17</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 17:17</span>
 </div>
 <div class="card-title">蔚蓝生物：联合研发新兽药获新兽药注册证书</div>
 
@@ -1735,13 +1853,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:29</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 17:29</span>
 </div>
 <div class="card-title">美联储、英伦银行与参议院投票在即：黄金、英镑与比特币准备迎接波动 - vtmarkets.com</div>
 
@@ -1767,13 +1887,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:20</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 17:20</span>
 </div>
 <div class="card-title">全球黄金ETF强势吸金，美联储利率决议在即，金价何去何从？</div>
 
@@ -1799,13 +1921,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:50</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 17:50</span>
 </div>
 <div class="card-title">Mexico Silver-黄金 Producer Lifts Throughput 34% as Mill </div>
 <div class="card-original-title">原文：Mexico Silver-Gold Producer Lifts Throughput 34% as Mill Expansion Slips to End-Q3 - Streetwise Reports</div>
@@ -1831,13 +1955,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:04</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-vhigh">极高</span>
 
-<span class="card-time">09-15 16:04</span>
 </div>
 <div class="card-title">现货白银日内跌幅达1.0%，报62.56美元/盎司。</div>
 
@@ -1871,13 +1997,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:16</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-vhigh">极高</span>
 
-<span class="card-time">09-15 16:16</span>
 </div>
 <div class="card-title">专家：主权债务危机环伺，黄金仍是“北极星”</div>
 
@@ -1903,13 +2031,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:09</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 17:09</span>
 </div>
 <div class="card-title">香港交易所信息显示，美国银行在金风科技H股的持股比例于09月10日从6.15%降至4.21%。</div>
 
@@ -1935,13 +2065,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:35</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 16:35</span>
 </div>
 <div class="card-title">恒瑞医药：瑞卡西单抗获批开展III期临床试验</div>
 
@@ -1967,13 +2099,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:20</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 15:20</span>
 </div>
 <div class="card-title">台积电共同营运长：台积电在将AI应用于技术开发方面采取“保守”策略。</div>
 
@@ -1999,13 +2133,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:01</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 16:01</span>
 </div>
 <div class="card-title">高盛上修光模块出货预期，光博会热度攀升，创业板人工智能ETF华宝（159363）获资金逢低布局 - 新浪财经</div>
 
@@ -2031,13 +2167,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:20</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 15:20</span>
 </div>
 <div class="card-title">多家创新药企奔赴港交所上市！</div>
 
@@ -2063,13 +2201,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:01</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 16:01</span>
 </div>
 <div class="card-title">医疗服务价格预立项制度落地：让前沿技术更快走进病房</div>
 
@@ -2095,13 +2235,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:51</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 16:51</span>
 </div>
 <div class="card-title">药明康德：因可转债转股新增发行6.79万股H股</div>
 
@@ -2127,13 +2269,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:42</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 15:42</span>
 </div>
 <div class="card-title">国家医保局出台价格预立项新政，推动重大创新成果加快临床应用</div>
 
@@ -2159,13 +2303,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:35</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 16:35</span>
 </div>
 <div class="card-title">恒瑞医药：子公司HRS-4139片获临床试验批准</div>
 
@@ -2191,13 +2337,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:07</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 16:07</span>
 </div>
 <div class="card-title">维康药业：黄甲软肝颗粒获III期临床试验补充申请批准</div>
 
@@ -2223,13 +2371,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:03</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 17:03</span>
 </div>
 <div class="card-title">印度8月黄金进口额达23亿美元。</div>
 
@@ -2255,13 +2405,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:51</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 15:51</span>
 </div>
 <div class="card-title">兴齐眼药：SQ-25012注射液获临床试验批准通知书</div>
 
@@ -2287,13 +2439,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:03</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 16:03</span>
 </div>
 <div class="card-title">土耳其央行通过传统方式开展4吨为期一周的“黄金换里拉”卖方掉期拍卖。</div>
 
@@ -2319,13 +2473,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:09</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 16:09</span>
 </div>
 <div class="card-title">恒生指数收盘跌1%，恒生科技指数跌0.62%</div>
 
@@ -2351,13 +2507,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>14:42</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-mixed">分化</span>
 <span class="impact-tag impact-vhigh">极高</span>
 
-<span class="card-time">09-15 14:42</span>
 </div>
 <div class="card-title">美国10年期国债收益率突破5%，金价承压下行 - 新浪财经</div>
 
@@ -2383,13 +2541,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>14:38</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 14:38</span>
 </div>
 <div class="card-title">国家医保局试行医疗服务价格项目预立项制度 支持高水平新技术新产品加快临床应用</div>
 
@@ -2415,13 +2575,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:24</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 15:24</span>
 </div>
 <div class="card-title">葛兰素史克再次收购恩沐生物一款药物 金额至多可达7.5亿美元</div>
 
@@ -2447,13 +2609,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>14:45</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 14:45</span>
 </div>
 <div class="card-title">从中报看黄金股：高金价，何时兑现为利润与分红？</div>
 
@@ -2479,13 +2643,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:03</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 13:03</span>
 </div>
 <div class="card-title">风口研报·公司</div>
 
@@ -2511,13 +2677,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:41</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 13:41</span>
 </div>
 <div class="card-title">黄力晨：美联储加息预期升温黄金价格继续承压_名家点金 - 黄金网</div>
 
@@ -2551,13 +2719,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:43</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 13:43</span>
 </div>
 <div class="card-title">美联储本周加息概率92%、10年期美债收益率破5%，为何没能压垮黄金？</div>
 
@@ -2583,13 +2753,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>14:07</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 14:07</span>
 </div>
 <div class="card-title">黄金 下跌s ₹115 on US 利率 hike fears, silver declines ₹461 - </div>
 <div class="card-original-title">原文：Gold falls ₹115 on US interest rate hike fears, silver declines ₹461 - Business Standard</div>
@@ -2615,13 +2787,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:31</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 13:31</span>
 </div>
 <div class="card-title">SpaceX、AMD财报出炉；大基金三期出手！</div>
 
@@ -2647,13 +2821,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>14:05</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 14:05</span>
 </div>
 <div class="card-title">Fujitsu's Monaka AI 芯片 to Ship to Super Micro Next Year, </div>
 
@@ -2679,13 +2855,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:28</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 13:28</span>
 </div>
 <div class="card-title">光刻胶概念午后异动拉升 西陇科学涨停</div>
 
@@ -2711,13 +2889,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:12</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 13:12</span>
 </div>
 <div class="card-title">三星电子或推行“双轨制程”HBM生产战略</div>
 
@@ -2743,13 +2923,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>14:07</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 14:07</span>
 </div>
 <div class="card-title">这一届光博会，光模块站到了“C位” - ZAKER新闻</div>
 
@@ -2775,13 +2957,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>12:54</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 12:54</span>
 </div>
 <div class="card-title">告别拼装 车企自研核心技术</div>
 
@@ -2807,13 +2991,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:03</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 13:03</span>
 </div>
 <div class="card-title">特朗普电话中自称遗传基因好，黄仁勋秒接话：难怪懂AI</div>
 
@@ -2839,13 +3025,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:28</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 13:28</span>
 </div>
 <div class="card-title">小小光模块托起大产业</div>
 
@@ -2871,13 +3059,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>11:50</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 11:50</span>
 </div>
 <div class="card-title">芯粤能、芯聚能协同开发第二代碳化硅主驱芯片和模块组合量产</div>
 
@@ -2903,13 +3093,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>12:46</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 12:46</span>
 </div>
 <div class="card-title">英伟达回应黄仁勋特朗普互动</div>
 
@@ -2935,13 +3127,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>12:36</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 12:36</span>
 </div>
 <div class="card-title">黄金市场情绪陷入观望 静待美联储决议“终极信号” - 新浪财经</div>
 
@@ -2967,13 +3161,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:23</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 13:23</span>
 </div>
 <div class="card-title">异动速递丨现货黄金失守4300美元/盎司 - 21财经</div>
 
@@ -2999,13 +3195,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>11:35</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 11:35</span>
 </div>
 <div class="card-title">黄仁勋执锹现身！英伟达投资的磷化铟工厂奠基了 - 财联社</div>
 
@@ -3031,13 +3229,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>12:04</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 12:04</span>
 </div>
 <div class="card-title">科创50半日涨近2%，风电、半导体集体大涨，存储芯片拉升，恒科指盘中涨1%，科网股集体反弹 - 华尔街见闻</div>
 
@@ -3063,13 +3263,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>12:02</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 12:02</span>
 </div>
 <div class="card-title">调查：韩国央行年底将再度加息至3.25%</div>
 
@@ -3095,13 +3297,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>12:18</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 12:18</span>
 </div>
 <div class="card-title">智利成为南美洲首个消除犬传人狂犬病的国家</div>
 
@@ -3127,13 +3331,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>11:54</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 11:54</span>
 </div>
 <div class="card-title">目前金价走势承压，4300美元能否守住？</div>
 
@@ -3159,13 +3365,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:30</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 10:30</span>
 </div>
 <div class="card-title">浙商证券：高端TIM材料市场呈梯度紧缺 规模快速攀升</div>
 
@@ -3191,13 +3399,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:35</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 10:35</span>
 </div>
 <div class="card-title">台积电's 2nm and 3nm Capacity Expansion Gains Momentum; </div>
 
@@ -3223,13 +3433,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:41</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 10:41</span>
 </div>
 <div class="card-title">存储芯片概念持续走高 恒烁股份涨超10%</div>
 
@@ -3255,13 +3467,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>11:35</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 11:35</span>
 </div>
 <div class="card-title">SK海力士's 3D DRAM Shifts to Logic Foundry, Expanding </div>
 
@@ -3295,13 +3509,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:34</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 10:34</span>
 </div>
 <div class="card-title">算力建设提振高端PCB与先进封装需求，半导体设备ETF易方达涨4.13% - caiwennews.com</div>
 
@@ -3327,13 +3543,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:34</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 10:34</span>
 </div>
 <div class="card-title">三大折叠旗舰同周上新，芯片设计端迎来强催化，科创芯片设计ETF招商标的指数涨近2% - 同花顺</div>
 
@@ -3359,13 +3577,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:32</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 10:32</span>
 </div>
 <div class="card-title">苹果接受三星明年一季度存储报价</div>
 
@@ -3391,13 +3611,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>11:20</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 11:20</span>
 </div>
 <div class="card-title">$4,275: 黄金 skating on thin ice as eyes remain on Mideast </div>
 <div class="card-original-title">原文：$4,275: Gold skating on thin ice as eyes remain on Mideast conflict, Fed - FXStreet</div>
@@ -3423,13 +3645,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>09:31</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 09:31</span>
 </div>
 <div class="card-title">台积电德国厂封顶，厂房主体工程完成</div>
 
@@ -3455,13 +3679,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:04</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 10:04</span>
 </div>
 <div class="card-title">让创新成果更快惠及患者 我国建立医疗服务价格预立项制度</div>
 
@@ -3487,13 +3713,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:29</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 10:29</span>
 </div>
 <div class="card-title">算力芯片概念震荡反弹 燧原科技涨超10%</div>
 
@@ -3519,13 +3747,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>11:23</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 11:23</span>
 </div>
 <div class="card-title">恩智浦宣布成立中国机器人创新中心</div>
 
@@ -3551,13 +3781,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:23</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 10:23</span>
 </div>
 <div class="card-title">光刻胶概念震荡反弹，宝丽迪“20cm”涨停</div>
 
@@ -3583,13 +3815,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:22</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 10:22</span>
 </div>
 <div class="card-title">多只科创半导体ETF涨超3%</div>
 
@@ -3615,13 +3849,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:18</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 10:18</span>
 </div>
 <div class="card-title">半导体设备板块持续拉升，华海清科涨超10%</div>
 
@@ -3647,13 +3883,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:12</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 10:12</span>
 </div>
 <div class="card-title">光通信概念拉升 通鼎互联涨停</div>
 
@@ -3679,13 +3917,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:07</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 10:07</span>
 </div>
 <div class="card-title">价格预立项制度试行 创新医疗技术落地提速</div>
 
@@ -3711,13 +3951,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>11:03</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 11:03</span>
 </div>
 <div class="card-title">康达新材等成立半导体科技公司</div>
 
@@ -3743,13 +3985,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>11:02</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 11:02</span>
 </div>
 <div class="card-title">英伟达等限制员工使用Claude</div>
 
@@ -3775,13 +4019,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:32</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 10:32</span>
 </div>
 <div class="card-title">高盛：光通信供应链需求前景正面 中际旭创评级“买入”</div>
 
@@ -3807,13 +4053,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:29</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 10:29</span>
 </div>
 <div class="card-title">国民技术：800G、1.6T光模块专用MCU已小批量出货</div>
 
@@ -3839,13 +4087,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:42</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 10:42</span>
 </div>
 <div class="card-title">国家医保局召开医疗服务价格项目预立项工作座谈会</div>
 
@@ -3871,13 +4121,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>09:21</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-vhigh">极高</span>
 
-<span class="card-time">09-15 09:21</span>
 </div>
 <div class="card-title">台积电3nm、2nm先进制程与先进封装产能持续供不应求</div>
 
@@ -3903,13 +4155,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:00</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 10:00</span>
 </div>
 <div class="card-title">半导体设备板块震荡反弹 臻宝科技涨超10%</div>
 
@@ -3935,13 +4189,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:33</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 10:33</span>
 </div>
 <div class="card-title">光博会验证NPO与CPO产业化加速，AI数据中心拉动光模块放量，通信ETF华夏涨1.18% - </div>
 
@@ -3967,13 +4223,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:56</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">光模块</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 10:56</span>
 </div>
 <div class="card-title">CPO产业化提速：AI算力互联迈向“光电共封装”时代 - 新浪财经</div>
 
@@ -3999,13 +4257,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>09:35</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 09:35</span>
 </div>
 <div class="card-title">Philadelphia 半导体 Index Plunges Over 5%; 台积电 and Delta </div>
 
@@ -4039,13 +4299,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>09:23</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 09:23</span>
 </div>
 <div class="card-title">两部门：攻关端侧智能计算芯片、高端存储芯片、存算一体等新型架构</div>
 
@@ -4071,13 +4333,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>09:53</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 09:53</span>
 </div>
 <div class="card-title">【必贝特医药任命Daniel A. Castro为BeBetter Pharma首席商务官】9月15日，必贝特医药宣</div>
 
@@ -4103,13 +4367,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:29</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 10:29</span>
 </div>
 <div class="card-title">10年期美债收益率上破5%金价承压却韧性十足，二者的传统逻辑正在失效 - 汇通网 Fx678</div>
 
@@ -4143,13 +4409,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:33</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 10:33</span>
 </div>
 <div class="card-title">银联总裁郭大勇履新上海黄金交易所党委书记</div>
 
@@ -4175,13 +4443,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>08:39</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-bull">利好</span>
 <span class="impact-tag impact-vhigh">极高</span>
 
-<span class="card-time">09-15 08:39</span>
 </div>
 <div class="card-title">A股热点前瞻 ｜ MLCC龙头酝酿“更大胆”扩产；</div>
 
@@ -4207,13 +4477,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>08:11</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 08:11</span>
 </div>
 <div class="card-title">硅谷巨头集体踩急刹车 AI降速呼声重挫英伟达等芯片股 - 新浪财经</div>
 
@@ -4239,13 +4511,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>08:26</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 08:26</span>
 </div>
 <div class="card-title">黄金交易提醒：加息预期持续压制，金价跌创逾一个月新低，多头还能撑多久？</div>
 
@@ -4271,13 +4545,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>08:55</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-mixed">分化</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 08:55</span>
 </div>
 <div class="card-title">黄金价格在经历了数日的反弹后逆转，每两下跌了50万越南盾。</div>
 
@@ -4303,13 +4579,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>08:52</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 08:52</span>
 </div>
 <div class="card-title">黄金，会崩盘单边大跌吗？美联储利率决议倒计时！</div>
 
@@ -4335,13 +4613,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>09:35</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 09:35</span>
 </div>
 <div class="card-title">科创创新药ETF汇添富（589120）开盘跌0.25%，重仓股艾力斯跌0.03%，百济神州跌0.62% - 新浪财经</div>
 
@@ -4367,13 +4647,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>08:28</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-mid">中</span>
 
-<span class="card-time">09-15 08:28</span>
 </div>
 <div class="card-title">一场会议搁置金价快速回落_金市直播 - 黄金网</div>
 
@@ -4399,13 +4681,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>07:01</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-mixed">分化</span>
 <span class="impact-tag impact-high">高</span>
 
-<span class="card-time">09-15 07:01</span>
 </div>
 <div class="card-title">今日黄金价格（9月15日）：金条价格下跌，金戒指价格上涨。</div>
 
@@ -4431,13 +4715,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>07:42</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 07:42</span>
 </div>
 <div class="card-title">费城半导体一夜暴跌近6%，AI“减速”吓崩了谁？哪些大跌，哪些抗揍？</div>
 
@@ -4463,13 +4749,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>07:55</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 07:55</span>
 </div>
 <div class="card-title">下一个万亿美元，比下一个25基点更值得黄金投资者警惕 - 新浪财经</div>
 
@@ -4495,13 +4783,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>07:11</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 07:11</span>
 </div>
 <div class="card-title">对 2026年、2027年、2028-2030年及以后黄金价格的预测 - LiteFinance</div>
 
@@ -4527,13 +4817,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>02:49</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 02:49</span>
 </div>
 <div class="card-title">Rio2 Announces Inclusion in MVIS Global Junior 黄金 Miners </div>
 <div class="card-original-title">原文：Rio2 Announces Inclusion in MVIS Global Junior Gold Miners Index - Investing News Network</div>
@@ -4559,13 +4851,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>01:18</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 01:18</span>
 </div>
 <div class="card-title">台积电 下跌s 3.3% as Its 2028 芯片 Roadmap Precedes High-NA </div>
 
@@ -4591,13 +4885,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>00:43</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 00:43</span>
 </div>
 <div class="card-title">Marvell 下跌s 7% as AI Pacing Debate Collides With 美联储 Week;</div>
 
@@ -4631,13 +4927,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>00:33</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-bear">利空</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 00:33</span>
 </div>
 <div class="card-title">音频设备成科技博弈新前沿：开yunapp登陆折射全球芯片供应链风险- 体坛网_体坛+ - 体坛加</div>
 
@@ -4663,13 +4961,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>01:20</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">创新药</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 01:20</span>
 </div>
 <div class="card-title">Piramal 制药 Receives 7 US FDA Observations at UK Plant - </div>
 <div class="card-original-title">原文：Piramal Pharma Receives 7 US FDA Observations at UK Plant - whalesbook.com</div>
@@ -4703,13 +5003,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
       </div>
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>01:39</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 01:39</span>
 </div>
 <div class="card-title">特朗普：AI将接管世界、摧毁人类是一场“骗局”</div>
 
@@ -4735,13 +5037,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>01:39</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">黄金</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 01:39</span>
 </div>
 <div class="card-title">特朗普：AI毁灭人类的说法属于骗局</div>
 
@@ -4767,13 +5071,15 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 
 </div>
 </div>
+</div>
 <div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>00:11</time><span class="d">09-15</span></div>
+<div class="card-body">
 <div class="card-top">
 <span class="card-cat">半导体</span>
 <span class="badge badge-neutral">中性</span>
 <span class="impact-tag impact-low">低</span>
 
-<span class="card-time">09-15 00:11</span>
 </div>
 <div class="card-title">谷歌云：数据流批处理任务的暂停/继续功能现已全面可用，并支持英伟达RTX PRO 6000布莱克韦尔架构图形处理器。</div>
 
@@ -4797,6 +5103,7 @@ Salesforce称，“KOA”是面向Agentforce的CRM推理模型。</div>
 <div class="verify-note">未命中明显信号,中性</div>
 
 
+</div>
 </div>
 </div>
 </div>
@@ -5222,7 +5529,7 @@ new Chart(document.getElementById('heatmapChart'), {
   type: 'bar',
   data: {
     labels: ["半导体","光模块","创新药","黄金"],
-    datasets: [{"label":"低","data":[31,16,22,19],"backgroundColor":"#f4d9d7"},{"label":"中","data":[17,2,1,4],"backgroundColor":"#e08a86"},{"label":"高","data":[10,1,1,6],"backgroundColor":"#c0171f"},{"label":"极高","data":[2,0,1,3],"backgroundColor":"#8f1017"}],
+    datasets: [{"label":"低","data":[31,16,22,19],"backgroundColor":"#dde1e6"},{"label":"中","data":[17,2,1,4],"backgroundColor":"#a8b0ba"},{"label":"高","data":[10,1,1,6],"backgroundColor":"#5c6570"},{"label":"极高","data":[2,0,1,3],"backgroundColor":"#23272e"}],
   },
   options: {
     responsive: true, maintainAspectRatio: false,
