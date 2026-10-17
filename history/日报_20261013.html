@@ -1,0 +1,3355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 日报每日更新,禁浏览器缓存,普通 F5 即刷新到最新构建 -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>行业板块日报 · 2026-10-13</title>
+<style>
+  :root {
+    /* 颜色角色:地面 / 卡片 / 浅底;文字三级;分隔线两级。
+       红是信号不是底色 —— 全页只给品牌字标、「极高」、利好、当前页签和「新」。 */
+    --bg:#f1f2f4; --card-bg:#fff; --tint:#f7f8f9; --tint-ink:#eceef1;
+    --border:#e7e9ed; --border-strong:#c9ced6;
+    --text:#14171c; --text-dim:#4e5661; --text-muted:#8b929c;
+    --accent:#c0171f;
+    /* 文本链接:低饱和蓝,只用于「原文链接/相关报道」,不参与强调 */
+    --link:#2e5b85;
+    /* 语义色 —— 红涨绿跌 */
+    --bull:#d91e18; --bear:#0a9e4b; --mixed:#b26a00;
+    /* 数字与代码位走等宽;中文正文留在系统中文栈,不引外部字体 */
+    --num:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased;}
+  /* 报价/涨跌幅/代码全是数字,一律等宽,纵向对得齐 */
+  b,strong,time,.num{font-variant-numeric:tabular-nums;}
+  .container{max-width:1200px;margin:0 auto;background:var(--card-bg);border-left:1px solid var(--border);border-right:1px solid var(--border);min-height:100vh;padding-bottom:32px;}
+
+  /* Header —— 报头式:白底红字标 + 顶部红线,红色不再占一整块面积 */
+  .header{display:flex;align-items:flex-end;gap:16px;padding:18px 22px 14px;border-top:3px solid var(--accent);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .header h1{font-size:26px;font-weight:800;letter-spacing:-.01em;line-height:1.1;color:var(--accent);white-space:nowrap;}
+  .head-meta{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--text-dim);padding-bottom:2px;}
+  .head-meta b{color:var(--text);font-weight:600;}
+  .head-meta .dim{font-size:11.5px;color:var(--text-muted);}
+  .head-right{margin-left:auto;display:flex;align-items:center;gap:8px;padding-bottom:2px;}
+  .src-tag{font-size:11.5px;color:var(--text-muted);border:1px solid var(--border);padding:2px 8px;white-space:nowrap;}
+  .refresh-btn{min-width:88px;text-align:center;padding:6px 16px;font:inherit;font-size:12.5px;font-weight:600;color:var(--text);background:var(--card-bg);border:1px solid var(--text);cursor:pointer;transition:background .15s,color .15s;}
+  .refresh-btn:hover{background:var(--text);color:#fff;}
+  .refresh-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .refresh-btn:disabled{color:var(--text-muted);border-color:var(--border-strong);cursor:progress;animation:pulse 1.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.55;}}
+  @media(prefers-reduced-motion:reduce){.refresh-btn:disabled{animation:none;}}
+  .refresh-toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:999;padding:9px 18px;font-size:12.5px;font-weight:600;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:opacity .3s;}
+  .toast-ok{background:var(--bear);}
+  .toast-err{background:var(--accent);}
+
+  /* Nav —— 白底下划线页签,贴近财联社的导航处理 */
+  .nav{display:flex;align-items:stretch;background:var(--card-bg);border-bottom:1px solid var(--border);padding:0 22px;flex-wrap:wrap;}
+  .nav a{display:inline-flex;align-items:center;font-size:13.5px;font-weight:600;color:var(--text-dim);text-decoration:none;padding:10px 14px 9px;margin-bottom:-1px;border-bottom:2px solid transparent;cursor:pointer;transition:color .15s;}
+  .nav a:first-child{padding-left:0;}
+  .nav a:hover{color:var(--text);}
+  .nav a:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
+  .nav a.on{color:var(--accent);border-bottom-color:var(--accent);}
+  .nav .ctrl{margin-left:auto;display:flex;align-items:center;gap:6px;padding:5px 0;font-size:12.5px;color:var(--text-dim);}
+  .nav select{font:inherit;font-size:12.5px;padding:3px 8px;border:1px solid var(--border-strong);background:var(--card-bg);color:var(--text);cursor:pointer;max-width:190px;}
+  .nav select:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+  .nav button{font:inherit;font-size:12.5px;font-weight:600;padding:3px 12px;border:1px solid var(--border-strong);background:var(--card-bg);color:var(--text-dim);cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
+  .nav button:hover{border-color:var(--text);color:var(--text);}
+  .nav button.active{background:var(--text);border-color:var(--text);color:#fff;}
+
+  /* Stats —— 数字承担层级,颜色只留给涨跌和「极高」 */
+  .stats-mini{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-bottom:1px solid var(--border);}
+  .st{display:block;padding:12px 22px 14px;border-right:1px solid var(--border);font-size:11.5px;color:var(--text-muted);letter-spacing:.02em;}
+  .st:last-child{border-right:0;}
+  .st b{display:block;font-size:26px;font-weight:700;line-height:1.2;color:var(--text);font-family:var(--num);letter-spacing:-.01em;}
+  .st.bull b{color:var(--bull);}
+  .st.bear b{color:var(--bear);}
+  .st.vhigh b{color:var(--accent);}
+  .st.high b{color:var(--text);}
+  @media(max-width:640px){
+    .stats-mini{grid-template-columns:repeat(3,minmax(0,1fr));}
+    .st{padding:9px 14px 10px;border-bottom:1px solid var(--border);}
+    .st b{font-size:21px;}
+  }
+
+  /* ETF —— 四栏并排报价表;净值挪进 title 提示,主视觉只留涨跌幅 */
+  .etf-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:12px 22px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+  @media(max-width:640px){
+    .etf-grid{grid-template-columns:repeat(2,minmax(0,1fr));margin:10px 14px 0;}
+    .etf-group:nth-child(2n){border-right:0;}
+    .etf-group:nth-child(-n+2){border-bottom:1px solid var(--border);}
+  }
+  .etf-group{background:var(--card-bg);padding:11px 14px 9px;border-right:1px solid var(--border);}
+  .etf-group:last-child{border-right:0;}
+  .etf-group-name{font-size:12.5px;font-weight:700;color:var(--text);letter-spacing:.04em;padding-bottom:6px;margin-bottom:2px;border-bottom:1px solid var(--border);}
+  .etf-item{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px dashed var(--border);}
+  .etf-item:last-child{border-bottom:0;}
+  .etf-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;color:var(--text);}
+  .etf-name i{font-style:normal;margin-left:4px;font-size:11px;font-family:var(--num);color:var(--text-muted);}
+  .etf-change{flex:none;min-width:58px;text-align:right;font-size:12.5px;font-weight:700;font-family:var(--num);}
+  .etf-change.up{color:var(--bull);}
+  .etf-change.down{color:var(--bear);}
+  .etf-change.neu{color:var(--text-muted);}
+
+  /* Sector summary row — .sc 是可点的板块筛选按钮,行为见页尾脚本「板块筛选」 */
+  .sector-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 22px 0;}
+  @media(max-width:640px){.sector-row{grid-template-columns:repeat(2,minmax(0,1fr));margin:12px 14px 0;}}
+  .sc{display:block;width:100%;text-align:left;background:var(--card-bg);border:1px solid var(--border);padding:11px 13px 12px;cursor:pointer;font:inherit;color:inherit;transition:border-color .15s,background .15s;}
+  .sc:hover{border-color:var(--border-strong);background:var(--tint);}
+  .sc:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+  .sc.active{background:var(--tint-ink);border-color:var(--text);}
+  .sc-name{display:flex;align-items:baseline;justify-content:space-between;gap:6px;font-size:14px;font-weight:600;color:var(--text);}
+  .sc-name b{font-size:20px;font-weight:700;font-family:var(--num);color:var(--text);letter-spacing:-.01em;}
+  .sc-stat{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:4px;font-size:12px;color:var(--text-dim);}
+  /* 板块速览一行四张卡:程度标记不再填色,否则四块实心红会把红色预算一次吃光 */
+  .sc .impact-vhigh{background:none;color:var(--accent);padding:0;font-weight:700;}
+
+  /* Section divider —— 细红竖条 + 黑体标题,红只占 3px */
+  .sec-title{display:flex;align-items:center;gap:9px;margin:26px 22px 0;padding-bottom:9px;border-bottom:1px solid var(--border);font-size:16px;font-weight:700;color:var(--text);letter-spacing:.01em;}
+  .sec-title::before{content:'';width:3px;height:15px;background:var(--accent);flex:none;}
+  @media(max-width:640px){.sec-title{margin-left:14px;margin-right:14px;font-size:15px;}}
+  .sec-hint{margin-left:auto;font-size:12px;font-weight:400;color:var(--text-muted);}
+  /* 「今日复盘 / 次日倾向」两个方向的释义条:两者语义不同,必须让读者一眼看出差别 */
+  .dir-legend{margin:8px 22px 0;font-size:12px;line-height:1.6;color:var(--text-muted);}
+  .dir-legend b{font-weight:700;color:var(--text-dim);}
+  @media(max-width:640px){.dir-legend{margin-left:14px;margin-right:14px;}}
+
+  /* News cards —— 电报式:左侧独立时间列,右侧标题/摘要,细分隔线
+     标题用字号和字重压住场,元信息一律退到灰色。 */
+  .news-grid{display:grid;gap:0;margin:0 22px;}
+  /* 筛选靠 hidden 属性,但 .news-card 的 display:grid 特异性高于 UA 的
+     [hidden]{display:none} —— 不显式补这条,设了 hidden 也藏不住。 */
+  .news-card[hidden]{display:none;}
+  .news-empty{margin:10px 22px 0;padding:16px;text-align:center;font-size:12.5px;color:var(--text-dim);border:1px dashed var(--border-strong);}
+  .news-count{margin-left:auto;font-size:12px;font-weight:400;color:var(--text-muted);white-space:nowrap;}
+  /* 新闻列表上方的筛选页签:选中用墨色文字 + 红色短线,不再整颗填红 */
+  .news-filter{display:flex;flex-wrap:wrap;gap:0 20px;margin:10px 22px 0;border-bottom:1px solid var(--border);}
+  @media(max-width:640px){.news-filter,.news-grid,.news-empty{margin-left:14px;margin-right:14px;}}
+  .fchip{display:inline-flex;align-items:center;font:inherit;font-size:13px;font-weight:600;color:var(--text-muted);background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;padding:6px 0 8px;cursor:pointer;transition:color .15s,border-color .15s;}
+  .fchip:hover{color:var(--text);}
+  .fchip:focus-visible{outline:2px solid var(--accent);outline-offset:-1px;}
+  .fchip b{margin-left:5px;font-weight:600;font-family:var(--num);color:var(--text-muted);}
+  .fchip.active{color:var(--text);border-bottom-color:var(--accent);}
+  .fchip.active b{color:var(--text-dim);}
+  .news-card{display:grid;grid-template-columns:74px minmax(0,1fr);gap:14px;padding:15px 10px 16px;margin:0 -10px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;}
+  .news-card:hover,.news-card:focus-within,.news-card.expanded{background:var(--tint);}
+  .card-aside{padding-top:2px;font-family:var(--num);font-size:11.5px;line-height:1.5;color:var(--text-muted);white-space:nowrap;}
+  .card-aside time{display:block;font-size:12px;font-weight:600;color:var(--text-dim);}
+  .card-aside .d{display:block;}
+  @media(max-width:640px){
+    .news-card{grid-template-columns:1fr;gap:3px;padding:13px 8px 14px;margin:0 -8px;}
+    .card-aside{display:flex;align-items:baseline;gap:7px;padding-top:0;}
+    .card-aside time{font-size:11.5px;}
+  }
+  .card-body{min-width:0;}
+  .card-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:5px;}
+  .card-cat{font-size:11.5px;font-weight:600;color:var(--text-dim);background:var(--tint-ink);padding:1px 6px;white-space:nowrap;}
+  .card-time{margin-left:auto;font-size:11.5px;color:var(--text-muted);font-family:var(--num);}
+  .fresh-badge{font-size:10.5px;font-weight:700;color:var(--accent);border:1px solid currentColor;padding:0 4px;line-height:1.45;}
+
+  .card-title{font-size:16px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:4px;letter-spacing:.005em;text-wrap:pretty;}
+  .card-original-title{font-size:12px;color:var(--text-muted);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .card-summary{font-size:13px;color:var(--text-dim);line-height:1.65;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-wrap:pretty;}
+  .card-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:11.5px;color:var(--text-muted);}
+  .card-meta a{color:var(--link);text-decoration:none;}
+  .card-meta a:hover{text-decoration:underline;}
+  .src-link{padding-left:2px;}
+  /* 方向徽标:色点 + 同色文字,不做底色;程度徽标只给「极高」实心红 */
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:0;font-size:11.5px;font-weight:600;background:none;}
+  .badge::before{content:'';width:5px;height:5px;background:currentColor;flex:none;}
+  .badge-bull{color:var(--bull);}
+  .badge-bear{color:var(--bear);}
+  .badge-neutral{color:var(--text-muted);}
+  .badge-mixed{color:var(--mixed);}
+  .impact-tag{font-size:11.5px;font-weight:600;color:var(--text-muted);}
+  .impact-vhigh{background:var(--accent);color:#fff;font-weight:700;padding:1px 6px;}
+  .impact-high{color:var(--accent);}
+  .impact-mid,.impact-low{color:var(--text-muted);}
+  .ticker-inline{color:var(--text-dim);font-family:var(--num);font-size:11.5px;}
+
+  /* Expand detail */
+  .card-detail{display:none;margin-top:9px;padding-top:9px;border-top:1px solid var(--border-strong);font-size:13px;color:var(--text);line-height:1.65;}
+  .news-card.expanded .card-detail{display:block;}
+  .detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:7px;}
+  @media(max-width:480px){.detail-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+  .dl{display:block;font-size:11px;color:var(--text-muted);letter-spacing:.02em;}
+  .detail-extra{margin:2px 0 7px;}
+  .expl-text{font-size:13px;}
+  .expl-list{margin:2px 0 0;padding-left:17px;font-size:12.5px;}
+  .expl-list li{margin-bottom:2px;}
+  .verify-note{font-size:12px;color:var(--text-dim);padding:6px 9px;background:var(--tint);border-left:2px solid var(--border-strong);}
+
+  /* 事件级去重:来源徽标 + 相关报道 */
+  .ev-src-badges{display:inline-flex;flex-wrap:wrap;gap:4px;}
+  .ev-src-badge{font-size:11.5px;padding:1px 7px;background:var(--tint);color:var(--text-dim);border:1px solid var(--border);white-space:nowrap;}
+  .event-sources,.event-related{margin-top:4px;}
+  .related-list li{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .related-list a{color:var(--link);text-decoration:none;font-size:12px;font-family:var(--num);}
+  .related-list a:hover{text-decoration:underline;}
+
+  /* Matrix table */
+  .table-wrap{overflow-x:auto;margin:12px 22px 0;border:1px solid var(--border);}
+  @media(max-width:640px){.table-wrap{margin-left:14px;margin-right:14px;}}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th{background:var(--tint);color:var(--text-dim);padding:7px 10px;text-align:left;font-weight:600;white-space:nowrap;border-bottom:1px solid var(--border-strong);font-size:11.5px;}
+  td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  .mx-name{font-weight:700;}
+  .dir-bull{color:var(--bull);font-weight:600;}
+  .dir-bear{color:var(--bear);font-weight:600;}
+  .dir-flat{color:var(--text-dim);}
+  .dir-mixed{color:var(--mixed);font-weight:600;}
+  /* 冲击程度不用红绿——那两色在本站已被「涨/跌」占用;只有最强档保留红字 */
+  .shock-strong{color:var(--accent);font-weight:700;}
+  .shock-mid{color:var(--text-dim);font-weight:600;}
+  .shock-weak{color:var(--text-muted);}
+
+  /* Key points —— 细竖线列表,不再是浅灰块 */
+  .key-points{display:grid;gap:9px;margin:14px 22px 0;}
+  .kp-card{border-left:2px solid var(--border-strong);padding:1px 0 1px 13px;font-size:13.5px;line-height:1.65;color:var(--text);}
+  .kp-card::before{content:'—';margin-right:7px;font-weight:700;color:var(--text-muted);}
+
+  /* 今日复盘 —— 全页导语:3px 红竖线 + 15px 正文,靠位置和字号抢注意力 */
+  .market-summary{display:flex;gap:16px;margin:16px 22px 0;padding:16px 18px 17px 16px;border-left:3px solid var(--accent);background:var(--tint);}
+  .ms-label{flex:none;font-size:11.5px;font-weight:700;color:var(--text);letter-spacing:.08em;padding-top:4px;white-space:nowrap;}
+  .market-summary p{font-size:15px;line-height:1.75;color:var(--text);max-width:76ch;text-wrap:pretty;}
+  .market-summary b{font-weight:700;font-family:var(--num);}
+  @media(max-width:640px){
+    .key-points{margin-left:14px;margin-right:14px;}
+    .market-summary{flex-direction:column;gap:5px;margin:14px 14px 0;padding:13px 14px 14px;}
+    .ms-label{padding-top:0;}
+    .market-summary p{font-size:14px;}
+  }
+
+  /* Footer */
+  .footer{margin-top:24px;padding:14px 22px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);line-height:1.8;}
+  .footer strong{color:var(--text-dim);}
+
+  /* Charts */
+  .chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 22px 0;}
+  @media(max-width:640px){.chart-grid{grid-template-columns:1fr;margin:12px 14px 0;}}
+  .chart-card{border:1px solid var(--border);background:var(--card-bg);padding:13px 15px;}
+  .wide-chart{grid-column:1/-1;}
+  .chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;}
+  .chart-wrap{position:relative;width:100%;}
+  .wide-chart .chart-wrap{height:240px;}
+  .chart-card .chart-wrap{height:200px;}
+  .chart-donut .chart-wrap{height:180px;max-width:240px;margin:0 auto;}
+</style>
+<script>
+// Site root derived from the current URL. On gh-pages the app lives under a
+// repo subpath (…/daily-stock-news/). A static relative <script src="assets/…">
+// resolves correctly on the index page but breaks on history pages, which sit
+// under /history/ — the browser would look for /history/assets/… → 404, and
+// Chart.js never loads (5 charts go blank). Derive the root and load the chart
+// library synchronously via document.write so it's ready before the chart
+// <script> at the bottom of <body> runs.
+(function(){
+  var p = window.location.pathname;
+  if (p.indexOf('/history/') >= 0) p = p.slice(0, p.indexOf('/history/'));
+  else if (p.slice(-5) === '.html') p = p.slice(0, p.lastIndexOf('/'));
+  else if (p.slice(-1) === '/') p = p.slice(0, -1);
+  window.BASE = p; // '' when deployed at the domain root (local preview)
+  document.write('<script src="' + p + '/assets/chart.umd.min.js"><\/scr' + 'ipt>');
+})();
+</script>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>行业板块日报</h1>
+  <div class="head-meta">
+    <div><b>2026-10-13</b> · 73 条精选 · 半导体 / 光模块 / 创新药 / 黄金</div>
+    <div class="dim">最后更新 2026-10-13 17:12:52（北京时间）</div>
+  </div>
+  <div class="head-right">
+    <span class="src-tag">Claude API 分析 + 中文翻译</span>
+    <button class="refresh-btn" onclick="triggerRefresh()" title="手动刷新日报">刷新日报</button>
+  </div>
+</div>
+
+<div class="nav">
+  <a class="on" onclick="goToday()">今日日报</a>
+  <a onclick="location.href=(window.BASE||'')+'/db.html'">数据查询</a>
+  <span class="ctrl">
+    <label for="historySelect">历史</label>
+    <select id="historySelect" onchange="showHistoryDate()">
+      <option value="">-- 选择日期 --</option>
+    </select>
+    <button id="today-btn" onclick="goToday()">今天</button>
+  </span>
+</div>
+
+<div class="stats-mini">
+  <div class="st bull">利好<b>22</b></div>
+  <div class="st bear">利空<b>9</b></div>
+  <div class="st vhigh">极高冲击<b>5</b></div>
+  <div class="st high">高影响<b>18</b></div>
+  <div class="st">板块<b>4</b></div>
+</div>
+
+
+<div class="market-summary">
+  <span class="ms-label">今日复盘</span>
+  <p>半导体板块小幅下跌，AI芯片需求增长与汽车芯片需求疲软形成分化，韩国芯片股遭抛售，印度半导体政策受关注。</p>
+</div>
+
+
+<div class="sec-title">板块 ETF 指标<span class="sec-hint">悬停查看净值</span></div>
+<div class="etf-grid">
+<div class="etf-group"><div class="etf-group-name">半导体</div><div class="etf-item" title="芯片ETF华夏 159995 · 净值 0.971"><span class="etf-name">芯片ETF华夏<i>159995</i></span><span class="etf-change down">-0.21%</span></div><div class="etf-item" title="芯片ETF国泰 512760 · 净值 0.945"><span class="etf-name">芯片ETF国泰<i>512760</i></span><span class="etf-change down">-0.11%</span></div><div class="etf-item" title="科创芯片ETF嘉实 588200 · 净值 0.996"><span class="etf-name">科创芯片ETF嘉实<i>588200</i></span><span class="etf-change neu">0.00%</span></div></div><div class="etf-group"><div class="etf-group-name">光模块</div><div class="etf-item" title="通信ETF华夏 515050 · 净值 0.878"><span class="etf-name">通信ETF华夏<i>515050</i></span><span class="etf-change up">+1.74%</span></div><div class="etf-item" title="通信ETF国泰 515880 · 净值 0.572"><span class="etf-name">通信ETF国泰<i>515880</i></span><span class="etf-change up">+1.78%</span></div><div class="etf-item" title="5GETF博时 159811 · 净值 2.581"><span class="etf-name">5GETF博时<i>159811</i></span><span class="etf-change up">+1.41%</span></div></div><div class="etf-group"><div class="etf-group-name">创新药</div><div class="etf-item" title="创新药ETF广发 515120 · 净值 0.614"><span class="etf-name">创新药ETF广发<i>515120</i></span><span class="etf-change down">-1.29%</span></div><div class="etf-item" title="创新药ETF南方 159858 · 净值 0.663"><span class="etf-name">创新药ETF南方<i>159858</i></span><span class="etf-change down">-1.34%</span></div><div class="etf-item" title="创新药ETF银华 159992 · 净值 0.820"><span class="etf-name">创新药ETF银华<i>159992</i></span><span class="etf-change down">-1.20%</span></div></div><div class="etf-group"><div class="etf-group-name">黄金</div><div class="etf-item" title="黄金ETF华安 518880 · 净值 8.599"><span class="etf-name">黄金ETF华安<i>518880</i></span><span class="etf-change up">+0.16%</span></div><div class="etf-item" title="黄金ETF易方达 159934 · 净值 8.985"><span class="etf-name">黄金ETF易方达<i>159934</i></span><span class="etf-change up">+0.18%</span></div><div class="etf-item" title="黄金ETF国泰 518800 · 净值 9.014"><span class="etf-name">黄金ETF国泰<i>518800</i></span><span class="etf-change up">+0.14%</span></div></div>
+</div>
+
+
+
+<div class="sec-title">板块速览<span class="sec-hint">点击卡片可只看该板块新闻</span></div>
+<div class="sector-row">
+
+  <button type="button" class="sc" data-sector="半导体" data-cat="semi" aria-pressed="false">
+    <span class="sc-name">半导体<b>43</b></span>
+    <span class="sc-stat">
+      
+      <span class="badge badge-bull">利好</span>
+      <span class="impact-tag impact-vhigh">强冲击</span>
+    </span>
+  </button>
+
+  <button type="button" class="sc" data-sector="黄金" data-cat="gold" aria-pressed="false">
+    <span class="sc-name">黄金<b>17</b></span>
+    <span class="sc-stat">
+      
+      <span class="badge badge-mixed">分化</span>
+      <span class="impact-tag impact-vhigh">强冲击</span>
+    </span>
+  </button>
+
+  <button type="button" class="sc" data-sector="光模块" data-cat="optics" aria-pressed="false">
+    <span class="sc-name">光模块<b>7</b></span>
+    <span class="sc-stat">
+      
+      <span class="badge badge-neutral">中性</span>
+      <span class="impact-tag impact-vhigh">强冲击</span>
+    </span>
+  </button>
+
+  <button type="button" class="sc" data-sector="创新药" data-cat="pharma" aria-pressed="false">
+    <span class="sc-name">创新药<b>6</b></span>
+    <span class="sc-stat">
+      
+      <span class="badge badge-neutral">中性</span>
+      <span class="impact-tag impact-low">弱冲击</span>
+    </span>
+  </button>
+
+</div>
+
+
+
+
+<div class="sec-title">市场数据可视化</div>
+<div class="chart-grid">
+  
+  <div class="chart-card wide-chart">
+    <div class="chart-title">板块 ETF 走势对比（首日=100，30日）</div>
+    <div class="chart-wrap"><canvas id="etfTrendChart"></canvas></div>
+  </div>
+  
+  <div class="chart-card">
+    <div class="chart-title">今日情绪分布</div>
+    <div class="chart-wrap chart-donut"><canvas id="sentimentChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">板块方向对比</div>
+    <div class="chart-wrap"><canvas id="directionChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">冲击热力图</div>
+    <div class="chart-wrap"><canvas id="heatmapChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">时间窗口分布</div>
+    <div class="chart-wrap chart-donut"><canvas id="timeWindowChart"></canvas></div>
+  </div>
+</div>
+
+
+<div class="sec-title" id="newsSection">新闻列表（按时间从近到远）<span class="news-count" id="newsCountText">共 73 条</span></div>
+<div class="news-filter" id="newsFilter" role="group" aria-label="按板块筛选新闻">
+  <button type="button" class="fchip active" data-sector="" aria-pressed="true">全部<b>73</b></button>
+  
+  <button type="button" class="fchip" data-sector="半导体" data-cat="semi" aria-pressed="false">半导体<b>43</b></button>
+
+  <button type="button" class="fchip" data-sector="黄金" data-cat="gold" aria-pressed="false">黄金<b>17</b></button>
+
+  <button type="button" class="fchip" data-sector="光模块" data-cat="optics" aria-pressed="false">光模块<b>7</b></button>
+
+  <button type="button" class="fchip" data-sector="创新药" data-cat="pharma" aria-pressed="false">创新药<b>6</b></button>
+
+</div>
+<div class="news-grid" id="newsGrid">
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:05</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-mixed">分化</span>
+<span class="impact-tag impact-vhigh">极高</span>
+
+</div>
+<div class="card-title">崔东树：9月车市最突出的特征是“旺季不旺”，传统“金九”成色严重不足</div>
+
+<div class="card-summary">乘联分会崔东树表示，2026年9月全国乘用车市场零售161.8万辆，同比下降28.0%，环比增长5.0%；1–9月乘用车累计零售1,333.4万辆，同比下降21.7%。9月车市最突出的特征是“旺季不旺”，传统“金九”成色严重不足。往年“金九”是大盘普涨、首购换购一起释放，今年则是存量博弈下的此消彼长，燃油车需求持续剧烈萎缩。9月成为本轮车市零售降幅异常突出的月份，多重因素叠加所致：一是中秋假期提前</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7222180.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>分化</div>
+<div><span class="dl">程度</span>极高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">90%（各细分市场影响差异）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“9月车市最突出的特征是'旺季不旺'，传统'金九'成色严重不足”</li></ul></div>
+<div class="verify-note">行情·利好(23·板块行情上涨)+行情·利空(54·板块行情走弱)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:04</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">三佳科技：召开2026年半年度业绩说明会 回应相关问题</div>
+
+<div class="card-summary">三佳科技公告称，公司于2026年10月13日以网络文字互动形式召开2026年半年度业绩说明会，公司董事长裴晓辉等高管出席，就投资者关注问题作出回复。公司未来盈利增长核心驱动为半导体封装装备板块国产替代、先进封装研发及客户拓展，以及智能制造板块订单拓展。向特定对象发行A股股票工作正稳步推进，目前内部审议已完成，正准备向上交所申请受理审核。扇出型晶圆级封装设备相关研发持续推进中，存在不确定性。截至目前</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7300028.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">三佳科技</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">90%（扇出型晶圆级封装设备相关研发持续推进中，存在不确定性。）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“未来盈利增长核心驱动为半导体封装装备国产替代、先进封装研发及客户拓展”</li></ul></div>
+<div class="verify-note">政策·利好(50)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:01</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-mid">中</span>
+
+</div>
+<div class="card-title">纳维仕半导体股价盘前上涨2.2%；该公司与英伟达合作开发下一代人工智能基础设施供电板。</div>
+
+
+<div class="card-meta">
+<span>新浪财经</span>
+
+
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>中</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">纳维仕半导体</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“该公司与英伟达合作开发下一代人工智能基础设施供电板”</li></ul></div>
+<div class="verify-note">行情·利好(15·板块行情上涨)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:03</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">创新药</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">香港交易所信息显示，摩根大通（JPMorgan）在百济神州H股的持股比例于10月07日从10.02%降至9.89%，卖出的平均股价为217.3360港元。</div>
+
+
+<div class="card-meta">
+<span>新浪财经</span>
+<span class="ticker-inline">百济神州(688235)</span>
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7298761.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">百济神州</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+      <div class="detail-extra event-related">
+        <span class="dl">相关报道（1 篇）</span>
+        <ul class="expl-list related-list"><li><a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7300500.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">finance.sina.cn/7x24/2026-10-13/detail-inivamwf730</a></li></ul>
+      </div>
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>17:00</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">创新药</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">奥林巴斯：收到美国食品药品监督管理局（FDA）警告函。</div>
+
+
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwe0523239.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:00</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">半导体、算力赛道大单接踵而至，产业需求向设备与部件扩散-证券之星 - 证券之星</div>
+
+
+<div class="card-meta">
+<span>证券之星</span>
+
+ <a href="https://news.google.com/rss/articles/CBMiXkFVX3lxTE9hdzhWWXA5a255TUcxMTUyZ3ZIaElsWlBEN3N0emF2dEVFNEdhbDR4LVpMWUVZY1dscjJPc18tQmZOZTNva2ZCdTBpY2hPc1A1MmVIWnJfNFdqVTF0d0E?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">90%</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“半导体、算力赛道大单接踵而至，产业需求向设备与部件扩散”</li></ul></div>
+<div class="verify-note">订单·利好(60)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:37</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">顶级散户抛售三星电子、SK海力士 抄底LG电子</div>
+
+<div class="card-summary">周二，韩国综合股价指数（KOSPI）盘中暴跌超6%，跌破6000点关口，韩国收益率表现最优的一批个人散户投资者抛售了三星电子、SK海力士等韩国头部芯片企业股票。与此同时，他们逢低抄底大幅下挫的标的，如LG电子、APR。</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwe0495240.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">三星电子、SK海力士</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">90%（全球市场联动影响）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“韩国综合股价指数（KOSPI）盘中暴跌超6%，跌破6000点关口，韩国收益率表现最优的一批个人散户投资者抛售了三星电子、SK海力士等韩国头部芯片企业股票”</li></ul></div>
+<div class="verify-note">行情·利空(54·板块行情走弱)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:24</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">AI板块遭抛售 印度IT股创17个月最大单日涨幅</div>
+
+<div class="card-summary">亚洲芯片企业股价下跌，资金转向所谓的AI避险交易，印度软件服务板块股票有望录得17个月最大涨幅。印度国家证券交易所Nifty IT指数一度上涨4.9%，HCL科技与塔塔咨询领涨。博通CEO称AI投资氛围如同赌场下注，受此言论影响，芯片股集中的韩国综合指数下跌超5%。三星资产管理投资组合经理艾伦·理查森表示：“每当AI行情回落，印度IT股就会迎来反弹。”但他同时称，仅靠这一点不足以吸引外资回流，需要</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwe0476424.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">90%（资金流向持续性）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>AI板块遭抛售</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“AI板块遭抛售 印度IT股创17个月最大单日涨幅”</li></ul></div>
+<div class="verify-note">AI板块遭抛售</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:58</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">创新药</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">恒瑞医药：SHR-3201注射液获临床试验批准</div>
+
+<div class="card-summary">恒瑞医药公告称，公司子公司北京盛迪医药有限公司收到国家药监局核准签发的SHR-3201注射液《药物临床试验批准通知书》，将于近期开展临床试验，该药物申请适应症为阿尔茨海默病，是公司自主研发的治疗药物，可清除患者脑内疾病生物标志物、延缓认知衰退，国内外尚无同类药物获批上市。截至目前，该项目累计研发投入约4880万元。药物后续尚需开展临床试验并经审评审批通过后方可生产上市，存在不确定性。</div>
+<div class="card-meta">
+<span>新浪财经</span>
+<span class="ticker-inline">恒瑞医药(600276)</span>
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7293571.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">恒瑞医药</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:52</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">光模块</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-vhigh">极高</span>
+
+</div>
+<div class="card-title">网传英伟达减单？景旺电子回应</div>
+
+<div class="card-summary">有投资者向景旺电子（603228.SH）提问，公司今天股价大跌，网上传英伟达（NVDA.US）减单了，是否属实？10月13日，公司在互动平台回答表示，上市公司股价波动受多种因素影响，与宏观环境、政策因素、行业经营状况及资本市场风格等综合情况密切相关。由于涉及商业保密条款，公司不便对具体客户的合作信息进行披露，为保证所有投资者平等获悉公司信息，具体客户信息请以公司公告为准。截至2026年三季度末，公</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7208823.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>极高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>订单信号·利好(+60分)</li><li>行情信号·利空(-36分·板块行情走弱)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“订单饱满”</li><li>“大跌”</li></ul></div>
+<div class="verify-note">订单·利好(60)+行情·利空(36·板块行情走弱)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:26</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">博通首席执行官陈福阳周一在新加坡星展银行会议上表示，AI领域的突破将使芯片投资需求在未来至少两年保持高位，目前的产能远不能满足需求，短缺未来还可能加剧。</div>
+
+<div class="card-summary">同场的英</div>
+<div class="card-meta">
+<span>金十数据</span>
+
+
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>技术信号·利好(+60分)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“突破”</li></ul></div>
+<div class="verify-note">技术·利好(60)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:04</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-mid">中</span>
+
+</div>
+<div class="card-title">美银调查：投资者科技股敞口创2020年以来新高</div>
+
+<div class="card-summary">美国银行调查显示，全球投资者追逐AI驱动的股市上涨行情，科技股敞口达到六年前新冠疫情后反弹以来最高水平。调查显示，超配科技板块的基金经理占比由上月30%升至37%，为2020年8月以来最高。约45%受访者认为2027年会出现AI泡沫，42%持相反观点。美银10月调查受访者表示，全球半导体股票是当前市场最拥挤交易。</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwe0447770.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>中</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（市场情绪持续性）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“全球投资者追逐AI驱动的股市上涨行情，科技股敞口达到六年前新冠疫情后反弹以来最高水平”</li></ul></div>
+<div class="verify-note">行情·利好(23·板块行情上涨)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:00</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-mid">中</span>
+
+</div>
+<div class="card-title">美股盘前：“七姐妹”普跌</div>
+
+<div class="card-summary">英伟达跌0.88%，苹果涨0.48%，微软涨0.27%，谷歌跌0.13%，亚马逊跌0.27%，Meta跌0.94%，特斯拉跌0.87%。</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7216426.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>中</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">60%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>行情信号·利空(-36分·板块行情走弱)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“普跌”</li></ul></div>
+<div class="verify-note">行情·利空(36·板块行情走弱)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:01</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-mid">中</span>
+
+</div>
+<div class="card-title">美股盘前：存储芯片股普跌，SK海力士跌约5%</div>
+
+
+<div class="card-meta">
+<span>华尔街见闻</span>
+
+ <a href="https://wallstreetcn.com/articles/3177788" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>中</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">60%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>行情信号·利空(-36分·板块行情走弱)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“普跌”</li></ul></div>
+<div class="verify-note">行情·利空(36·板块行情走弱)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:00</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">光模块</span>
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-mid">中</span>
+
+</div>
+<div class="card-title">美股光通信股盘前普跌</div>
+
+<div class="card-summary">Lumentum跌1.85%，康宁跌1.64%，Coherent跌1.78%，应用光电跌1.55%，Ciena跌2.04%，博通跌1.38%，迈威尔科技跌3.14%。</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7216443.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>中</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">60%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>行情信号·利空(-36分·板块行情走弱)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“普跌”</li></ul></div>
+<div class="verify-note">行情·利空(36·板块行情走弱)</div>
+
+      <div class="detail-extra event-sources">
+        <span class="dl">来源聚合（3 家）</span>
+        <span class="ev-src-badges"><span class="ev-src-badge">金十数据</span><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">华尔街见闻</span></span>
+      </div>
+
+      <div class="detail-extra event-related">
+        <span class="dl">相关报道（15 篇）</span>
+        <ul class="expl-list related-list"><li><a href="美元兑日元USD/JPY短线波动近50点，现报157.96。" target="_blank" rel="noopener" onclick="event.stopPropagation()">美元兑日元USD/JPY短线波动近50点，现报157.96。</a></li><li><a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwe0509716.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">finance.sina.cn/7x24/2026-10-13/detail-inivamwe050</a></li><li><a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwe0503743.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">finance.sina.cn/7x24/2026-10-13/detail-inivamwe050</a></li><li><a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwe0454258.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">finance.sina.cn/7x24/2026-10-13/detail-inivamwe045</a></li><li><a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7224933.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">finance.sina.cn/7x24/2026-10-13/detail-inivamwf722</a></li><li><a href="【美股生物科技板块盘前普涨】礼来涨1.12%，强生涨1.09%，Moderna涨0.80%，诺和诺德涨0.44%，艾伯维涨0.83%，默沙东涨1.60%。" target="_blank" rel="noopener" onclick="event.stopPropagation()">【美股生物科技板块盘前普涨】礼来涨1.12%，强生涨1.09%，Moderna涨0.80%，诺和诺德</a></li><li><a href="【美股存储板块盘前普跌】美光跌3.39%，闪迪跌3.56%，SK海力士跌5.37%，西部数据跌4.12%，希捷科技跌3.41%。" target="_blank" rel="noopener" onclick="event.stopPropagation()">【美股存储板块盘前普跌】美光跌3.39%，闪迪跌3.56%，SK海力士跌5.37%，西部数据跌4.1</a></li><li><a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwe0437874.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">finance.sina.cn/7x24/2026-10-13/detail-inivamwe043</a></li></ul>
+      </div>
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:40</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">黄金</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-mid">中</span>
+
+</div>
+<div class="card-title">黄金何时反弹？机构：关注3个信号 - 21财经</div>
+
+
+<div class="card-meta">
+<span>21财经</span>
+
+ <a href="https://news.google.com/rss/articles/CBMijwFBVV95cUxQclhRTzJUdDdxbVJZcFZ1Vk13ZmxxNDZDbkljQ01HVWNIMi1Ya0JCVGc1bzVpemdlQlg5ZVZUVHJKRTZGOFozQVg5TlpMZUlTX1FNT0luVzRFRnFSX3BjMEJRcVF5WXdSWHRfZjNjaUh2MmNqemY4TVBWdERNOXZ3T2dyWmJNNThRMnZMYVpPQQ?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>中</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">60%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>行情信号·利好(+15分·板块行情上涨)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“反弹”</li></ul></div>
+<div class="verify-note">行情·利好(15·板块行情上涨)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:53</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">美银调查：投资者科技股配置达2020年以来最高 半导体股成最拥挤交易</div>
+
+<div class="card-summary">【美银调查：投资者科技股配置达2020年以来最高 半导体股成最拥挤交易】财联社10月13日电，美国银行的一项调查显示，全球投资者追逐人工智能推动的股市涨势，对科</div>
+<div class="card-meta">
+<span>财联社</span>
+
+ <a href="https://www.cls.cn/detail/2503466" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">70%（45%认为2027年将出现AI泡沫）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>拥挤交易风险</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“半导体股成最拥挤交易”</li></ul></div>
+<div class="verify-note">拥挤交易风险</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:40</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">熵基科技新设子公司 含集成电路芯片业务</div>
+
+<div class="card-summary">企查查APP显示，近日，上海熵联乾芯科技有限公司成立，经营范围包含：集成电路设计；集成电路芯片设计及服务；集成电路芯片及产品销售；集成电路销售等。企查查股权穿透显示，该公司由熵基科技全资持股。</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwe0498156.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>长期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">熵基科技</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“经营范围包含：集成电路设计；集成电路芯片设计及服务”</li></ul></div>
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:38</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">印度财长：印度在半导体问题上作出了现实的选择。</div>
+
+
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwe0495455.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（印度政策执行效果未知）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“印度在半导体问题上作出了现实的选择。”</li></ul></div>
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:34</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">印度财长：印度半导体计划已引起投资者兴趣。</div>
+
+
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7262762.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">70%（投资者兴趣能否转化为实际投资）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“印度半导体计划已引起投资者兴趣。”</li></ul></div>
+<div class="verify-note">传闻·中性(10)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:32</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">面壁智能发布新一代MiniCPM-V 4.7</div>
+
+<div class="card-summary">10月13日，面壁智能正式发布新一代端侧多模态大模型MiniCPM-V 4.7，包含35B-A3B与1B两个版本。其中35B-A3B采用MoE架构，总参数350亿、每次推理激活30亿，约3GB内存可运行，解码速度达15+token/s（iPad Pro 实测）。目前已支持瑞芯微、NVIDIA、Intel和Apple等国内外主流芯片平台，同时支持iOS、安卓和鸿蒙系统，并提供开源端侧适配代码及主流推</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7260556.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">瑞芯微、NVIDIA、Intel、Apple</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（实际商业化进度）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“面壁智能正式发布新一代端侧多模态大模型MiniCPM-V 4.7...支持瑞芯微、NVIDIA、Intel和Apple等国内外主流芯片平台”</li></ul></div>
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>14:56</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">华微电子：未来五年将聚焦功率半导体及相关产业</div>
+
+<div class="card-summary">华微电子在10月13日召开的2026年半年度业绩说明会上表示，目前公司八英寸线按照计划正常扩产，处于满产满销的状态，产能利用率处于较高水平。SiC PM模块目前还在开发中，SiC IPM模块已经开始小批量销售。未来五年，公司将主要聚焦功率半导体及相关产业，核心产品覆盖IGBT、MOSFET、二极管类及宽禁带半导体等方面；同时将加大芯片和封装生产线的建设。</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivafqm8137953.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>扩产信号·利好(+40分)</li><li>传闻信号·中性(±10分)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“扩产”</li><li>“计划”</li></ul></div>
+<div class="verify-note">扩产·利好(40)+传闻·中性(10)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:38</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">黄金</span>
+<span class="badge badge-mixed">分化</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">黄金10月上破4300美元的概率继续抬升，但更高价位信心转弱，同时美联储加息预期升温，金价上行面临利率端约束。</div>
+
+<div class="card-summary">原油受运输与供应风险明显走强，白银则出现上行降温。</div>
+<div class="card-meta">
+<span>金十数据</span>
+
+
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>分化</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>宏观信号·利空(-40分)</li><li>行情信号·利好(+15分·板块行情上涨)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“加息”</li><li>“上行”</li></ul></div>
+<div class="verify-note">宏观·利空(40)+行情·利好(15·板块行情上涨)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>14:31</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">黄金</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">卡塔尔埃米尔称，黄金通道项目取得重大进展。</div>
+
+
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivafqh0470331.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>技术信号·利好(+40分)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“重大进展”</li></ul></div>
+<div class="verify-note">技术·利好(40)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:31</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-mid">中</span>
+
+</div>
+<div class="card-title">今日投资舆情热点</div>
+
+<div class="card-summary">【今日投资舆情热点】
+1）PCB：10月以来，电子布涨价再次落地，行业产能集中释放预计要到明年年底。
+2）染料：6月低点至今，分散染料报价累计上涨超30%，活性</div>
+<div class="card-meta">
+<span>财联社</span>
+
+ <a href="https://www.cls.cn/detail/2503330" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>中</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">60%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>行情信号·利好(+8分·板块行情上涨)</li><li>涨价信号·利好(+25分·供不应求/涨价,量价齐升利好)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“上涨”</li><li>“涨价”</li></ul></div>
+<div class="verify-note">行情·利好(8·板块行情上涨)+涨价·利好(25·供不应求/涨价,量价齐升利好)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:27</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">英伟达韩国负责人：英伟达平台是实现Physical AI的核心技术</div>
+
+<div class="card-summary">英伟达韩国代表Jeong So-young预测，能够感知物理世界并据此执行实际动作的Physical AI市场将快速增长。她介绍称，实现Physical AI的核心手段是计算基础设施。 Jeong So-young表示：“Physical AI所需的数据本身具有三维（3D）环境特性，因此收集数据需要非常强大的计算能力”，“还需要进行模拟学习，因此充分确保计算资源就是竞争力。” Jeong So-y</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7252937.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>长期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">英伟达</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（市场增长速度预期）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“英伟达平台是实现Physical AI的核心技术”</li></ul></div>
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:18</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">芯和半导体系统级EDA在CPO等AI产业关键场景形成客户验证</div>
+
+<div class="card-summary">据记者获悉，芯和半导体系统级EDA已经在Chiplet先进封装、CPO光电共封装、PCIe 6.0高速存储、AI服务器和AI PC等AI产业关键场景形成客户验证。</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7239800.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">芯和半导体</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（客户验证规模）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“芯和半导体系统级EDA已经在Chiplet先进封装、CPO光电共封装等AI产业关键场景形成客户验证”</li></ul></div>
+<div class="verify-note">未命中明显信号,中性</div>
+
+      <div class="detail-extra event-sources">
+        <span class="dl">来源聚合（2 家）</span>
+        <span class="ev-src-badges"><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">华尔街见闻</span></span>
+      </div>
+
+      <div class="detail-extra event-related">
+        <span class="dl">相关报道（1 篇）</span>
+        <ul class="expl-list related-list"><li><a href="https://wallstreetcn.com/articles/3177799" target="_blank" rel="noopener" onclick="event.stopPropagation()">wallstreetcn.com/articles/3177799</a></li></ul>
+      </div>
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:15</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-mixed">分化</span>
+<span class="impact-tag impact-vhigh">极高</span>
+
+</div>
+<div class="card-title">软件股走强，金蝶看涨期权交易规模创纪录</div>
+
+<div class="card-summary">金蝶看涨期权交易量连续第二个交易日激增并创下历史新高。半导体与硬件股走弱之际，金蝶股价延续涨势，同板块软件股同步上行。金蝶认购期权成交量达6800张合约，为20日均值的12倍；认沽期权成交1600张。2026年10月29日到期、行权价8.25港元的认购期权，以及2026年11月27日到期、行权价8.50港元和8港元的认购期权交易最为活跃。该股盘中最高上涨7%至8.67港元，三日累计涨幅接近20%，</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivafqi7292685.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>分化</div>
+<div><span class="dl">程度</span>极高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>行情信号·利好(+23分·板块行情上涨)</li><li>行情信号·利空(-54分·板块行情走弱)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“上涨”</li><li>“走弱”</li></ul></div>
+<div class="verify-note">行情·利好(23·板块行情上涨)+行情·利空(54·板块行情走弱)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:09</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-vhigh">极高</span>
+
+</div>
+<div class="card-title">新台币因AI股抛售创一年多最大跌幅</div>
+
+<div class="card-summary">人工智能板块股票遭遇抛售，市场对新台币情绪转弱，新台币创下一年多来最大单日跌幅。新台币一度贬值1%，至1美元兑32.222新台币，为2025年6月以来最大跌幅。中国台湾股市指标下跌近2%，台积电对大盘拖累幅度最大。全球股市抛售行情进一步加剧，市场再度担忧AI交易行情，冲击科技股占比较高的亚洲市场，新台币应声下挫。股市下跌同样打压韩元，韩元创下9月末以来最大跌幅。</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivafqh0511187.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>极高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>订单信号·利好(+60分)</li><li>行情信号·利空(-36分·板块行情走弱)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“大单”</li><li>“大跌”</li></ul></div>
+<div class="verify-note">订单·利好(60)+行情·利空(36·板块行情走弱)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:17</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">博通CEO：许多AI投资者就像赌徒 根本不知道自己在投资什么</div>
+
+<div class="card-summary">博通CEO陈福阳表示，许多押注AI与芯片赛道的投资者，其投资策略如同赌场赌徒，其中部分人根本不清楚自己在押注什么。 作为全球最大的数据中心基础设施供应商之一，陈福阳还批评部分企业在AI项目上存在资金浪费现象，并对持续亏损的AI实验室能否实现长期商业价值提出质疑。 “很多投资者根本不知道自己在投资什么。”陈福阳称，投资者抱有极度乐观的预期，到头来却发现，这几乎就像置身赌场。 陈福阳同时提到，Open</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivafqi7295355.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>业绩信号·利好(+50分)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“营收增长”</li></ul></div>
+<div class="verify-note">业绩·利好(50)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:16</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">机构：光电测试平台成CPO量产关键，测试设备供应链版图将迎新变局</div>
+
+<div class="card-summary">根据TrendForce集邦咨询最新AI互连技术研究，随AI数据中心推升高速传输需求，共封装光学（CPO）逐步迈向量产，缩短测试时间、降低成本成为重要课题。由于CPO需协同进行电学与光学量测，测试设备与软件的整合需求升高，预估2027年将是测试架构收敛的关键年。传统半导体自动测试设备（ATE）大厂积极布局的同时，新的制程、技术挑战也为相关设备、测试界面与封测服务供应商创造全新商机。</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivafqh0521641.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>扩产信号·利好(+40分)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“量产”</li></ul></div>
+<div class="verify-note">扩产·利好(40)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:11</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">黄金</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-mid">中</span>
+
+</div>
+<div class="card-title">美元与美国国债期货展现拐点信号，国际现货黄金或处于吸筹阶段；</div>
+
+<div class="card-summary">美银维持对金价的长期看涨观点，下一轮上涨最重要的催化剂是......</div>
+<div class="card-meta">
+<span>金十数据</span>
+
+
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>中</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">60%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>行情信号·利好(+15分·板块行情上涨)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“上涨”</li></ul></div>
+<div class="verify-note">行情·利好(15·板块行情上涨)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:09</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">软通动力删除“到货英伟达8000张GPU”相关推文，公司回应</div>
+
+<div class="card-summary">日前，软通动力（301236.SZ）到货8000张英伟达6000D（Blackwell架构）GPU卡的消息在业内引发关注。记者今日以投资者身份致电软通动力证券部，求证8000张英伟达GPU到货消息的真实性，公司人士未正面回应，仅表示“您可以查一下公司公众号上面的最新消息；公司做很多业务，一些业务可能也没有达到一个比较重大的标准，不必过于纠结这个卡有没有或者说数量是多少的问题。如果是比较重大的事项，</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7228090.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">软通动力</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">70%（实际订单规模）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“公司人士未正面回应，仅表示'您可以查一下公司公众号上面的最新消息'”</li></ul></div>
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:06</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">华为披露麒麟9050系列已经成功量产</div>
+
+<div class="card-summary">10月13日，在2026华为终端创新技术沟通会上，华为详细介绍了近期随华为三折叠手机Mate XT 2及直板旗舰Mate90 Pro Max面世的麒麟9050系</div>
+<div class="card-meta">
+<span>华尔街见闻</span>
+
+ <a href="https://wallstreetcn.com/articles/3177756" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>扩产信号·利好(+40分)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“量产”</li></ul></div>
+<div class="verify-note">扩产·利好(40)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:05</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">京元电子董事会批准与英伟达签订美国测试业务付款协议</div>
+
+<div class="card-summary">根据一份台湾证券交易所公告，京元电子董事会批准旗下美国子公司AeternZ Semiconductor Testing Corporation与英伟达国际公司签署客户预付款协议。协议约定，英伟达国际将支付预付款，京元电子及AeternZ将在美国扩产、预留产能，并为该客户提供测试服务。预付款将用于抵扣后续服务费。京元电子表示，预计该协议将对公司财务与业务发展产生积极影响。</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivafqi7278481.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>扩产信号·利好(+40分)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“扩产”</li></ul></div>
+<div class="verify-note">扩产·利好(40)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:02</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-mid">中</span>
+
+</div>
+<div class="card-title">米兰上市的意法半导体股价早盘下跌4.3%，泰诺宝股价下跌4.5%。</div>
+
+
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivafqh0500773.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>中</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">60%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>行情信号·利空(-36分·板块行情走弱)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“下跌”</li></ul></div>
+<div class="verify-note">行情·利空(36·板块行情走弱)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:54</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">韩资逆势加仓中国硬科技 创业板ETF、中际旭创等获净买入</div>
+
+<div class="card-summary">港股、A股市场震荡加剧之际，韩国投资者对多个硬科技标的维持净买入态势。港股市场方面， 韩国证券存托结算院数据显示，截至10月12日，过去一个月韩国投资者净买入南方东英创业板ETF、中芯国际、华虹宏力等标的。其中，韩国投资者对南方东英创业板ETF在过去一个月的买入金额为1245.79万美元，但卖出金额仅为1.18万美元，维持坚定持有状态。A股市场方面，韩国投资者过去一个月逆势加仓奥士康、德明利、中际</div>
+<div class="card-meta">
+<span>新浪财经</span>
+<span class="ticker-inline">中芯国际(688981)</span>
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwe0438397.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">中芯国际</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:40</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">据《日经亚洲》，半导体化学品和材料领先供应商Qnity的首席执行官表示，随着芯片制造商转移并缩短供应链，一种“本地化</div>
+
+<div class="card-summary">生产、本地化供应”的战略是业务增长的关键，这</div>
+<div class="card-meta">
+<span>金十数据</span>
+
+
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:02</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">三星计划扩充AI内存与存储战略</div>
+
+<div class="card-summary">三星电子周二公布下一代内存与存储技术战略，旨在提升人工智能基础设施的性能。这家韩国芯片厂商在旧金山开幕的2026年开放计算项目全球峰会上发布相关方案。三星提出提升AI基础设施性能的三大核心技术方向：高性能内存、基于CXL的内存扩展技术，以及搭载新一代固态硬盘（SSD）的数据存储与管理解决方案。三星企业副总裁、应用工程团队负责人沈浩俊进行主题演讲。沈浩俊表示：随着AI模型体量持续增大，推理所需的数据</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivafqi7274132.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">60%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>传闻信号·中性(±10分)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“计划”</li></ul></div>
+<div class="verify-note">传闻·中性(10)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:01</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">ETF两市成交额报6081.18亿元，较昨日此时放量785.94亿元</div>
+
+<div class="card-summary">截至目前，ETF两市成交额报6081.18亿元，较昨日此时放量785.94亿元，分类型来看，股票型ETF成交额1489.18亿元，债券型ETF成交额3407.18亿元，货币型ETF成交额410.68亿元，商品型ETF成交额81.03亿元，QDII型ETF成交额693.11亿元。其中，成交额最高的非货币型ETF分别是中韩半导体ETF（513310）、创业板ETF（159915）、科创50ETF（58</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivafqi7272194.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:56</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">光模块</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">曹添雨出任中信建投证券通信及人工智能联席首席分析师</div>
+
+<div class="card-summary">10月13日，中信建投证券宣布，曹添雨正式担任中信建投证券通信及人工智能行业联席首席分析师，重点覆盖ICT设备（交换机/交换芯片）、线缆（光纤光缆/海缆）、电信运营商、量子科技等研究领域。其未来将持续专注于AI互联（Interconnect）领域的研究，深耕通信及AI领域的研究，同时保持对量子科技/6G等前沿技术领域的跟踪，适度拓展研究的广度。</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7212844.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:45</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">创新药</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">【海特生物：与Visara签署独家合作与授权许可协议，首付款及近期里程碑款700万美元】金十数据10月13日讯，海特</div>
+
+<div class="card-summary">生物公告，公司与Visara签署HT006.</div>
+<div class="card-meta">
+<span>金十数据</span>
+
+
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:45</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">创新药</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">海特生物：与Visara签约，首付款及里程碑款700万美元</div>
+
+<div class="card-summary">海特生物公告，公司与Visara签署HT006.2.2滴眼液项目独家合作与授权许可协议，Visara获得该产品在大中华区以外地区的独家权利。协议生效后，Visara将支付700万美元的首付款及近期里程碑款；海特生物还可根据临床开发和商业化进程收取最高不超过1.04亿美元的相关里程碑付款，并按授权区域内年度净销售额收取一定比例的特许权使用费。</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7277318.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="创新药" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:40</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">创新药</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">鹏鹞环保：公司暂无对艾棣维欣追加投资的计划</div>
+
+<div class="card-summary">有投资者在互动平台向鹏鹞环保提问，请问截止到目前鹏鹞环保参股北京艾棣维欣生物技术股份公司初始投资成本是多少？持股比例是多少？鹏鹞环保后期有无意向增加投资这家生物疫苗公司股份？鹏鹞环保回复称，公司2020年累计出资3,000万元认缴原北京艾棣维欣生物技术有限公司128.5714万元注册资本，对应投资完成后持股比例7.6531%。艾棣维欣现已更名为四川艾棣维欣生物制药股份公司，于全国中小企业股份转让系</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7270490.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">60%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>传闻信号·中性(±10分)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“计划”</li></ul></div>
+<div class="verify-note">传闻·中性(10)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>16:00</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">黄金</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">土耳其中央银行通过传统方式开设规模为5吨的一周期黄金兑换里拉卖方掉萨拍卖。</div>
+
+
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7216477.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>14:53</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">2026湾芯展将于10月14日—16日召开 参展企业同比增长66%</div>
+
+<div class="card-summary">2026湾区半导体产业生态博览会（简称“湾芯展”）将于10月14日—16日在深圳会展中心（福田）召开。据了解，本届展会近8万㎡大型展览规模，汇聚来自22个国家和地区、1000余家优质参展企业，参展企业同比增长66%，新凯来、蜂巢互联、鼎泰匠芯、精智达等企业新技术、新设备、新生态方案集中首发，北方华创、中微公司、华海清科、电科装备、平湖实验室、长飞先进、启云方、微导纳米等龙头企业与科研机构带来一系列</div>
+<div class="card-meta">
+<span>新浪财经</span>
+<span class="ticker-inline">北方华创(002371)、中微公司(688012)</span>
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivafqi7263660.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">北方华创、中微公司</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:40</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">光模块</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">利亚德：公司暂未开展Micro-LED CPO的样品研发</div>
+
+<div class="card-summary">10月13日，利亚德（300296.SZ）在互动平台表示，公司暂未开展Micro-LEDCPO的样品研发。</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivamwf7195154.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:35</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-mixed">分化</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">美国制裁下，英伟达在华AI芯片市场份额降至34%，华为紧追28% : 国际 : 财经日报 - 재경일보</div>
+
+
+<div class="card-meta">
+<span>재경일보</span>
+
+ <a href="https://news.google.com/rss/articles/CBMiYkFVX3lxTE5ZLXA4c09jSThZRjFxcFlFaTNaLXljVnFfV01nSFlXc3BQOEVaOXVId24yWWRXekRMbDdfaGItV0JUMHFpUHF6OVMxS2hBSHl2UFIzM2NjUU9KZWtDQ2plOWN3?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>分化</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">英伟达、华为</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">90%</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“美国制裁下，英伟达在华AI芯片市场份额降至34%，华为紧追28%”</li></ul></div>
+<div class="verify-note">政策·分化(50·制裁对国产替代链利好、对依赖海外设备/客户的公司利空,标为分化)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:39</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">华为披露下一代麒麟芯片进展 已进入测试阶段</div>
+
+<div class="card-summary">在中国智能手机市场面临出货下滑与成本上涨的双重压力下，芯片正在成为华为在高端手机市场争夺技术主动权的重要支撑。10月13日，华为在上海练秋湖研发中心举行麒麟芯片</div>
+<div class="card-meta">
+<span>东方财富</span>
+
+ <a href="http://finance.eastmoney.com/news/1354,202610133894054313.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">华为</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">95%（在中国智能手机市场面临出货下滑与成本上涨的双重压力下）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“华为披露下一代麒麟芯片进展 已进入测试阶段”</li></ul></div>
+<div class="verify-note">扩产·利好(30)+行情·利好(11·板块行情上涨)+行情·利空(27·板块行情走弱)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:14</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-mid">中</span>
+
+</div>
+<div class="card-title">消息称数据中心运营商 AirTrunk推迟 15 亿美元 IPO</div>
+
+<div class="card-summary">知情人士表示，受利率上行与市场波动削弱投资者需求影响，数据中心运营商 AirTrunk将原计划在新加坡进行的房地产投资信托基金 IPO 推迟至明年。知情人士称，这家由黑石集团（Blackstone Inc.）投资的公司原本计划 10 月初正式启动路演，试探市场对这笔 15 亿美元 REIT IPO 的投资意愿。因信息尚未公开，相关消息人士要求匿名。另一家数据中心企业 Firmus Grid Ltd</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-iniuzzhm7303136.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>中</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">60%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>传闻信号·中性(±10分)</li><li>行情信号·利好(+15分·板块行情上涨)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“计划”</li><li>“上行”</li></ul></div>
+<div class="verify-note">传闻·中性(10)+行情·利好(15·板块行情上涨)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:48</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">光模块</span>
+<span class="badge badge-mixed">分化</span>
+<span class="impact-tag impact-mid">中</span>
+
+</div>
+<div class="card-title">四大股指午后全线翻红 全市场超3600股飘红</div>
+
+<div class="card-summary">上证报中国证券网讯10月13日，A股四大股指午后全线翻红，创业板指早盘一度跌近3.5%。截至13时21分，沪指涨0.34%，深证成指涨0.24%，创业板指涨0.</div>
+<div class="card-meta">
+<span>东方财富</span>
+
+ <a href="http://stock.eastmoney.com/news/11215,202610133894064942.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>分化</div>
+<div><span class="dl">程度</span>中</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">60%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>行情信号·利好(+15分·板块行情上涨)</li><li>行情信号·利空(-18分·板块行情走弱)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“翻红”</li><li>“跌近”</li></ul></div>
+<div class="verify-note">行情·利好(15·板块行情上涨)+行情·利空(18·板块行情走弱)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>14:43</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">当地政府表示，三星电机将再投资18.4亿美元，扩大其位于越南太原省的半导体基板产能。</div>
+
+
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivafqh0482517.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>15:30</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">黄金</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">Shanghai 黄金 Exchange 黄金 T+D closed at 904.3 yuan/gram on </div>
+<div class="card-original-title">原文：Shanghai Gold Exchange gold T+D closed at 904.3 yu</div>
+<div class="card-summary">Oct 13 (Tue), down 0.07%; silver T+D closed at 14,700.0 yuan/kg, down 0.82%.</div>
+<div class="card-meta">
+<span>金十数据</span>
+
+
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>14:14</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">黄金</span>
+<span class="badge badge-mixed">分化</span>
+<span class="impact-tag impact-mid">中</span>
+
+</div>
+<div class="card-title">受美国通胀数据及美联储利率路径影响，金价小幅走高</div>
+
+<div class="card-summary">金价上涨，交易员等待本周晚些时候公布的美国通胀数据，从中寻找美联储利率走向线索。黄金最高上涨0.7%，触及每盎司4200美元，掉期交易员认为本月美联储会议加息概率较低。自2月末美伊冲突爆发以来，贵金属走势与原油基本背离，该地区能源供应中断引发全球通胀与各国央行收紧货币政策。</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivafqi7226701.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>分化</div>
+<div><span class="dl">程度</span>中</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">60%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>宏观信号·利空(-20分)</li><li>行情信号·利好(+8分·板块行情上涨)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“加息”</li><li>“上涨”</li></ul></div>
+<div class="verify-note">宏观·利空(20)+行情·利好(8·板块行情上涨)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>14:26</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">光模块</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">中际旭创A股成交额超200亿元</div>
+
+<div class="card-summary">10月13日下午，中际旭创A股成交额超200亿元，现涨1.61%。</div>
+<div class="card-meta">
+<span>新浪财经</span>
+<span class="ticker-inline">中际旭创(300308)</span>
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-inivafqh0466702.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">中际旭创</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+      <div class="detail-extra event-sources">
+        <span class="dl">来源聚合（2 家）</span>
+        <span class="ev-src-badges"><span class="ev-src-badge">华尔街见闻</span><span class="ev-src-badge">新浪财经</span></span>
+      </div>
+
+      <div class="detail-extra event-related">
+        <span class="dl">相关报道（1 篇）</span>
+        <ul class="expl-list related-list"><li><a href="https://wallstreetcn.com/articles/3177729" target="_blank" rel="noopener" onclick="event.stopPropagation()">wallstreetcn.com/articles/3177729</a></li></ul>
+      </div>
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="光模块" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:03</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">光模块</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-mid">中</span>
+
+</div>
+<div class="card-title">CPO、光通信板块午后拉升，迅捷兴、金百泽20cm涨停</div>
+
+
+<div class="card-meta">
+<span>新浪财经</span>
+<span class="ticker-inline">天孚通信(300394)</span>
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-iniuzzhm7292120.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>中</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">天孚通信</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">60%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>行情信号·利好(+15分·板块行情上涨)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“涨停”</li></ul></div>
+<div class="verify-note">行情·利好(15·板块行情上涨)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:10</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">华为徐松余：下一代麒麟2027芯片已经就绪</div>
+
+<div class="card-summary">在2026麒麟媒体沟通会上，华为半导体业务无线终端芯片产品管理部部长徐松余首次公布逻辑折叠韬芯片麒麟 9050 Pro详细架构图，包括新一代灵犀CPU、马良GPU、达芬奇架构NPU、麒麟AI ISP、Balong AI Modem、FFTS函数流任务调度器、音视频处理器、安全处理器和灵犀微核协同工作。徐松余透露，下一代麒麟2027芯片也已经就绪，到目前为止，所有的测试结果都符合预期，因此在未来10</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-iniuzzhk0525817.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:17</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">华工科技战配投资粤芯半导体近2亿元</div>
+
+<div class="card-summary">据华工科技消息，今日，粤芯半导体在创业板上市，发行价12.01元/股，30家投资者参与战略配售。华工科技作为其战略配售方，出资1.99亿元。除了资本层面的合作，华工科技还与粤芯半导体签署长期战略协议，将围绕硅光芯片、光电配套芯片的晶圆代工、封装光学、光电共封装等前沿赛道开展全方位技术协同与产业合作。</div>
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-iniuzzhm7305724.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:01</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">意法半导体：意法半导体拟在2027年年度股东大会上提议再次任命让-马克·谢里（Jean-Marc Chery）担任董事长兼首席执行官，任期一年。</div>
+
+
+<div class="card-meta">
+<span>新浪财经</span>
+
+ <a href="https://finance.sina.cn/7x24/2026-10-13/detail-iniuzzhk0517405.d.html" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:21</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">黄金</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">机构：金价三季度顶住美债风暴，四季度波动风险不容忽视 - 汇通网 Fx678</div>
+
+
+<div class="card-meta">
+<span>汇通网 Fx678</span>
+
+ <a href="https://news.google.com/rss/articles/CBMiW0FVX3lxTE5wbVlzZDc2bjhYanJMTmk5RFF6eGt1VG84SVlwaFpXNU1nNXdhYXhXdGtxZ2VOVjVMWEdHaC1WdWJ5VnFDWFp5NXpBb1I2S094ODFYYzR3eFJycUU?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+      <div class="detail-extra event-sources">
+        <span class="dl">来源聚合（2 家）</span>
+        <span class="ev-src-badges"><span class="ev-src-badge">手机网易网</span><span class="ev-src-badge">汇通网 Fx678</span></span>
+      </div>
+
+      <div class="detail-extra event-related">
+        <span class="dl">相关报道（1 篇）</span>
+        <ul class="expl-list related-list"><li><a href="https://news.google.com/rss/articles/CBMiYkFVX3lxTE5lUi1iUzZxYjNpS244UjlBamRicVhpektXdFN6bHR0U0dGYU9RX2IxV0R1Ti1xekhDZGE3R3hnU2hNcEQ0ODZDRjN4cmlERWlfV1JuVUQxUG5BM2dmY3BwMTl3?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">news.google.com/rss/articles/CBMiYkFVX3lxTE5lUi1iU</a></li></ul>
+      </div>
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:27</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">黄金</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">美银警告黄金短期难站稳4000美元，真正触底还要等三个信号 - 金融界</div>
+
+
+<div class="card-meta">
+<span>金融界</span>
+
+ <a href="https://news.google.com/rss/articles/CBMiY0FVX3lxTE82OWdRVi1NcUZmcmE3Q0QxQTBZT1p5VDM2SkxxbG5RcW1YeDdzWWhlX0Y5YTFjSWZCZ2ZraVJOUVNtaHUtUUo1RWs3ekZ6bWZ3ejQtblpQYjU1UjlSbEJiaWM4TQ?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>13:18</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">黄金</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">现货黄金站上4200美元/盎司，日内涨0.69%。</div>
+
+
+<div class="card-meta">
+<span>华尔街见闻</span>
+
+ <a href="https://wallstreetcn.com/articles/3177683" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>11:16</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">黄金</span>
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-vhigh">极高</span>
+
+</div>
+<div class="card-title">机构：维持黄金谨慎预期，但短期回调难掩中长期逻辑_外汇动态报道 - 汇通网 Fx678</div>
+
+
+<div class="card-meta">
+<span>汇通网 Fx678</span>
+
+ <a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTE1WcGstRmR4bU50WGNLUWxFaVlHWldFVUFIUjg0cVZIc2NONFhrcUhabVRVQy15QWx3QWVqaFJXSjh2WkpPamFMdDQ1RHJQNU5pT2xJS2Y5TnhBZw?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>极高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>价格信号·利空(-60分)</li><li>行情信号·利空(-36分·板块行情走弱)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“回调”</li><li>“回调”</li></ul></div>
+<div class="verify-note">价格·利空(60)+行情·利空(36·板块行情走弱)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:25</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">粤芯半导体敲钟，首批入局的产投机构广汽资本收获第51家上市公司</div>
+
+<div class="card-summary">10月13日粤芯半导体IPO，成创业板首家晶圆代工企业。公司是广东首家量产12英寸晶圆制造企业、中国大陆唯一12英寸硅光晶圆量产平台。广汽资本于2021、202</div>
+<div class="card-meta">
+<span>华尔街见闻</span>
+
+ <a href="https://wallstreetcn.com/articles/3177612" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">60%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>扩产信号·利好(+20分)</li><li>政策信号·利好(+25分)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“量产”</li><li>“自主可控”</li></ul></div>
+<div class="verify-note">扩产·利好(20)+政策·利好(25)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:00</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">黄金</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-mid">中</span>
+
+</div>
+<div class="card-title">美元反弹与通胀担忧施压，黄金围绕4160美元震荡_外汇动态报道 - 汇通网 Fx678</div>
+
+
+<div class="card-meta">
+<span>汇通网 Fx678</span>
+
+ <a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTE84Z3FDV0FEZ21UTmVyTEtubHZhVUtYNnd4dm56VnQ3Yk1uS0M4ejh1cGVvRnEyM0VQZ3NrMWVab0ZEOHVDRU84LXh6cjRobUF2dnZRYU14RTBsQQ?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>中</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">60%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>行情信号·利好(+15分·板块行情上涨)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“反弹”</li></ul></div>
+<div class="verify-note">行情·利好(15·板块行情上涨)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:59</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">上市捷报 | 沙利文祝贺粤芯半导体技术股份有限公司成功登陆创业板(301660.SZ) - </div>
+
+<div class="card-summary">frostchina.com</div>
+<div class="card-meta">
+<span>frostchina.com</span>
+
+ <a href="https://news.google.com/rss/articles/CBMif0FVX3lxTE13NVlZaEVWdGxwTThmSXhXMUdtSDR3RWV6Q24yQTRvUVU3ZjRDTEdxMG1RTkhWRkhmbks1R3haREZ3Q1lzY3k2Qm1YVXFEdWI5eTlYM3habThURU5DbWxCN0VFUmpoYWVySVUtbFRFc1R2Y0QyY3JROVg5azRlcnc?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">粤芯半导体</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“沙利文祝贺粤芯半导体技术股份有限公司成功登陆创业板”</li></ul></div>
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>09:38</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">黄金</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">金价为何跌不下去？华尔街巨头揭开真相，并警告更大波动 - FX168</div>
+
+
+<div class="card-meta">
+<span>FX168</span>
+
+ <a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE13VkotaFdCQnY5eENZYjBpUzlDVmtKM3VyWEhKN3hQLVB2bXFwTHZLVnFUQ25oZGpDRzhVZ09Wc010dVNjZlp1LW5DbXJGZ2pHTUxzMnJfN1FKWmJrcVdyT0ZoMGlQSVVVN3Exag?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>10:11</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">黄金</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">金价短期从高位向4000美元方向回撤，成为下一个购金大机会 - 汇通网 Fx678</div>
+
+
+<div class="card-meta">
+<span>汇通网 Fx678</span>
+
+ <a href="https://news.google.com/rss/articles/CBMiW0FVX3lxTE5HLVk5SlMtdlJyRWU0OXRmbldrWlpsX2lBZE1FOFJ2QnZxUzl6dWRGVTBCalBiUWxnVlJmdXk4UUZhS0FkWnZ6UDUxWWpTcWszWWxBakp6ZjZCbjQ?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>低</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">40%（关键词引擎自动研判，未经验证）</span></div>
+
+
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>08:00</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">粤芯半导体登陆创业板 硬科技晶圆制造迎来新标杆 - 中证网</div>
+
+
+<div class="card-meta">
+<span>中证网</span>
+
+ <a href="https://news.google.com/rss/articles/CBMieEFVX3lxTE5wVWFFNFFRemRtV2FMclB0ODV2UjVXTDlSYzB1SWRWUEViU20yNEIwX0dLYmMyNHRDZF9Udy1WbE9UWnlFczBodlVPLXhYS3AwY0FHQUdublJOVHU0aHdCZFpuRU4wZmdwX0hOYjV0S0J0T3IwYkNiOA?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">粤芯半导体</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“硬科技晶圆制造迎来新标杆”</li></ul></div>
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>06:58</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">黄金</span>
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">黄金交易提醒：美元狂飙+油价暴涨双杀，美联储加息阴云压顶，金价再度剑指4000关口？</div>
+
+<div class="card-summary">_外汇动态报道 - 汇通网 Fx678</div>
+<div class="card-meta">
+<span>汇通网 Fx678</span>
+
+ <a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTE5hT0MxZ0NjUDJLWDVnUEc2M2FwejFJMmVCTmFoRl9taUxuZkNSbGF2QnRma280UTRvNzUxeUxKOW9pRTNPSW95UWZTM3VKZ18xdlNNdVR1OEhWUQ?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>宏观信号·利空(-60分)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“加息”</li></ul></div>
+<div class="verify-note">宏观·利空(60)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>07:41</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">黄金</span>
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">金价涨了！何时突破5000美元关口 - 新浪网</div>
+
+
+<div class="card-meta">
+<span>新浪网</span>
+
+ <a href="https://news.google.com/rss/articles/CBMigwFBVV95cUxPN2dzcWh2S2xCZzFPbnVRNWFjNmw2QXFRMzNoV0xYZW9KVW1QM3hsUW80YzFVckcyVGtGWEg3Tld3a2g4ZVBvd2FRbEp0RG1FbFVZY2MycWNWb3kxVkxmbndVNlA4bGZnU01HbWdEZHpkaU5yRERtQ1RVQ3NoY3dJQVJIZw?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>技术信号·利好(+60分)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“突破”</li></ul></div>
+<div class="verify-note">技术·利好(60)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="黄金" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>05:01</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">黄金</span>
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-high">高</span>
+
+</div>
+<div class="card-title">汇丰下调黄金目标价 鹰派美联储与强势美元持续施压 - 财联社</div>
+
+
+<div class="card-meta">
+<span>财联社</span>
+
+ <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTE9ac0xMcGViQnRhRGZ2R0N0SzJSTzh4V0RTWXdldWYtMzdTODFvTjN0UmZOTG9KRGxEYVRLN1ZTUXRaU1dUU0dFbA?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">80%（关键词引擎自动研判，未经验证）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>宏观信号·利空(-40分)</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“鹰派”</li></ul></div>
+<div class="verify-note">宏观·利空(40)</div>
+
+
+</div>
+</div>
+</div>
+<div class="news-card" data-sector="半导体" onclick="this.classList.toggle('expanded')">
+<div class="card-aside"><time>04:59</time><span class="d">10-13</span></div>
+<div class="card-body">
+<div class="card-top">
+<span class="card-cat">半导体</span>
+<span class="badge badge-neutral">中性</span>
+<span class="impact-tag impact-low">低</span>
+
+</div>
+<div class="card-title">拟再投6.3亿元建设晶圆激光隐形切割项目 九州一轨跨界加码能否优化收入结构？</div>
+
+<div class="card-summary">|速读公告 - 财联社</div>
+<div class="card-meta">
+<span>财联社</span>
+
+ <a href="https://news.google.com/rss/articles/CBMiSEFVX3lxTE1xY1poTHpWcjN1cE83aVVETDY0aF9ENEVpejdsbHNsNDFHU3RReU8tVDhMeGZ5Z2k4N090ejMwR2h1ZlhNUW1ZWg?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>中性</div>
+<div><span class="dl">程度</span>低</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>长期</div>
+</div>
+<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">九州一轨</span></div>
+<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">70%（跨界加码能否优化收入结构？）</span></div>
+<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list"><li>同意关键词预判</li></ul></div>
+<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list"><li>“拟再投6.3亿元建设晶圆激光隐形切割项目”</li></ul></div>
+<div class="verify-note">未命中明显信号,中性</div>
+
+
+</div>
+</div>
+</div>
+</div>
+<div class="news-empty" id="newsEmpty" hidden>该板块今日无入选新闻</div>
+
+<div class="sec-title">板块冲击矩阵</div>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>板块</th><th>冲击</th><th>方向</th><th>新闻</th><th>传导逻辑</th><th>关联标的</th></tr></thead>
+    <tbody><tr><td class="mx-name">半导体</td><td class="shock-strong">强</td><td class="dir-bull">利好</td><td class="num">43</td><td>半导体板块43条新闻，方向以利好为主</td><td class="num">中芯国际(688981)、北方华创(002371)、中微公司(688012)</td></tr>
+<tr><td class="mx-name">黄金</td><td class="shock-strong">强</td><td class="dir-mixed">分化</td><td class="num">17</td><td>黄金板块17条新闻，方向以分化为主</td><td class="num">紫金矿业、山东黄金、中金黄金</td></tr>
+<tr><td class="mx-name">光模块</td><td class="shock-strong">强</td><td class="dir-flat">中性</td><td class="num">7</td><td>光模块板块7条新闻，方向以中性为主</td><td class="num">中际旭创(300308)、天孚通信(300394)</td></tr>
+<tr><td class="mx-name">创新药</td><td class="shock-weak">弱</td><td class="dir-flat">中性</td><td class="num">6</td><td>创新药板块6条新闻，方向以中性为主</td><td class="num">百济神州(688235)、恒瑞医药(600276)</td></tr></tbody>
+  </table>
+</div>
+
+
+<div class="sec-title">今日要点</div>
+<div class="key-points"><div class="kp-card">【半导体】三佳科技半导体封装装备国产替代推进</div>
+<div class="kp-card">【半导体】华为麒麟芯片进入测试阶段</div>
+<div class="kp-card">【半导体】韩国KOSPI指数暴跌超6%，三星电子、SK海力士遭散户抛售</div>
+<div class="kp-card">【半导体】9月中国乘用车零售同比下降28%，车市'旺季不旺'，AI驱动芯片价格暴涨</div></div>
+
+
+<div class="footer">
+  基于多源财经 API 自动抓取 · Claude API 智能分析 + 中文翻译 · 每天更新（含周末）<br>
+  监控范围：半导体 / 光模块 / 创新药 / 黄金 &nbsp;|&nbsp; 包含韩国及美股半导体市场<br>
+  <strong>免责声明：</strong>基于公开信息自动整理，不构成投资建议。股市有风险，投资需谨慎。
+</div>
+
+</div>
+<script>
+const REFRESH_URL = "https://1384887796-0ww1bkypy1.ap-guangzhou.tencentscf.com";
+// 勿在此写死密钥: 该值会被内联进公开页面,等同于直接发布
+const REFRESH_SECRET = "";
+// BASE was set by the inline script in <head> (which also injected Chart.js).
+// It holds the site root derived from the current URL — '' at the domain root
+// (local preview), '/daily-stock-news' on gh-pages. All history/asset paths
+// below join against it so they resolve correctly on both the index page and
+// history pages under /history/.
+const BASE = window.BASE || '';
+// 页面自身构建时间(UTC ISO)。auto-check 用它和 history/build-state.json 的
+// generatedAt 比较:定时/推送构建完成后,停留在首页的用户会自动刷新到最新版。
+const PAGE_GENERATED_AT = "2026-10-13T09:12:52.695Z";
+const PHASE_CN = { fetch: '抓取新闻', analyze: 'AI 分析', 'analyze-kw': '关键词引擎', chart: '图表数据', write: '写入文件', commit: '提交 git', push: '推送 git', cloud: '云端构建', done: '完成', skipped: '空报告,跳过推送', error: '失败' };
+let refreshStartedAt = 0;
+let refreshTimer = null;
+let lastPhase = 'fetch';
+function isLocalHost() { return ['localhost', '127.0.0.1', '::1', '0.0.0.0'].includes(location.hostname); }
+// 公网可用: 配置了云端刷新代理(REFRESH_URL 非空); 本机可用: 本地预览服务
+function refreshAvailable() { return !!(REFRESH_URL || isLocalHost()); }
+// 云端代理仅在公网域名生效; 本机(localhost)下即使注入了云端 URL 也走本地 refresh-server
+const isCloud = !!(REFRESH_URL && !isLocalHost());
+function updateBtnPhase(phase) {
+  const btn = document.querySelector('.refresh-btn');
+  if (!btn) return;
+  const label = PHASE_CN[phase] || (phase ? String(phase) : '构建中');
+  btn.textContent = label + (refreshStartedAt ? ' ' + Math.round((Date.now() - refreshStartedAt) / 1000) + 's' : '');
+}
+function startBtnTimer() {
+  stopBtnTimer();
+  refreshTimer = setInterval(() => { if (document.querySelector('.refresh-btn')?.disabled) updateBtnPhase(lastPhase); }, 1000);
+}
+function stopBtnTimer() { if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; } }
+async function triggerRefresh() {
+  const btn = document.querySelector('.refresh-btn');
+  if (!refreshAvailable()) {
+    showToast('刷新服务不可用', 'err');
+    return;
+  }
+  if (btn.disabled) return; // 已在进行中,避免重复轮询
+  btn.disabled = true;
+  btn.textContent = '提交中…';
+  refreshStartedAt = Date.now();
+
+  // ── 云端代理模式: 触发 GitHub Actions 重建,前端轮询 build-state.json ──
+  if (isCloud) {
+    const runId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    try {
+      const r = await fetch(REFRESH_URL + '/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(REFRESH_SECRET ? { 'X-Refresh-Secret': REFRESH_SECRET } : {}) },
+        body: JSON.stringify({ runId }),
+      });
+      const d = await r.json();
+      if (r.status === 202 && d.status === 'accepted') {
+        showToast('已在云端触发构建,完成后自动刷新', 'ok');
+        lastPhase = 'cloud';
+        updateBtnPhase(lastPhase);
+        startBtnTimer();
+        pollStatus(runId);
+      } else {
+        showToast(d.message || d.error || '请求失败', 'err');
+        resetBtn();
+      }
+    } catch (e) {
+      showToast('云端刷新服务异常,请稍后再试', 'err');
+      resetBtn();
+    }
+    return;
+  }
+
+  // ── 本机模式: 本地 refresh-server 的 /refresh + /status ──
+  if (!isLocalHost()) {
+    showToast('刷新按钮仅在本机预览 (http://127.0.0.1:3456) 可用', 'err');
+    return;
+  }
+  try {
+    const r = await fetch('/refresh', { method: 'POST' });
+    const d = await r.json();
+    if (r.status === 202) {
+      showToast(d.status === 'already_running' ? '构建已在进行,完成后自动刷新' : '已开始重建,完成后自动刷新', 'ok');
+      lastPhase = d.phase || 'fetch';
+      updateBtnPhase(lastPhase);
+      startBtnTimer();
+      pollStatus();
+    } else {
+      showToast(d.message || '请求失败', 'err');
+      resetBtn();
+    }
+  } catch (e) {
+    showToast('刷新服务未启动,请本地运行 refresh-server.mjs', 'err');
+    resetBtn();
+  }
+}
+function showToast(msg, type) {
+  const t = document.createElement('div');
+  t.className = 'refresh-toast toast-' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 4000);
+}
+function resetBtn() {
+  stopBtnTimer();
+  const btn = document.querySelector('.refresh-btn');
+  btn.disabled = false;
+  btn.textContent = '刷新日报';
+}
+async function pollStatus(myRunId) {
+  let previewNotified = false; // 每次轮询会话只提示一次"基础版已发布"
+  // ── 云端模式: 轮询 history/build-state.json,用 runId 精确判断"这一次"构建完成 ──
+  if (isCloud) {
+    const MAX = 90; // 8s × 90 ≈ 12 分钟,覆盖 Actions 排队 + 构建 + 部署
+    let netErrors = 0;
+    for (let i = 0; i < MAX; i++) {
+      await new Promise(r => setTimeout(r, 8000));
+      try {
+        // _t 时间戳 + no-store,双重防 GitHub Pages 缓存旧文件
+        const r = await fetch(BASE + '/history/build-state.json?_t=' + Date.now(), { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const d = await r.json();
+        netErrors = 0;
+        updateBtnPhase('cloud');
+        // 两阶段构建:preview = 纯关键词简报已上线,提示后继续轮询,等 AI 版 done
+        if (d.state === 'preview' && myRunId && d.runId === myRunId && !previewNotified) {
+          previewNotified = true;
+          showToast('基础版已发布（关键词引擎），AI 研判生成中，完成后自动刷新', 'ok');
+        }
+        if (d.state === 'done' && myRunId && d.runId === myRunId) {
+          stopBtnTimer();
+          showToast('刷新完成!即将自动重载', 'ok');
+          setTimeout(() => location.reload(), 1500);
+          return;
+        }
+      } catch (e) {
+        if (++netErrors >= 5) { stopBtnTimer(); showToast('云端构建暂不可见,请稍后刷新页面', 'err'); resetBtn(); return; }
+      }
+    }
+    stopBtnTimer();
+    showToast('云端构建超时,请查看 GitHub Actions 运行记录', 'err');
+    resetBtn();
+    return;
+  }
+
+  // ── 本机模式: 轮询 /status ──
+  const MAX = 75; // 8s × 75 ≈ 10 分钟,覆盖 AI proxy 最坏 3×180s 重试
+  let netErrors = 0;
+  for (let i = 0; i < MAX; i++) {
+    await new Promise(r => setTimeout(r, 8000));
+    try {
+      const r = await fetch('/status', { cache: 'no-store' });
+      const d = await r.json();
+      netErrors = 0;
+      if (d.phase) lastPhase = d.phase;
+      updateBtnPhase(d.phase || lastPhase);
+      if (d.state === 'done') {
+        stopBtnTimer();
+        const pf = d.phase === 'push_failed';
+        // skipped = 推送闸门拦下的空报告(见 scripts/push-gate.mjs)。本地页面已按这次
+        // 构建重写,但没提交没推送 —— 得说清楚,否则用户以为刷新成功了线上却没动。
+        const skipped = d.phase === 'skipped';
+        const msg = skipped ? ('已跳过推送 —— ' + (d.error || '当日 0 条新闻'))
+          : pf ? '刷新完成(推送 main 失败,本地已更新),即将重载'
+            : '刷新完成!即将自动重载';
+        showToast(msg, (pf || skipped) ? 'err' : 'ok');
+        setTimeout(() => location.reload(), 1500);
+        return;
+      }
+      if (d.state === 'error') {
+        stopBtnTimer();
+        showToast('刷新失败:' + (d.error || '请查看服务端日志'), 'err');
+        resetBtn();
+        return;
+      }
+    } catch (e) {
+      if (++netErrors >= 3) { stopBtnTimer(); showToast('刷新服务失去响应,请检查是否关闭', 'err'); resetBtn(); return; }
+    }
+  }
+  stopBtnTimer();
+  showToast('构建超时,请查看服务端日志', 'err');
+  resetBtn();
+}
+// ── 自动检测新构建 ─────────────────────────────────────────
+// 定时/推送构建完成后页面不会自己知道,这里低频轮询 history/build-state.json
+// 的 generatedAt(每次构建重写),发现比本页构建时间新就 toast 提示并自动刷新。
+// localStorage 记录已刷过的版本,防止 CDN 边缘时序造成刷新循环。
+const AUTO_CHECK_MS = 120000; // 2 分钟
+const AUTO_RELOAD_KEY = 'dailyStockAutoReloadAt';
+const isHistoryPage = window.location.pathname.indexOf('/history/') >= 0;
+async function checkForNewBuild() {
+  // 仅公网首页生效。历史页是当日固定存档、不会被新构建重写,自动刷新只会空转;
+  // 本机预览(localhost)不部署 build-state.json,也跳过。
+  if (isLocalHost() || isHistoryPage) return;
+  try {
+    const r = await fetch(BASE + '/history/build-state.json?_t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d.generatedAt || !PAGE_GENERATED_AT) return;
+    // 两阶段构建的 preview(纯关键词简报)不自动跳转 —— 定时/后台升级等 AI 版
+    // (done)落地后才刷新;只有手动刷新流程的 pollStatus 才提示预览版。
+    if (d.state === 'preview') return;
+    if (d.generatedAt <= PAGE_GENERATED_AT) return; // 页面已是最新
+    if (d.generatedAt === localStorage.getItem(AUTO_RELOAD_KEY)) return; // 已为这一版刷过
+    localStorage.setItem(AUTO_RELOAD_KEY, d.generatedAt);
+    showToast('检测到新日报,即将自动刷新', 'ok');
+    setTimeout(() => location.reload(), 3000);
+  } catch (e) { /* 网络抖动/部署时序,静默跳过,下轮再试 */ }
+}
+function startAutoCheck() {
+  setTimeout(checkForNewBuild, 1500); // 页面渲染稳定后先查一次
+  setInterval(() => {
+    if (document.visibilityState === 'hidden') return; // 后台标签页不查
+    checkForNewBuild();
+  }, AUTO_CHECK_MS);
+}
+startAutoCheck();
+// History browsing — the archive lives as static files under history/ so the
+// picker works on the static gh-pages site (no local server needed).
+async function loadHistoryDates(){
+  const sel = document.getElementById('historySelect');
+  if(!sel) return;
+  try {
+    const r = await fetch(BASE + '/history/dates.json');
+    const d = await r.json();
+    sel.innerHTML = '<option value="">-- 选择日期 --</option>';
+    (d.dates || []).forEach(dt => {
+      const opt = document.createElement('option');
+      opt.value = dt;
+      const y=dt.slice(0,4), m=dt.slice(4,6), day=dt.slice(6,8);
+      opt.textContent = y + '-' + m + '-' + day;
+      sel.appendChild(opt);
+    });
+  } catch(e) { console.warn('加载历史日期失败', e); }
+}
+function showHistoryDate(){
+  const sel = document.getElementById('historySelect');
+  const dt = sel.value;
+  if(!dt) return;
+  window.location.href = BASE + '/history/日报_' + dt + '.html';
+}
+function goToday(){
+  window.location.href = BASE + '/';
+}
+// ── 板块筛选 ─────────────────────────────────────────────
+// 两个入口共用同一个筛选状态:新闻列表上方的胶囊条 #newsFilter,以及「板块速览」
+// 的 .sc 卡片。再点当前选中的那个(或「全部」)取消。状态写进 URL hash(#半导体):
+// 120s 一次的新构建自动重载、手动刷新、分享链接都能带着筛选。用 replaceState
+// 写入,不往浏览器后退键里塞条目。
+let currentSector = '';
+function sectorFromHash() {
+  try { return decodeURIComponent((location.hash || '').replace(/^#/, '')); }
+  catch (e) { return ''; }
+}
+// 本页可筛的板块,取自胶囊条(「全部」那个 data-sector 是空串,filter 掉)。
+// hash 是用户可手改的,出现不在集合里的值就当没筛选,否则会得到一整页空白。
+function knownSectors() {
+  return Array.from(document.querySelectorAll('.news-filter .fchip')).map(b => b.dataset.sector).filter(Boolean);
+}
+function applySectorFilter(sector, opts) {
+  const grid = document.getElementById('newsGrid');
+  if (!grid) return; // 没有新闻列表的渲染路径(理论上不存在,防御一下)
+  const cards = grid.querySelectorAll('.news-card');
+  const active = knownSectors().indexOf(sector) >= 0 ? sector : '';
+  currentSector = active;
+  let shown = 0;
+  cards.forEach(c => {
+    const hit = !active || c.dataset.sector === active;
+    c.hidden = !hit;
+    if (hit) shown++;
+  });
+  const countEl = document.getElementById('newsCountText');
+  if (countEl) countEl.textContent = active
+    ? active + ' · ' + shown + ' / ' + cards.length + ' 条'
+    : '共 ' + cards.length + ' 条';
+  const emptyEl = document.getElementById('newsEmpty');
+  if (emptyEl) emptyEl.hidden = !(active && shown === 0);
+  // 两个入口的选中态一起同步;「全部」胶囊的 data-sector 是空串,未筛选时正好命中
+  document.querySelectorAll('.news-filter .fchip, .sector-row .sc').forEach(b => {
+    const on = (b.dataset.sector || '') === active;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  history.replaceState(null, '', active
+    ? '#' + encodeURIComponent(active)
+    : location.pathname + location.search);
+  // 速览在页面上半部、列表在中部(中间隔着图表),筛选后滚过去才看得到结果
+  if (active && opts && opts.scroll) {
+    (document.getElementById('newsSection') || grid).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+// 两个入口绑同一段逻辑:点到当前选中的那个就取消筛选
+function bindSectorTrigger(container, opts) {
+  if (!container) return;
+  container.addEventListener('click', (e) => {
+    const btn = e.target.closest('.fchip, .sc');
+    if (!btn || btn.dataset.sector === undefined) return;
+    const s = btn.dataset.sector;
+    applySectorFilter(s && s !== currentSector ? s : '', opts);
+  });
+}
+bindSectorTrigger(document.getElementById('newsFilter'), { scroll: false });
+bindSectorTrigger(document.querySelector('.sector-row'), { scroll: true });
+window.addEventListener('hashchange', () => applySectorFilter(sectorFromHash()));
+applySectorFilter(sectorFromHash()); // 带 hash 的链接/刷新后首屏即生效
+document.addEventListener('DOMContentLoaded', () => {
+  loadHistoryDates();
+  // 刷新按钮显隐: 公网无代理时隐藏(避免不可用的按钮),历史页隐藏;本机预览始终显示
+  const btn = document.querySelector('.refresh-btn');
+  if (btn) {
+    const onHistory = window.location.pathname.indexOf('/history/') >= 0;
+    if (onHistory && !isLocalHost()) btn.style.display = 'none';
+    else if (!refreshAvailable()) btn.style.display = 'none';
+  }
+});
+</script>
+
+<script>
+
+// ETF Trend
+new Chart(document.getElementById('etfTrendChart'), {
+  type: 'line',
+  data: {
+    labels: ["2026-08-25","2026-08-26","2026-08-27","2026-08-28","2026-08-31","2026-09-01","2026-09-02","2026-09-03","2026-09-04","2026-09-07","2026-09-08","2026-09-09","2026-09-10","2026-09-11","2026-09-14","2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22","2026-09-23","2026-09-24","2026-09-28","2026-09-29","2026-09-30","2026-10-08","2026-10-09","2026-10-12","2026-10-13"],
+    datasets: [{"label":"半导体","data":[100,101.16,105.64,103.22,104.47,101.97,100.27,99.73,97.14,100.18,98.93,98.39,97.94,96.33,94.45,96.33,100.54,99.64,103.04,103.49,104.38,103.85,101.25,96.51,97.32,94.19,89.89,89.36,87.03,86.85],"borderColor":"#7c3aed","backgroundColor":"#7c3aed22","borderWidth":2,"pointRadius":1.5,"pointHoverRadius":4,"tension":0.3,"fill":false,"spanGaps":true},{"label":"光模块","data":[100,100.4,104.37,102.98,104.37,102.19,100.3,99.8,98.11,104.27,103.58,104.57,103.78,104.08,100.99,100.5,104.37,103.78,106.36,107.46,107.26,106.36,103.18,96.12,97.02,95.92,91.05,89.96,85.79,87.28],"borderColor":"#0891b2","backgroundColor":"#0891b222","borderWidth":2,"pointRadius":1.5,"pointHoverRadius":4,"tension":0.3,"fill":false,"spanGaps":true},{"label":"创新药","data":[100,100.15,101.08,99.54,97.84,97.84,97.23,98.31,97.38,97.07,98,96.46,94.76,92.76,95.84,94.92,95.22,95.84,96.61,100.31,100.15,100.31,97.07,96.76,97.38,100.77,97.07,97.53,95.84,94.61],"borderColor":"#0d9488","backgroundColor":"#0d948822","borderWidth":2,"pointRadius":1.5,"pointHoverRadius":4,"tension":0.3,"fill":false,"spanGaps":true},{"label":"黄金","data":[100,99.83,99.09,99.39,95.83,95.65,93.38,95.51,96.13,94.66,94.9,94.84,95.28,93.81,93.1,92.62,93.41,92.9,94.5,93.67,92.93,93.33,92.19,89.88,89.36,90.56,88.89,90.39,90.06,90.2],"borderColor":"#d97706","backgroundColor":"#d9770622","borderWidth":2,"pointRadius":1.5,"pointHoverRadius":4,"tension":0.3,"fill":false,"spanGaps":true}],
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12, font: { size: 10 }, usePointStyle: true } },
+      tooltip: { bodyFont: { size: 11 }, titleFont: { size: 11 } },
+    },
+    scales: {
+      x: { ticks: { font: { size: 9 }, maxTicksLimit: 8, maxRotation: 45 }, grid: { display: false } },
+      // 不设 y 轴标题:竖排中文在 240px 高的图里会压住刻度数字,而卡片标题
+      // 已经写明「首日=100」,轴的语义在标题里就够了。
+      y: { ticks: { font: { size: 9 } }, grid: { color: '#ebedf2' } },
+    },
+  },
+});
+
+// Sentiment donut
+new Chart(document.getElementById('sentimentChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ["利好","利空","中性","分化"],
+    datasets: [{"data":[22,9,36,6],"backgroundColor":["#16a34a","#dc2626","#9ca0af","#ea580c"],"borderWidth":0}],
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '55%',
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 8, padding: 10, font: { size: 10 }, usePointStyle: true } },
+    },
+  },
+});
+
+// Time window donut
+new Chart(document.getElementById('timeWindowChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ["短期","中期","长期"],
+    datasets: [{"data":[22,48,3],"backgroundColor":["#2563eb","#ea580c","#16a34a"],"borderWidth":0}],
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '55%',
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 8, padding: 10, font: { size: 10 }, usePointStyle: true } },
+    },
+  },
+});
+
+// Direction stacked bar
+new Chart(document.getElementById('directionChart'), {
+  type: 'bar',
+  data: {
+    labels: ["半导体","光模块","创新药","黄金"],
+    datasets: [{"label":"利好","data":[15,2,0,5],"backgroundColor":"#16a34a"},{"label":"利空","data":[5,1,0,3],"backgroundColor":"#dc2626"},{"label":"中性","data":[20,3,6,7],"backgroundColor":"#9ca0af"},{"label":"分化","data":[3,1,0,2],"backgroundColor":"#ea580c"}],
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 8, padding: 8, font: { size: 10 }, usePointStyle: true } },
+    },
+    scales: {
+      x: { stacked: true, ticks: { font: { size: 9 } }, grid: { display: false } },
+      y: { stacked: true, ticks: { font: { size: 9 }, stepSize: 1 }, grid: { color: '#ebedf2' } },
+    },
+  },
+});
+
+// Heatmap — using matrix plugin or bar fallback
+new Chart(document.getElementById('heatmapChart'), {
+  type: 'bar',
+  data: {
+    labels: ["半导体","光模块","创新药","黄金"],
+    datasets: [{"label":"低","data":[20,3,6,7],"backgroundColor":"#dde1e6"},{"label":"中","data":[7,3,0,4],"backgroundColor":"#a8b0ba"},{"label":"高","data":[13,0,0,5],"backgroundColor":"#5c6570"},{"label":"极高","data":[3,1,0,1],"backgroundColor":"#23272e"}],
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    indexAxis: 'x',
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 8, padding: 8, font: { size: 10 }, usePointStyle: true } },
+    },
+    scales: {
+      x: { stacked: false, ticks: { font: { size: 9 } }, grid: { display: false } },
+      y: { stacked: false, ticks: { font: { size: 9 }, stepSize: 1 }, grid: { color: '#ebedf2' } },
+    },
+  },
+});
+</script>
+
+</body>
+</html>
