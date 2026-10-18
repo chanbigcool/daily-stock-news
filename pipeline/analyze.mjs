@@ -16,9 +16,16 @@ import {
 // Detect whether a title is not in Chinese and needs translation.
 // Only Chinese characters are treated as "already translated" — English and
 // Korean headlines (e.g. Samsung/SK hynix feeds) must go through translation.
+// 只含个别汉字、主体仍是英文的标题也要译:本地词典会把 Gold/股票 等词替换成
+// 汉字,于是 "Seoul Economic Daily reports 三星 Electronics..." 这种混排标题
+// 会被「含汉字」误判成已翻译,英文原样留在页面上。汉字占少数时同样送去翻译。
 const HAN_RE = /[一-鿿]/;
 function needsTranslation(text) {
-  return typeof text === 'string' && text.length > 0 && !HAN_RE.test(text);
+  if (typeof text !== 'string' || text.length === 0) return false;
+  const han = (text.match(/[一-鿿]/g) || []).length;
+  if (han === 0) return true;
+  const latin = (text.match(/[A-Za-z]/g) || []).length;
+  return latin >= 6 && latin > han * 2;
 }
 
 function extractTextBlock(data) {
@@ -208,6 +215,36 @@ export function translateWithLocalDict(text) {
 
 // Word-boundary matching for short Latin keywords lives in sectors.mjs (matchKw).
 
+// 单轮批量翻译:返回 { [id]: {title, desc} }。strict 用于对未译出的条目重试。
+async function requestTranslations(batch, strict = false) {
+  const strictNote = strict
+    ? '\n注意：上一轮有部分条目被原样返回成英文/韩文。本轮必须把每一条都译成简体中文，禁止保留原文。'
+    : '';
+  const prompt = `你是财经新闻翻译。把以下 JSON 数组中的英文/韩文标题和描述翻译成简体中文金融术语，公司名可保留或译名（如 SK Hynix→SK海力士、Nvidia→英伟达、Samsung→三星、TSMC→台积电）。要求：title 是完整、通顺的中文新闻标题（不超过 30 字），先概括核心事实；若原标题被截断，请结合 desc 补全，不要把半句话直译过来。desc 是对应的中文摘要（200 字以内）。原样返回 JSON 数组（每个对象含 id/title/desc），不要 markdown 代码块，不要加注释：${strictNote}\n${JSON.stringify(batch)}`;
+  const resp = await fetch(`${CONFIG.apiBase}/v1/messages`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': CONFIG.apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({ model: CONFIG.model, max_tokens: 8192, messages: [{ role: 'user', content: prompt }] }),
+    timeout: 90000,
+    // fetch 的 timeout 只覆盖到收到 headers;resp.json() 读 body 可能无限挂起
+    // (GLM 返回 200 后 body 不结束)。AbortSignal.timeout 覆盖整个请求+body。
+    signal: AbortSignal.timeout(90000),
+  });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const data = await resp.json();
+  const text = extractTextBlock(data).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  const start = text.indexOf('['), end = text.lastIndexOf(']');
+  const arr = JSON.parse(start >= 0 && end > start ? text.slice(start, end + 1) : text);
+  if (!Array.isArray(arr)) throw new Error('bad array');
+  const byId = {};
+  for (const t of arr) if (t && typeof t.id === 'number') byId[t.id] = t;
+  return byId;
+}
+
 // Batch-translate non-Chinese titles/descriptions via the Claude proxy.
 // Returns a copy of newsItems with title_cn / summary_cn set.
 async function translateItems(newsItems) {
@@ -229,35 +266,40 @@ async function translateItems(newsItems) {
   }
 
   try {
-    const prompt = `你是财经新闻翻译。把以下 JSON 数组中的英文/韩文标题和描述翻译成简体中文金融术语，公司名可保留或译名（如 SK Hynix→SK海力士、Nvidia→英伟达、Samsung→三星）。原样返回 JSON 数组（每个对象含 id/title/desc），不要 markdown 代码块，不要加注释：\n${JSON.stringify(toTranslate)}`;
-    const resp = await fetch(`${CONFIG.apiBase}/v1/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': CONFIG.apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({ model: CONFIG.model, max_tokens: 8192, messages: [{ role: 'user', content: prompt }] }),
-      timeout: 90000,
-      // fetch 的 timeout 只覆盖到收到 headers;resp.json() 读 body 可能无限挂起
-      // (GLM 返回 200 后 body 不结束)。AbortSignal.timeout 覆盖整个请求+body。
-      signal: AbortSignal.timeout(90000),
+    const byId = await requestTranslations(toTranslate);
+    // 模型偶尔会把个别标题原样吐回来(实测多为被截断的英文快讯)。只对仍未
+    // 译成中文的条目再发一轮,避免整天页面里夹着英文。
+    const leftover = toTranslate.filter(t => {
+      const got = byId[t.id];
+      return !got || needsTranslation(String(got.title || '').trim());
     });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    let text = extractTextBlock(data).replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
-    const start = text.indexOf('['), end = text.lastIndexOf(']');
-    const arr = JSON.parse(start >= 0 && end > start ? text.slice(start, end + 1) : text);
-    if (!Array.isArray(arr)) throw new Error('bad array');
+    if (leftover.length > 0) {
+      console.log(`  🔁 ${leftover.length} 条未译成中文,重试一次...`);
+      try {
+        Object.assign(byId, await requestTranslations(leftover, true));
+      } catch (err) {
+        console.warn(`  ⚠ 翻译重试失败 (${err.message})`);
+      }
+    }
 
-    const byId = {};
-    for (const t of arr) if (t && typeof t.id === 'number') byId[t.id] = t;
+    let done = 0;
     const out = newsItems.map((n, i) => {
       const t = byId[i];
       if (!t) return n;
-      return { ...n, title_cn: t.title || n.title, summary_cn: t.desc || n.description, originalTitle: n.title };
+      const titleOk = !needsTranslation(String(t.title || '').trim());
+      const descOk = !needsTranslation(String(t.desc || '').trim());
+      if (titleOk) done++;
+      // 二次重试后仍是原文的,至少过一遍本地词典,不让整条英文留在页面上。
+      const dictTitle = titleOk ? '' : translateWithLocalDict(n.title);
+      const dictDesc = descOk ? '' : translateWithLocalDict(n.description || '');
+      return {
+        ...n,
+        title_cn: titleOk ? t.title : (HAN_RE.test(dictTitle) ? dictTitle : n.title),
+        summary_cn: descOk ? (t.desc || n.description) : (HAN_RE.test(dictDesc) ? dictDesc : n.description),
+        originalTitle: n.title,
+      };
     });
-    console.log(`  ✅ 批量翻译完成 (${Object.keys(byId).length}/${toTranslate.length})`);
+    console.log(`  ✅ 批量翻译完成 (${done}/${toTranslate.length})`);
     return out;
   } catch (err) {
     console.warn(`  ⚠ 批量翻译失败 (${err.message})，使用本地词典兜底`);

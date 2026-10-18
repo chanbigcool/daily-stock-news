@@ -273,7 +273,17 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
     </details>`;
   };
 
+  // 报告日期决定是否按交易时段分组:周六/周日休市,不存在盘前/盘中/盘后。
+  const dateKey = String(todayDisplay || '').replace(/\D/g, '').slice(0, 8);
+  let weekendLabel = '';
+  if (/^\d{8}$/.test(dateKey)) {
+    const d = new Date(Date.UTC(+dateKey.slice(0, 4), +dateKey.slice(4, 6) - 1, +dateKey.slice(6, 8)));
+    const dow = d.getUTCDay();
+    if (dow === 6) weekendLabel = '周六';
+    else if (dow === 0) weekendLabel = '周日';
+  }
   const sessionOf = (n) => {
+    if (weekendLabel) return { key: 'weekend', label: weekendLabel, hint: '休市 · 全天快讯' };
     const t = hhmm(n);
     if (!t) return { key: 'unk', label: '时间未标', hint: '' };
     const [h, m] = t.split(':').map(Number);
@@ -283,7 +293,7 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
     if (mins < 15 * 60) return { key: 'mid', label: '盘中', hint: '09:30—15:00' };
     return { key: 'post', label: '盘后', hint: '15:00 后' };
   };
-  const groupOrder = ['pre', 'mid', 'post', 'unk'];
+  const groupOrder = weekendLabel ? ['weekend'] : ['pre', 'mid', 'post', 'unk'];
   const groupItems = new Map();
   for (const n of sorted) {
     const s = sessionOf(n);
