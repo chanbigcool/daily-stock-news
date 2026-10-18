@@ -42,18 +42,30 @@ const mkResult = (over = {}) => ({
 
 const render = (over) => renderHTML(mkResult(over), '2026-09-12', [], undefined);
 
-test('每张新闻卡都带 data-sector,值等于该条的板块', () => {
+test('每条新闻都渲染成可展开的条目,带 data-sector / data-tier', () => {
   const html = render();
-  const sectors = [...html.matchAll(/class="news-card" data-sector="([^"]*)"/g)].map(m => m[1]);
-  assert.equal(sectors.length, 3, '三条新闻应渲染三张带 data-sector 的卡');
-  assert.deepEqual(sectors, ['半导体', '光模块', '黄金']);
-  // 卡片上仍保留原有的点击展开
-  assert.match(html, /class="news-card" data-sector="[^"]*" onclick="this\.classList\.toggle\('expanded'\)"/);
+  const items = [...html.matchAll(/class="item (?:key|high|normal|quiet)" data-sector="([^"]*)" data-tier="([^"]*)"/g)];
+  assert.equal(items.length, 3, '三条新闻应渲染三个带 data-sector 的条目');
+  assert.deepEqual(items.map(m => m[1]), ['半导体', '光模块', '黄金']);
+  assert.deepEqual(items.map(m => m[2]), ['normal', 'normal', 'normal'], '中影响映射为 normal');
+  // 展开由原生 details/summary 完成,筛选脚本靠 [hidden] 显隐
+  assert.match(html, /<details class="item (?:key|high|normal|quiet)" data-sector="[^"]*" data-tier="[^"]*">\s*<summary>/);
+});
+
+test('同一时段内按发布时间倒序', () => {
+  const html = render({
+    analyzed: [
+      mkItem({ title: '早新闻', pubDate: '2026-09-12T10:00:00+08:00' }),
+      mkItem({ title: '晚新闻', pubDate: '2026-09-12T11:00:00+08:00' }),
+    ],
+  });
+  const titles = [...html.matchAll(/<span class="title">(?:<i class="flag sm">重点<\/i>)?([^<]*)<\/span>/g)].map(m => m[1]);
+  assert.deepEqual(titles, ['晚新闻', '早新闻']);
 });
 
 test('板块速览渲染成原生 button,带 data-sector / data-cat / aria-pressed', () => {
   const html = render();
-  const btns = [...html.matchAll(/<button type="button" class="sc" data-sector="([^"]*)" data-cat="([^"]*)" aria-pressed="false">/g)];
+  const btns = [...html.matchAll(/<button type="button" class="sc" data-sector="([^"]*)" data-cat="([^"]*)" aria-label="[^"]*" aria-pressed="false">/g)];
   assert.equal(btns.length, 4, '四个板块各一张可点卡片,0 条的板块也要有');
   assert.deepEqual(btns.map(b => b[1]), ['半导体', '光模块', '创新药', '黄金']);
   assert.deepEqual(btns.map(b => b[2]), ['semi', 'optics', 'pharma', 'gold']);
@@ -61,43 +73,46 @@ test('板块速览渲染成原生 button,带 data-sector / data-cat / aria-press
   assert.doesNotMatch(html, /<div class="sc"/);
 });
 
-test('新闻列表的挂载点与初始计数都在(#newsGrid 等)', () => {
+test('新闻流的挂载点与初始计数都在(#stream 等)', () => {
   const html = render();
-  for (const id of ['newsSection', 'newsGrid', 'newsCountText', 'newsFilter', 'newsEmpty']) {
+  for (const id of ['stream', 'streamFilter', 'streamCount', 'timeline', 'streamEmpty']) {
     assert.ok(html.includes(`id="${id}"`), `缺少 id="${id}"`);
   }
   // 无 JS 时也要看到条数;JS 接管后会改写成「板块 · N / M 条」
-  assert.match(html, /id="newsCountText">共 3 条</);
+  assert.match(html, /id="streamCount">共 <span class="num">3<\/span> 条/);
   // 空态提示默认隐藏
-  assert.match(html, /id="newsEmpty" hidden>/);
+  assert.match(html, /id="streamEmpty" hidden>/);
 });
 
-test('新闻列表上方常驻筛选胶囊条:全部 + 四板块,带条数', () => {
+test('新闻流上方常驻筛选页签:全部 + 四板块 + 高影响,带条数', () => {
   const html = render();
-  const chips = [...html.matchAll(/<button type="button" class="fchip(?: active)?" data-sector="([^"]*)"[^>]*>/g)];
-  // 0 条的板块也要有胶囊,点了显示空态(和速览卡片保持一致)
-  assert.equal(chips.length, 5, '「全部」+ 四个板块');
-  assert.deepEqual(chips.map(c => c[1]), ['', '半导体', '光模块', '创新药', '黄金']);
+  const tabs = [...html.matchAll(/<button type="button" class="tab(?: on)?" data-f="([^"]*)"/g)];
+  // 0 条的板块也要有页签,点了显示空态(和速览卡片保持一致)
+  assert.equal(tabs.length, 6, '「全部」+ 四个板块 + 「高影响」');
+  assert.deepEqual(tabs.map(t => t[1]), ['all', '半导体', '光模块', '创新药', '黄金', 'key']);
   // 「全部」默认选中,其余 aria-pressed 为 false
-  assert.match(html, /class="fchip active" data-sector="" aria-pressed="true">全部<b>3<\/b>/);
-  // 胶囊上的数字来自实际渲染出的卡片,不是速览里的 news_count
-  assert.match(html, /data-sector="半导体"[^>]*>[\s\S]{0,80}?<b>1<\/b>/);
-  assert.match(html, /data-sector="创新药"[^>]*>[\s\S]{0,80}?<b>0<\/b>/);
-  // 色点靠 data-cat 上色,和新闻卡左侧的 .card-cat 用同一套变量
-  assert.match(html, /class="fchip" data-sector="光模块" data-cat="optics"/);
+  assert.match(html, /class="tab on" data-f="all" aria-pressed="true">全部<b>3<\/b>/);
+  // 页签上的数字来自实际渲染出的条目,不是速览里的 news_count
+  assert.match(html, /data-f="半导体"[^>]*>半导体<b>1<\/b>/);
+  assert.match(html, /data-f="创新药"[^>]*>创新药<b>0<\/b>/);
+  assert.match(html, /data-f="key"[^>]*>高影响<b>0<\/b>/);
+  // 色点靠 data-cat 上色
+  assert.match(html, /class="tab" data-f="光模块" data-cat="optics" aria-pressed="false">光模块<b>1<\/b>/);
 });
 
-test('样式里显式关掉了 [hidden] —— .news-card 的 display:flex 会压过 UA 的 [hidden]', () => {
+test('样式里显式关掉了 [hidden] —— details 的 display 会压过 UA 的 [hidden]', () => {
   const html = render();
-  assert.ok(html.includes('.news-card[hidden]{display:none;}'),
-    '缺这条时 hidden 属性藏不住卡片,筛选会静默失效');
+  assert.ok(html.includes('.item[hidden]{display:none!important;}'),
+    '缺这条时 hidden 属性藏不住条目,筛选会静默失效');
+  assert.ok(html.includes('.grp[hidden]{display:none!important;}'),
+    '筛选后整组为空时,分组标题也要藏住');
   // .sc 是 button,必须显式继承字体/颜色,否则样式和原来不一致
   assert.match(html, /\.sc\{[^}]*font:inherit/);
 });
 
 test('板块名做属性转义,不会撑破 data-sector 引号', () => {
   const html = render({ analyzed: [mkItem({ category: '半"导体' })] });
-  assert.match(html, /class="news-card" data-sector="半&quot;导体"/);
+  assert.match(html, /class="item (?:key|high|normal|quiet)" data-sector="半&quot;导体"/);
   assert.ok(!html.includes('data-sector="半"导体"'));
 });
 

@@ -28,646 +28,828 @@ import { loadFetchPayload } from '../pipeline/ingest.mjs';
 
 export function renderHTML(result, todayDisplay, etfData, chartData) {
   const { analyzed, sectorMatrix, keyPoints, marketSummary, isAi } = result;
+  const news = Array.isArray(analyzed) ? analyzed : [];
+  const matrix = Array.isArray(sectorMatrix) ? sectorMatrix : [];
+  const etfs = Array.isArray(etfData) ? etfData : [];
+  const points = Array.isArray(keyPoints) ? keyPoints : [];
 
-  const impactCls = (imp) => imp === '极高' ? 'impact-vhigh' : imp === '高' ? 'impact-high' : imp === '中' ? 'impact-mid' : 'impact-low';
   const dirCls = (d) => (d || '').includes('利好') ? 'badge-bull' : (d || '').includes('利空') ? 'badge-bear' : (d === '中性' ? 'badge-neutral' : 'badge-mixed');
-  // 表格单元格里只要字色,不要徽标的底色,所以单列一套
   const dirText = (d) => (d || '').includes('利好') ? 'dir-bull' : (d || '').includes('利空') ? 'dir-bear' : (d === '中性' ? 'dir-flat' : 'dir-mixed');
+  const chgCls = (d) => (d || '').includes('利好') ? 'bull' : (d || '').includes('利空') ? 'bear' : 'neutral';
   const shockCls = (s) => s === '强' ? 'shock-strong' : s === '中' ? 'shock-mid' : 'shock-weak';
-
-  const stats = {
-    bull: analyzed.filter(n => (n.direction || '').includes('利好')).length,
-    bear: analyzed.filter(n => (n.direction || '').includes('利空')).length,
-    mixed: analyzed.filter(n => n.direction === '分化' || n.direction === '中性').length,
-    vhigh: analyzed.filter(n => n.impact === '极高').length,
-    high: analyzed.filter(n => n.impact === '高').length,
-  };
-
-  // 筛选胶囊条上的数字,取自实际渲染出的卡片,和新闻卡同源不会对不上
-  const sectorCounts = {};
-  for (const n of analyzed) if (n.category) sectorCounts[n.category] = (sectorCounts[n.category] || 0) + 1;
+  const pct = (x) => `${x > 0 ? '+' : x < 0 ? '−' : ''}${Math.abs(x).toFixed(2)}%`;
+  const flowCls = (x) => x > 0 ? 'bull' : x < 0 ? 'bear' : 'neutral';
+  const tsOf = (n) => { const t = new Date(n.pubDate).getTime(); return Number.isFinite(t) ? t : 0; };
+  const timeOf = (n) => formatTime(n.pubDate);
+  const hhmm = (n) => { const p = timeOf(n).split(' '); return p.length > 1 ? p[1] : ''; };
+  const tierOf = (n) => n.impact === '极高' ? 'key' : n.impact === '高' ? 'high' : n.impact === '中' ? 'normal' : 'quiet';
 
   // 导语统一在这里收口:旧档案里各分片是「…。；…」直接拼的,重渲染时一并修好。
   const summaryText = marketSummary ? normalizeMarketSummary([marketSummary]) : '';
   // 正文里的涨跌幅加粗 —— 用字重而不是红色做强调
   const emphasizePct = (escaped) => escaped.replace(/([+\-]?\d+(?:\.\d+)?%)/g, '<b>$1</b>');
 
-  const newsCards = analyzed.map((n) => {
-    const fresh = (Date.now() - new Date(n.pubDate).getTime()) < 12 * 3600 * 1000;
-    const t = splitLead(n.title_cn || n.title);
-    // 上游的 title_cn 有时被截在半句上(「…解析中,点」),而 summary_cn 是同一段文字的
-    // 完整版。判据是 summary 以 title 开头 —— 这时改从 summary 重切,标题和导语都干净。
+  // 标题/导语:和旧卡片同一套切分逻辑,保证重渲染历史页时文本不变形
+  function titleParts(n) {
+    const t = splitLead(n.title_cn || n.title || '');
     const alt = String(n.summary_cn || n.description || '').trim();
     const body = (!t.lead && alt.startsWith(t.body) && alt.length > t.body.length) ? alt : t.body;
     const hl = headLead(body);
-    const head = t.lead || hl.head;
-    // 标题取自【】前缀时,正文整段都是导语;取自正文首句时,剩下的才是导语。
+    const head = t.lead || hl.head || String(n.title || '').trim();
     const lead = t.lead ? t.body : (hl.rest || alt);
     const summary = (lead && !sameLead(head, lead)) ? lead : '';
-    const ts = formatTime(n.pubDate);
-    const [tsDate, tsTime] = ts ? ts.split(' ') : ['', ''];
-    return [
-      `<div class="news-card" data-sector="${escHtml(n.category || '')}" onclick="this.classList.toggle('expanded')">`,
-      `<div class="card-aside">${tsTime ? `<time>${tsTime}</time>` : ''}${tsDate ? `<span class="d">${tsDate}</span>` : ''}</div>`,
-      `<div class="card-body">`,
-      `<div class="card-top">`,
-      `<span class="card-cat">${escHtml(n.category || '综合')}</span>`,
-      `<span class="badge ${dirCls(n.direction)}">${n.direction}</span>`,
-      `<span class="impact-tag ${impactCls(n.impact)}">${n.impact}</span>`,
-      fresh ? `<span class="fresh-badge">新</span>` : '',
-      `</div>`,
-      `<div class="card-title">${escHtml(head)}</div>`,
-      isAi && n.title !== n.title_cn ? `<div class="card-original-title">原文：${escHtml(n.title.substring(0, 120))}</div>` : '',
-      summary ? `<div class="card-summary">${escHtml(summary.slice(0, 200))}</div>` : '',
-      `<div class="card-meta">`,
-      n.source ? `<span>${escHtml(n.source)}</span>` : '',
-      n.tickers && n.tickers !== '—' ? `<span class="ticker-inline">${escHtml(n.tickers)}</span>` : '',
-      n.link ? ` <a href="${n.link}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="src-link">原文链接</a>` : '',
-      `</div>`,
-      `<div class="card-detail">`,
-      `<div class="detail-grid">`,
-      `<div><span class="dl">方向</span>${n.direction}</div>`,
-      `<div><span class="dl">程度</span>${n.impact}</div>`,
-      `<div><span class="dl">确定性</span>${n.certainty}</div>`,
-      `<div><span class="dl">窗口</span>${n.time_window}</div>`,
-      `</div>`,
-      (Array.isArray(n.affected_companies) && n.affected_companies.length > 0)
-        ? `<div class="detail-extra"><span class="dl">受影响公司</span><span class="expl-text">${escHtml(n.affected_companies.join('、'))}</span></div>` : '',
-      (typeof n.confidence_score === 'number' && n.confidence_score >= 0)
-        ? `<div class="detail-extra"><span class="dl">置信度</span><span class="expl-text">${(n.confidence_score * 100).toFixed(0)}%${n.uncertainty ? `（${escHtml(n.uncertainty)}）` : ''}</span></div>` : '',
-      (Array.isArray(n.reasoning) && n.reasoning.length > 0)
-        ? `<div class="detail-extra"><span class="dl">研判依据</span><ul class="expl-list">${n.reasoning.map(r => `<li>${escHtml(r)}</li>`).join('')}</ul></div>` : '',
-      (Array.isArray(n.evidence) && n.evidence.length > 0)
-        ? `<div class="detail-extra"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="expl-list">${n.evidence.map(e => `<li>“${escHtml(e)}”</li>`).join('')}</ul></div>` : '',
-      n.notes ? `<div class="verify-note">${escHtml(String(n.notes).replace(/^(AI研判|评分引擎)\s*[:：]\s*/, ''))}</div>` : '',
-      // 事件级去重:多来源徽标 + 相关报道折叠列表(一事件一卡,来源在事件内聚合)
-      (n.sourceCount && n.sourceCount > 1) ? `
-      <div class="detail-extra event-sources">
-        <span class="dl">来源聚合（${n.sourceCount} 家）</span>
-        <span class="ev-src-badges">${(n.eventSources || []).map(s => `<span class="ev-src-badge">${escHtml(s)}</span>`).join('')}</span>
-      </div>` : '',
-      (Array.isArray(n.relatedLinks) && n.relatedLinks.length > 0) ? `
-      <div class="detail-extra event-related">
-        <span class="dl">相关报道（${n.relatedLinks.length} 篇）</span>
-        <ul class="expl-list related-list">${n.relatedLinks.slice(0, 8).map(l => `<li><a href="${escHtml(l)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${escHtml(l).replace(/^https?:\/\/(www\.)?/, '').substring(0, 50)}</a></li>`).join('')}</ul>
-      </div>` : '',
-      `</div>`,
-      `</div>`,
-      `</div>`,
-    ].join('\n');
-  }).join('\n');
+    return { head, body, summary };
+  }
 
-  // 「今日复盘」= direction(ETF 硬校准后),「次日倾向」= forwardDirection(纯新闻研判)。
-  // 两者语义不同,必须各占一列 —— 一个是已发生事实的复述,一个是没被行情污染的前瞻
-  // 判断,合并就分不清「读错了新闻」还是「行情本来就不跟」。旧存档没有
-  // forwardDirection(2026-10-16 前构建),那时保持单列「方向」,免得重渲染历史页时
-  // 多出一整列「—」;新页才拆两列。
-  const hasForward = (Array.isArray(sectorMatrix) ? sectorMatrix : []).some(s => s.forwardDirection);
-  const matrixRows = (Array.isArray(sectorMatrix) ? sectorMatrix : []).map(s => {
+  const sorted = [...news].sort((a, b) => tsOf(b) - tsOf(a));
+  const highCount = news.filter(n => n.impact === '高' || n.impact === '极高').length;
+  const bullCount = news.filter(n => (n.direction || '').includes('利好')).length;
+  const bearCount = news.filter(n => (n.direction || '').includes('利空')).length;
+  const sectorNames = SECTORS.slice();
+  const hasForward = matrix.some(s => s.forwardDirection);
+
+  const sectorCount = (name) => news.filter(n => n.category === name).length;
+  const highInSector = (name) => news.filter(n => n.category === name && (n.impact === '高' || n.impact === '极高')).length;
+  const etfAvg = (name) => {
+    const arr = etfs.filter(e => e.category === name && typeof e.change === 'number');
+    return arr.length ? arr.reduce((s, e) => s + e.change, 0) / arr.length : null;
+  };
+  const sectorRow = (name) => matrix.find(s => s.name === name) || {};
+
+  // ── 左栏:板块行情 ─────────────────────────────────
+  const quoteSectors = sectorNames.map((cat) => {
+    const arr = etfs.filter(e => e.category === cat);
+    const avg = etfAvg(cat);
+    const sm = sectorRow(cat);
+    const badges = hasForward
+      ? `<span class="badge ${dirCls(sm.direction)}" title="今日复盘：板块方向以当日 ETF 实际涨跌校准">复盘 ${escHtml(sm.direction || '—')}</span>`
+        + `<span class="badge ${sm.forwardDirection ? dirCls(sm.forwardDirection) : 'badge-neutral'}" title="次日倾向：只由新闻内容研判，未经行情校准">次日 ${escHtml(sm.forwardDirection || '—')}</span>`
+      : (sm.direction ? `<span class="badge ${dirCls(sm.direction)}">${escHtml(sm.direction)}</span>` : '');
+    const rows = arr.map((e) => {
+      const code = e.code ? `<span class="qcode num">${escHtml(e.code)}</span>` : '<span class="qcode"></span>';
+      return `<div class="qetf" title="${escHtml(e.name)}${e.code ? ' ' + escHtml(e.code) : ''}${typeof e.price === 'number' ? ' · 净值 ' + e.price.toFixed(3) : ''}">`
+        + code
+        + `<span class="qetf-name">${escHtml(e.name)}</span>`
+        + `<span class="qchg num ${flowCls(e.change)}">${typeof e.change === 'number' ? pct(e.change) : '—'}</span>`
+        + `</div>`;
+    }).join('');
+    return `<div class="qsec">
+      <div class="qsec-top">
+        <button type="button" class="sc" data-sector="${escHtml(cat)}" data-cat="${CATEGORY_CLS[cat] || 'other'}" aria-label="只看${escHtml(cat)}新闻" aria-pressed="false">
+          <span class="qname">${escHtml(cat)}</span>
+          <span class="sc-badges">${badges}</span>
+        </button>
+        <span class="qchg num ${avg === null ? 'neutral' : flowCls(avg)}">${avg === null ? '—' : pct(avg)}</span>
+      </div>
+      ${rows}
+    </div>`;
+  }).join('');
+
+  const quotesHTML = `<aside class="quotes">
+    <div class="ph"><h2>板块行情</h2><span class="note">当日收盘</span></div>
+    ${quoteSectors}
+    <div class="qstats">
+      <div><span>收录</span><b class="num">${news.length}</b></div>
+      <div><span>高影响</span><b class="num">${highCount}</b></div>
+      <div><span>利好</span><b class="num bull">${bullCount}</b></div>
+      <div><span>利空</span><b class="num bear">${bearCount}</b></div>
+    </div>
+    <div class="qfoot">涨跌幅为当日收盘口径；板块均值为组内 ETF 的简单平均。点击板块名可只看该板块新闻。</div>
+  </aside>`;
+
+  // ── 中栏:要闻 ────────────────────────────────────
+  // 选摘口径:事件优先于纯行情复述,冲击/确定性高的在前,并尽量覆盖各板块。
+  const RANK_IMPACT = { 极高: 0, 高: 1, 中: 2, 低: 3 };
+  const RANK_CERT = { 高: 0, 中: 1, 低: 2 };
+  const MARKET_RECAP = /涨超|跌超|收涨|收跌|多数收涨|多数收跌|盘前|盘中涨|成交额报|融资融券|上证指数|深证成指|恒生指数|恒生科技指数|ETF两市/;
+  const rankScore = (n) => (RANK_IMPACT[n.impact] ?? 9) * 100 + (RANK_CERT[n.certainty] ?? 9) * 10 + (MARKET_RECAP.test(n.title_cn || n.title || '') ? 50 : 0);
+  const rankedNews = [...news].sort((a, b) => rankScore(a) - rankScore(b) || tsOf(b) - tsOf(a));
+  const top = [];
+  const seenCat = new Set();
+  for (const n of rankedNews) {
+    if (top.length >= 5) break;
+    if (!seenCat.has(n.category)) { top.push(n); seenCat.add(n.category); }
+  }
+  for (const n of rankedNews) {
+    if (top.length >= 5) break;
+    if (!top.includes(n)) top.push(n);
+  }
+
+  const leadItem = top[0];
+  const leadParts = leadItem ? titleParts(leadItem) : null;
+  const leadHTML = leadItem ? `<article class="lead">
+    <h2><i class="flag">重点</i>${escHtml(leadParts.head || '(无标题)')}</h2>
+    <div class="meta">${escHtml(leadItem.category || '综合')} · <span class="${chgCls(leadItem.direction)}">${escHtml(leadItem.direction || '')}</span>${leadItem.source ? ' · ' + escHtml(leadItem.source) : ''}${hhmm(leadItem) ? ' ' + hhmm(leadItem) : ''}</div>
+    ${leadParts.body ? `<p>${escHtml(leadParts.body)}</p>` : ''}
+  </article>` : '<div class="feed-empty">今日暂无入选新闻</div>';
+
+  const sideHTML = top.slice(1).map((n) => {
+    const p = titleParts(n);
+    return `<article class="top-item">
+      <h3>${escHtml(p.head || '(无标题)')}</h3>
+      <div class="meta">${escHtml(n.category || '综合')} · <span class="${chgCls(n.direction)}">${escHtml(n.direction || '')}</span>${n.source ? ' · ' + escHtml(n.source) : ''}${hhmm(n) ? ' ' + hhmm(n) : ''}</div>
+    </article>`;
+  }).join('');
+
+  const feedHTML = `<section id="news" class="feed">
+    <div class="ph"><h2>要闻</h2><span class="note">事件优先，跨板块选摘</span></div>
+    ${leadHTML}
+    ${sideHTML}
+  </section>`;
+
+  // ── 右栏:今日要点 + 当日分布 ─────────────────────
+  const railPoints = points.length
+    ? points.map(p => `<li>${escHtml(p)}</li>`).join('')
+    : sectorNames.map((cat) => {
+      const own = news.filter(n => n.category === cat);
+      const sm = sectorRow(cat);
+      const avg = etfAvg(cat);
+      const dir = sm.direction || '';
+      const avgTxt = avg === null ? '暂无 ETF 数据' : `ETF 均值 ${pct(avg)}`;
+      const mismatch = (dir.includes('利好') && avg !== null && avg < 0) || (dir.includes('利空') && avg !== null && avg > 0);
+      const verdict = own.length ? `研判${dir || '—'}，${avgTxt}${mismatch ? '，消息与行情背离' : ''}` : '今日无入选新闻';
+      return `<li><b>${escHtml(cat)}</b>${own.length} 条，高影响 ${highInSector(cat)} 条，${verdict}</li>`;
+    }).join('');
+
+  const SENTS = ['利好', '利空', '中性', '分化'];
+  const SENT_CLS = { 利好: 'f-red', 利空: 'f-green', 中性: 'f-g1', 分化: 'f-g2' };
+  const sentCounts = SENTS.map(s => news.filter(n => n.direction === s).length);
+  const sentTotal = sentCounts.reduce((a, b) => a + b, 0) || 1;
+  const sentHTML = `<div class="stack">${SENTS.map((s, i) => `<i class="${SENT_CLS[s]}" style="width:${(sentCounts[i] / sentTotal * 100).toFixed(2)}%"></i>`).join('')}</div>
+    <div class="lgd">${SENTS.map((s, i) => `<span><i class="${SENT_CLS[s]}"></i>${s}<b class="num">${sentCounts[i]}</b></span>`).join('')}</div>`;
+
+  const dirRows = sectorNames.map((cat) => {
+    const own = news.filter(n => n.category === cat);
+    const val = SENTS.map(s => own.filter(n => n.direction === s).length);
+    const tot = own.length || 1;
+    return `<div class="drow"><span class="dn">${escHtml(cat)}</span><span class="db">${SENTS.map((s, k) => `<i class="${SENT_CLS[s]}" style="width:${(val[k] / tot * 100).toFixed(2)}%"></i>`).join('')}</span><span class="dt num">${own.length}</span></div>`;
+  }).join('');
+
+  const WIN_ORDER = ['短期', '中期', '长期'];
+  const wins = WIN_ORDER.filter(w => w !== '长期' || news.some(n => n.time_window === w));
+  const twTotal = news.filter(n => wins.includes(n.time_window)).length || 1;
+  const twHTML = `<div class="stack">${wins.map((w, i) => `<i class="${i % 2 ? 'f-g1' : 'f-g2'}" style="width:${(news.filter(n => n.time_window === w).length / twTotal * 100).toFixed(2)}%"></i>`).join('')}</div>
+    <div class="lgd">${wins.map((w, i) => `<span><i class="${i % 2 ? 'f-g1' : 'f-g2'}"></i>${w}<b class="num">${news.filter(n => n.time_window === w).length}</b></span>`).join('')}</div>`;
+
+  const railHTML = `<aside class="rail">
+    <div class="ph"><h2>今日要点</h2><span class="more">${points.length ? 'AI 研判' : '按板块生成'}</span></div>
+    <ul class="points">${railPoints}</ul>
+    <div class="ph rail-dist"><h2>当日分布</h2><span class="more">${news.length} 条</span></div>
+    <div class="mini">
+      <h3>情绪<span class="sub">利好 / 利空 / 中性 / 分化</span></h3>
+      ${sentHTML}
+    </div>
+    <div class="mini">
+      <h3>方向<span class="sub">按板块</span></h3>
+      ${dirRows}
+    </div>
+    <div class="mini">
+      <h3>时间窗口<span class="sub">短期 / 中期</span></h3>
+      ${twHTML}
+    </div>
+  </aside>`;
+
+  // ── 新闻流:全宽、盘前/盘中/盘后三栏 ───────────────
+  const itemDetail = (n, p) => {
+    const bits = [];
+    if (p.body) bits.push(`<p>${escHtml(p.body)}</p>`);
+    const cells = [];
+    if (n.direction) cells.push(`<div><span class="dl">方向</span><b class="${chgCls(n.direction)}">${escHtml(n.direction)}</b></div>`);
+    if (n.impact) cells.push(`<div><span class="dl">冲击</span><b>${escHtml(n.impact)}</b></div>`);
+    if (n.certainty) cells.push(`<div><span class="dl">确定性</span><b>${escHtml(n.certainty)}</b></div>`);
+    if (n.time_window) cells.push(`<div><span class="dl">窗口</span><b>${escHtml(n.time_window)}</b></div>`);
+    if (cells.length) bits.push(`<div class="dgrid">${cells.join('')}</div>`);
+    if (Array.isArray(n.affected_companies) && n.affected_companies.length) {
+      bits.push(`<p><span class="dl">受影响公司</span>${escHtml(n.affected_companies.join('、'))}</p>`);
+    }
+    if (n.tickers) {
+      bits.push(`<p><span class="dl">关联标的</span>${escHtml(n.tickers)}</p>`);
+    }
+    if (n.title && n.title_cn && n.title !== n.title_cn) {
+      bits.push(`<p class="dim"><span class="dl">原文标题</span>${escHtml(n.title)}</p>`);
+    }
+    if (typeof n.confidence_score === 'number' && n.confidence_score >= 0) {
+      bits.push(`<p class="dim"><span class="dl">置信度</span>${(n.confidence_score * 100).toFixed(0)}%${n.uncertainty ? `（${escHtml(n.uncertainty)}）` : ''}</p>`);
+    } else if (n.uncertainty) {
+      bits.push(`<p class="dim">${escHtml(n.uncertainty)}</p>`);
+    }
+    if (Array.isArray(n.reasoning) && n.reasoning.length) {
+      bits.push(`<div class="dsec"><span class="dl">研判依据</span><ul class="dlist">${n.reasoning.map(r => `<li>${escHtml(r)}</li>`).join('')}</ul></div>`);
+    }
+    if (Array.isArray(n.evidence) && n.evidence.length) {
+      bits.push(`<div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist">${n.evidence.map(e => `<li>“${escHtml(e)}”</li>`).join('')}</ul></div>`);
+    }
+    if (n.notes) bits.push(`<p class="dim">${escHtml(String(n.notes).replace(/^(AI研判|评分引擎)\s*[:：]\s*/, ''))}</p>`);
+    if (n.sourceCount && n.sourceCount > 1) {
+      bits.push(`<div class="dsec"><span class="dl">来源聚合（${n.sourceCount} 家）</span><span class="ev-src">${(n.eventSources || []).map(s => `<span class="ev-src-badge">${escHtml(s)}</span>`).join('')}</span></div>`);
+    }
+    if (Array.isArray(n.relatedLinks) && n.relatedLinks.length) {
+      bits.push(`<div class="dsec"><span class="dl">相关报道（${n.relatedLinks.length} 篇）</span><ul class="dlist related">${n.relatedLinks.slice(0, 8).map(l => `<li><a href="${escHtml(l)}" target="_blank" rel="noopener">${escHtml(l).replace(/^https?:\/\/(www\.)?/, '').substring(0, 50)}</a></li>`).join('')}</ul></div>`);
+    }
+    if (n.link) bits.push(`<p><a class="src" href="${escHtml(n.link)}" target="_blank" rel="noopener">原文 · ${escHtml(n.source || '来源')}</a></p>`);
+    return `<div class="detail">${bits.join('')}</div>`;
+  };
+
+  const itemHTML = (n) => {
+    const p = titleParts(n);
+    const tier = tierOf(n);
+    const showSummary = tier !== 'quiet' && p.summary;
+    const metaBits = [
+      escHtml(n.category || '综合'),
+      `<span class="${chgCls(n.direction)}">${escHtml(n.direction || '')}</span>`,
+      escHtml(n.source || ''),
+    ];
+    if (n.sourceCount && n.sourceCount > 1) metaBits.push(`${n.sourceCount} 家报道`);
+    return `<details class="item ${tier}" data-sector="${escHtml(n.category || '')}" data-tier="${tier}">
+      <summary>
+        <span class="t num">${hhmm(n)}</span>
+        <span class="c">
+          <span class="title">${tier === 'key' ? '<i class="flag sm">重点</i>' : ''}${escHtml(p.head || '(无标题)')}</span>
+          ${showSummary ? `<span class="summary">${escHtml(p.summary)}</span>` : ''}
+          <span class="meta">${metaBits.filter(Boolean).join(' · ')}</span>
+        </span>
+      </summary>
+      ${itemDetail(n, p)}
+    </details>`;
+  };
+
+  const sessionOf = (n) => {
+    const t = hhmm(n);
+    if (!t) return { key: 'unk', label: '时间未标', hint: '' };
+    const [h, m] = t.split(':').map(Number);
+    const mins = h * 60 + m;
+    if (!Number.isFinite(mins)) return { key: 'unk', label: '时间未标', hint: '' };
+    if (mins < 9 * 60 + 30) return { key: 'pre', label: '盘前', hint: '09:30 前' };
+    if (mins < 15 * 60) return { key: 'mid', label: '盘中', hint: '09:30—15:00' };
+    return { key: 'post', label: '盘后', hint: '15:00 后' };
+  };
+  const groupOrder = ['pre', 'mid', 'post', 'unk'];
+  const groupItems = new Map();
+  for (const n of sorted) {
+    const s = sessionOf(n);
+    if (!groupItems.has(s.key)) groupItems.set(s.key, { ...s, items: [] });
+    groupItems.get(s.key).items.push(n);
+  }
+  const weightOf = { quiet: 88, normal: 120, high: 140, key: 165 };
+  const splitColumns = (arr, k) => {
+    const total = arr.reduce((s, x) => s + (weightOf[tierOf(x)] || 100), 0);
+    const cols = Array.from({ length: k }, () => []);
+    let acc = 0, ci = 0;
+    for (const x of arr) {
+      while (ci < k - 1 && acc >= (total * (ci + 1)) / k) ci++;
+      cols[ci].push(x);
+      acc += weightOf[tierOf(x)] || 100;
+    }
+    return cols;
+  };
+  const streamGroups = groupOrder.filter(k => groupItems.has(k)).map((k) => {
+    const g = groupItems.get(k);
+    return `<div class="grp" data-session="${g.key}">
+      <div class="grp-head"><span>${g.label}</span><i>${g.hint}</i><b class="num" data-gcount>${g.items.length}</b></div>
+      <div class="grp-cols">${splitColumns(g.items, 3).map(c => `<div class="scol">${c.map(itemHTML).join('')}</div>`).join('')}</div>
+    </div>`;
+  }).join('');
+
+  const tabsHTML = `<button type="button" class="tab on" data-f="all" aria-pressed="true">全部<b>${news.length}</b></button>`
+    + sectorNames.map(cat => `<button type="button" class="tab" data-f="${escHtml(cat)}" data-cat="${CATEGORY_CLS[cat] || 'other'}" aria-pressed="false">${escHtml(cat)}<b>${sectorCount(cat)}</b></button>`).join('')
+    + `<button type="button" class="tab" data-f="key" aria-pressed="false">高影响<b>${highCount}</b></button>`;
+
+  const streamHTML = `<section id="stream" class="stream">
+    <div class="stream-bar">
+      <div class="stream-head">
+        <h2>新闻流</h2>
+        <span class="count" id="streamCount">共 <span class="num">${news.length}</span> 条 · 按发布时间倒序</span>
+      </div>
+      <div class="tabs" id="streamFilter" role="group" aria-label="按板块筛选新闻">${tabsHTML}</div>
+    </div>
+    <div class="timeline" id="timeline">
+      ${streamGroups}
+      <div class="stream-empty" id="streamEmpty" hidden>今日暂无入选新闻</div>
+      <div class="stream-end">共 <b class="num">${news.length}</b> 条 · 点击标题展开全文、研判依据与相关报道。</div>
+    </div>
+  </section>`;
+
+  // ── 数据:走势(内联 SVG) + 冲击热力图 ──────────────
+  const trend = chartData && chartData.etfTrend && chartData.etfTrend.hasData ? chartData.etfTrend : null;
+  const hasTrend = !!(trend && Array.isArray(trend.dates) && trend.dates.length && Array.isArray(trend.datasets) && trend.datasets.length);
+  let trendJSON = 'null';
+  let trendHTML = '';
+  if (hasTrend) {
+    const TH = 240, PT = 16, PB = 30;
+    const nPts = trend.dates.length;
+    const vals = [];
+    for (const s of trend.datasets) for (const v of s.data || []) if (typeof v === 'number' && Number.isFinite(v)) vals.push(v);
+    if (!vals.length) {
+      // 有日期但全是空值:不画图,避免除零
+    } else {
+      const yMin = Math.floor(Math.min(...vals) / 5) * 5;
+      let yMax = Math.ceil(Math.max(...vals) / 5) * 5;
+      if (yMax === yMin) yMax = yMin + 1;
+      const lastOf = (s) => { const d = s.data || []; for (let i = d.length - 1; i >= 0; i--) if (typeof d[i] === 'number' && Number.isFinite(d[i])) return d[i]; return null; };
+      const seriesAll = trend.datasets.map(s => ({ label: s.label, data: s.data || [], last: lastOf(s) })).filter(s => s.last !== null);
+      const ranked = [...seriesAll].sort((a, b) => b.last - a.last);
+      const GRAYS = ['#222222', '#555555', '#999999', '#c9c9c9'];
+      const colorFor = new Map();
+      let gi = 0;
+      ranked.forEach((s, i) => {
+        colorFor.set(s.label, i === 0 && s.last >= 100 ? '#de0422' : GRAYS[Math.min(gi++, GRAYS.length - 1)]);
+      });
+      const order = [...ranked].reverse();
+
+      const makeTrend = (W, PR, showLabels) => {
+        const PL = 8;
+        const step = nPts > 1 ? (W - PL - PR) / (nPts - 1) : 0;
+        const sx = (i) => PL + i * step;
+        const sy = (v) => PT + ((yMax - v) / (yMax - yMin)) * (TH - PT - PB);
+        const series = order.map((s) => {
+          let d = '', pen = false;
+          s.data.forEach((v, j) => {
+            if (typeof v !== 'number' || !Number.isFinite(v)) { pen = false; return; }
+            d += `${pen ? 'L' : 'M'}${sx(j).toFixed(1)},${sy(v).toFixed(1)}`;
+            pen = true;
+          });
+          return { ...s, color: colorFor.get(s.label), path: d, y: sy(s.last) };
+        });
+        let labelsHTML = '';
+        if (showLabels) {
+          const GAP = 14, topLim = PT + 6, botLim = TH - PB;
+          const byY = [...series].sort((a, b) => a.y - b.y);
+          let ly = byY.map(s => s.y);
+          for (let i = 1; i < ly.length; i++) ly[i] = Math.max(ly[i], ly[i - 1] + GAP);
+          const over = ly[ly.length - 1] - botLim;
+          if (over > 0) ly = ly.map(y => y - over);
+          if (ly[0] < topLim) { const shift = topLim - ly[0]; ly = ly.map(y => y + shift); }
+          labelsHTML = byY.map((s, i) => `
+            <line x1="${W - PR + 4}" y1="${s.y}" x2="${W - PR + 10}" y2="${ly[i]}" class="lead-line" style="stroke:${s.color}"/>
+            <text x="${W - PR + 13}" y="${ly[i] + 3.5}" class="endlab"><tspan class="en" style="fill:${s.color}">${escHtml(s.label)}</tspan><tspan class="${s.last >= 100 ? 'bull' : 'bear'}" dx="4">${s.last.toFixed(1)}</tspan></text>`).join('');
+        }
+        return `<svg class="tchart" data-w="${W}" data-pr="${PR}" viewBox="0 0 ${W} ${TH}" role="img" aria-label="板块 ETF 走势对比">
+          <rect x="0" y="0" width="${W}" height="${TH}" fill="transparent"/>
+          <line x1="${PL}" y1="${sy(100)}" x2="${W - PR}" y2="${sy(100)}" class="base"/>
+          <text x="${PL}" y="${sy(100) - 4}" class="axis">100</text>
+          ${series.map(s => `<path d="${s.path}" class="tl" style="stroke:${s.color}"/>`).join('')}
+          ${labelsHTML}
+          <text x="${PL}" y="${TH - 8}" class="axis">${escHtml(String(trend.dates[0]).slice(5))}</text>
+          <text x="${(PL + W - PR) / 2}" y="${TH - 8}" class="axis" text-anchor="middle">${escHtml(String(trend.dates[Math.floor(nPts / 2)]).slice(5))}</text>
+          <text x="${W - PR}" y="${TH - 8}" class="axis" text-anchor="end">${escHtml(String(trend.dates[nPts - 1]).slice(5))}</text>
+        </svg>`;
+      };
+
+      const legendHTML = ranked.map(s => `<span class="lg"><i style="background:${colorFor.get(s.label)}"></i>${escHtml(s.label)}<b class="${s.last >= 100 ? 'bull' : 'bear'} num">${s.last.toFixed(1)}</b></span>`).join('');
+      trendJSON = JSON.stringify({
+        dates: trend.dates,
+        series: ranked.map(s => ({ label: s.label, color: colorFor.get(s.label), data: s.data })),
+      }).replace(/</g, '\\u003c');
+      trendHTML = `<div class="viz-card">
+        <div class="vtitle">板块 ETF 走势对比 <span>首日 = 100</span></div>
+        <div class="legend">${legendHTML}</div>
+        <div class="chart-plot" id="trendPlot">
+          <div class="only-wide">${makeTrend(1100, 132, true)}</div>
+          <div class="only-narrow">${makeTrend(360, 14, false)}</div>
+          <div class="tip" id="trendTip" hidden></div>
+        </div>
+        <div class="hint">在图上移动或轻点，查看任意一日各板块指数；数值以首日 = 100 为基准。</div>
+      </div>`;
+    }
+  }
+  const showTrend = trendJSON !== 'null';
+
+  const IMPACTS = ['低', '中', '高', '极高'];
+  const heat = sectorNames.map(cat => IMPACTS.map(im => news.filter(n => n.category === cat && n.impact === im).length));
+  const heatMax = Math.max(1, ...heat.flat());
+  const heatHTML = `<table class="heat">
+    <thead><tr><th></th>${IMPACTS.map(im => `<th>${im}</th>`).join('')}</tr></thead>
+    <tbody>${sectorNames.map((cat, r) => `<tr><th>${escHtml(cat)}</th>${IMPACTS.map((im, c) => {
+      const v = heat[r][c];
+      const a = v / heatMax;
+      return `<td style="background:rgba(222,4,34,${(0.03 + a * 0.62).toFixed(2)});color:${a > 0.5 ? '#fff' : 'var(--ink)'}">${v || ''}</td>`;
+    }).join('')}</tr>`).join('')}</tbody>
+  </table>`;
+
+  const dataHTML = (showTrend || news.length) ? `<section id="data" class="viz">
+    <div class="ph"><h2>数据</h2><span class="note">走势 · 冲击热力图</span></div>
+    ${trendHTML}
+    ${news.length ? `<div class="viz-card">
+      <div class="vtitle">冲击热力图 <span>板块 × 影响等级</span></div>
+      ${heatHTML}
+    </div>` : ''}
+  </section>` : '';
+
+  // ── 板块矩阵 ─────────────────────────────────────
+  const matrixRows = matrix.map((s) => {
     const fwdCell = hasForward
-      ? `<td class="${s.forwardDirection ? dirText(s.forwardDirection) : ''}">${s.forwardDirection || '—'}</td>`
+      ? `<td class="${s.forwardDirection ? dirText(s.forwardDirection) : ''}">${escHtml(s.forwardDirection || '—')}</td>`
       : '';
-    return `<tr><td class="mx-name">${escHtml(s.name)}</td><td class="${shockCls(s.shock)}">${s.shock}</td>`
-      + `<td class="${dirText(s.direction)}">${s.direction}</td>${fwdCell}`
-      + `<td class="num">${s.news_count}</td><td>${escHtml(s.summary || s.logic || '')}</td><td class="num">${escHtml(s.tickers || '—')}</td></tr>`;
+    return `<tr><td class="mx-name">${escHtml(s.name)}</td><td class="${shockCls(s.shock)}">${escHtml(s.shock || '')}</td>`
+      + `<td class="${dirText(s.direction)}">${escHtml(s.direction || '')}</td>${fwdCell}`
+      + `<td class="num">${s.news_count != null ? s.news_count : ''}</td><td class="logic">${escHtml(s.summary || s.logic || '')}</td><td class="num tickers">${escHtml(s.tickers || '—')}</td></tr>`;
   }).join('\n');
+  const matrixHTML = matrix.length ? `<section id="matrix" class="matrix">
+    <div class="ph"><h2>板块矩阵</h2><span class="note">方向与冲击取自新闻研判，ETF 均值为当日收盘</span></div>
+    ${hasForward ? `<div class="dir-legend"><b>今日复盘</b>=板块方向以当日 ETF 实际涨跌校准（回答「今天为什么涨跌」）；<b>次日倾向</b>=只由新闻内容研判、未经行情校准（回答「明天可能怎样」）。</div>` : ''}
+    <div class="matrix-scroll">
+      <table>
+        <thead><tr><th>板块</th><th>冲击</th>${hasForward ? '<th>今日复盘</th><th>次日倾向</th>' : '<th>方向</th>'}<th>新闻</th><th>传导逻辑</th><th>关联标的</th></tr></thead>
+        <tbody>${matrixRows}</tbody>
+      </table>
+    </div>
+  </section>` : '';
 
-  const pointsHTML = keyPoints.map(p => `<div class="kp-card">${escHtml(p)}</div>`).join('\n');
-
-  // ── Chart panels ─────────────────────────────────────
-  const hasCharts = chartData && (
-    chartData.etfTrend?.hasData || chartData.sentiment?.hasData ||
-    chartData.heatmap?.hasData || chartData.direction?.hasData ||
-    chartData.timeWindow?.hasData
-  );
-
-  const chartPanels = hasCharts ? `
-<div class="sec-title">市场数据可视化</div>
-<div class="chart-grid">
-  ${chartData.etfTrend.hasData ? `
-  <div class="chart-card wide-chart">
-    <div class="chart-title">板块 ETF 走势对比（首日=100，30日）</div>
-    <div class="chart-wrap"><canvas id="etfTrendChart"></canvas></div>
-  </div>
-  ` : ''}
-  <div class="chart-card">
-    <div class="chart-title">今日情绪分布</div>
-    <div class="chart-wrap chart-donut"><canvas id="sentimentChart"></canvas></div>
-  </div>
-  <div class="chart-card">
-    <div class="chart-title">板块方向对比</div>
-    <div class="chart-wrap"><canvas id="directionChart"></canvas></div>
-  </div>
-  <div class="chart-card">
-    <div class="chart-title">冲击热力图</div>
-    <div class="chart-wrap"><canvas id="heatmapChart"></canvas></div>
-  </div>
-  <div class="chart-card">
-    <div class="chart-title">时间窗口分布</div>
-    <div class="chart-wrap chart-donut"><canvas id="timeWindowChart"></canvas></div>
-  </div>
-</div>
-` : '';
-
-  const chartJS = hasCharts ? `
-<script>
-${chartData.etfTrend?.hasData ? `
-// ETF Trend
-new Chart(document.getElementById('etfTrendChart'), {
-  type: 'line',
-  data: {
-    labels: ${JSON.stringify(chartData.etfTrend.dates)},
-    datasets: ${JSON.stringify(chartData.etfTrend.datasets)},
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    interaction: { mode: 'index', intersect: false },
-    plugins: {
-      legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12, font: { size: 10 }, usePointStyle: true } },
-      tooltip: { bodyFont: { size: 11 }, titleFont: { size: 11 } },
-    },
-    scales: {
-      x: { ticks: { font: { size: 9 }, maxTicksLimit: 8, maxRotation: 45 }, grid: { display: false } },
-      // 不设 y 轴标题:竖排中文在 240px 高的图里会压住刻度数字,而卡片标题
-      // 已经写明「首日=100」,轴的语义在标题里就够了。
-      y: { ticks: { font: { size: 9 } }, grid: { color: '#ebedf2' } },
-    },
-  },
-});
-` : ''}
-// Sentiment donut
-new Chart(document.getElementById('sentimentChart'), {
-  type: 'doughnut',
-  data: {
-    labels: ${JSON.stringify(chartData.sentiment.labels)},
-    datasets: ${JSON.stringify(chartData.sentiment.datasets)},
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false, cutout: '55%',
-    plugins: {
-      legend: { position: 'bottom', labels: { boxWidth: 8, padding: 10, font: { size: 10 }, usePointStyle: true } },
-    },
-  },
-});
-
-// Time window donut
-new Chart(document.getElementById('timeWindowChart'), {
-  type: 'doughnut',
-  data: {
-    labels: ${JSON.stringify(chartData.timeWindow.labels)},
-    datasets: ${JSON.stringify(chartData.timeWindow.datasets)},
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false, cutout: '55%',
-    plugins: {
-      legend: { position: 'bottom', labels: { boxWidth: 8, padding: 10, font: { size: 10 }, usePointStyle: true } },
-    },
-  },
-});
-
-// Direction stacked bar
-new Chart(document.getElementById('directionChart'), {
-  type: 'bar',
-  data: {
-    labels: ${JSON.stringify(chartData.direction.sectors)},
-    datasets: ${JSON.stringify(chartData.direction.datasets)},
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: {
-      legend: { position: 'bottom', labels: { boxWidth: 8, padding: 8, font: { size: 10 }, usePointStyle: true } },
-    },
-    scales: {
-      x: { stacked: true, ticks: { font: { size: 9 } }, grid: { display: false } },
-      y: { stacked: true, ticks: { font: { size: 9 }, stepSize: 1 }, grid: { color: '#ebedf2' } },
-    },
-  },
-});
-
-// Heatmap — using matrix plugin or bar fallback
-new Chart(document.getElementById('heatmapChart'), {
-  type: 'bar',
-  data: {
-    labels: ${JSON.stringify(chartData.heatmap.sectors)},
-    datasets: ${JSON.stringify(chartData.heatmap.impacts.map((imp, i) => ({
-      label: imp,
-      data: chartData.heatmap.sectors.map(s => chartData.heatmap.matrix[s]?.[imp] || 0),
-      // 冲击程度是有序量,用单色深浅表示:墨色越深冲击越大。红不再参与 ——
-      // 它在本站只留给「极高」与涨跌,大面积红会让热力图喧宾夺主。
-      backgroundColor: imp === '极高' ? '#23272e' : imp === '高' ? '#5c6570' : imp === '中' ? '#a8b0ba' : '#dde1e6',
-    })))},
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    indexAxis: 'x',
-    plugins: {
-      legend: { position: 'bottom', labels: { boxWidth: 8, padding: 8, font: { size: 10 }, usePointStyle: true } },
-    },
-    scales: {
-      x: { stacked: false, ticks: { font: { size: 9 } }, grid: { display: false } },
-      y: { stacked: false, ticks: { font: { size: 9 }, stepSize: 1 }, grid: { color: '#ebedf2' } },
-    },
-  },
-});
-</script>
-` : '';
+  // 星期几:todayDisplay 是 YYYY-MM-DD,按北京正午解析避免时区跨日
+  const weekday = (() => {
+    const s = String(todayDisplay || '');
+    const dt = /^\d{4}-\d{2}-\d{2}$/.test(s) ? new Date(s + 'T12:00:00+08:00') : null;
+    if (!dt || Number.isNaN(dt.getTime())) return '';
+    return ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][dt.getUTCDay()];
+  })();
 
   return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- 日报每日更新,禁浏览器缓存,普通 F5 即刷新到最新构建 -->
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 <title>行业板块日报 · ${todayDisplay}</title>
 <style>
-  :root {
-    /* 颜色角色:地面 / 卡片 / 浅底;文字三级;分隔线两级。
-       红是信号不是底色 —— 全页只给品牌字标、「极高」、利好、当前页签和「新」。 */
-    --bg:#f1f2f4; --card-bg:#fff; --tint:#f7f8f9; --tint-ink:#eceef1;
-    --border:#e7e9ed; --border-strong:#c9ced6;
-    --text:#14171c; --text-dim:#4e5661; --text-muted:#8b929c;
-    --accent:#c0171f;
-    /* 文本链接:低饱和蓝,只用于「原文链接/相关报道」,不参与强调 */
-    --link:#2e5b85;
-    /* 语义色 —— 红涨绿跌 */
-    --bull:#d91e18; --bear:#0a9e4b; --mixed:#b26a00;
-    /* 数字与代码位走等宽;中文正文留在系统中文栈,不引外部字体 */
-    --num:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  :root{
+    --bg:#fff; --hover:#f9fafc; --chip:#eceff5; --tint:#f7f8f9;
+    --ink:#222; --ink2:#383838; --link:#555; --muted:#999; --faint:#b3b3b3;
+    --rule:#e6e7ea; --rule2:#f0f0f0;
+    --red:#de0422; --green:#13a85b;
+    --g1:#999; --g2:#d9d9d9; --track:#efefef;
+    --mono:"SF Mono","Cascadia Mono",Consolas,"Liberation Mono",monospace;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased;}
-  /* 报价/涨跌幅/代码全是数字,一律等宽,纵向对得齐 */
-  b,strong,time,.num{font-variant-numeric:tabular-nums;}
-  .container{max-width:1200px;margin:0 auto;background:var(--card-bg);border-left:1px solid var(--border);border-right:1px solid var(--border);min-height:100vh;padding-bottom:32px;}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;}
+  .bull{color:var(--red);}
+  .bear{color:var(--green);}
+  .neutral{color:var(--muted);}
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;}
+  a:focus-visible,button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--red);outline-offset:2px;}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}*{transition:none!important;animation:none!important;}}
+  .wrap{width:100%;max-width:1200px;margin:0 auto;padding:0 24px;}
 
-  /* Header —— 报头式:白底红字标 + 顶部红线,红色不再占一整块面积 */
-  .header{display:flex;align-items:flex-end;gap:16px;padding:18px 22px 14px;border-top:3px solid var(--accent);border-bottom:1px solid var(--border);flex-wrap:wrap;}
-  .header h1{font-size:26px;font-weight:800;letter-spacing:-.01em;line-height:1.1;color:var(--accent);white-space:nowrap;}
-  .head-meta{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--text-dim);padding-bottom:2px;}
-  .head-meta b{color:var(--text);font-weight:600;}
-  .head-meta .dim{font-size:11.5px;color:var(--text-muted);}
-  .head-right{margin-left:auto;display:flex;align-items:center;gap:8px;padding-bottom:2px;}
-  .src-tag{font-size:11.5px;color:var(--text-muted);border:1px solid var(--border);padding:2px 8px;white-space:nowrap;}
-  .refresh-btn{min-width:88px;text-align:center;padding:6px 16px;font:inherit;font-size:12.5px;font-weight:600;color:var(--text);background:var(--card-bg);border:1px solid var(--text);cursor:pointer;transition:background .15s,color .15s;}
-  .refresh-btn:hover{background:var(--text);color:#fff;}
-  .refresh-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
-  .refresh-btn:disabled{color:var(--text-muted);border-color:var(--border-strong);cursor:progress;animation:pulse 1.4s ease-in-out infinite;}
+  /* 顶部工具条 + 主导航 */
+  .topbar{border-bottom:1px solid var(--rule2);font-size:13px;color:#6a6a6a;}
+  .topbar .wrap{display:flex;align-items:center;gap:26px;min-height:44px;padding-top:5px;padding-bottom:5px;flex-wrap:wrap;}
+  .topbar .tb-links{display:flex;align-items:center;gap:26px;}
+  .topbar a:hover{color:var(--red);}
+  .topbar a.on{color:var(--ink);font-weight:600;}
+  .tb-right{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);white-space:nowrap;}
+  .tb-right label{font-size:12px;color:var(--muted);}
+  #historySelect{font:inherit;font-size:12px;padding:4px 6px;border:1px solid var(--rule);background:#fff;color:var(--ink);max-width:128px;}
+  #today-btn{font:inherit;font-size:12px;padding:4px 10px;border:1px solid var(--rule);background:#fff;color:var(--ink2);cursor:pointer;}
+  #today-btn:hover{border-color:var(--ink);color:var(--ink);}
+  .src-tag{font-size:11.5px;color:var(--muted);border:1px solid var(--rule);padding:2px 8px;white-space:nowrap;}
+  .refresh-btn{min-width:84px;text-align:center;padding:5px 14px;font:inherit;font-size:12px;font-weight:600;color:var(--ink);background:#fff;border:1px solid var(--ink);cursor:pointer;transition:background .15s,color .15s;}
+  .refresh-btn:hover{background:var(--ink);color:#fff;}
+  .refresh-btn:disabled{color:var(--muted);border-color:var(--rule);cursor:progress;animation:pulse 1.4s ease-in-out infinite;}
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.55;}}
   @media(prefers-reduced-motion:reduce){.refresh-btn:disabled{animation:none;}}
-  .refresh-toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:999;padding:9px 18px;font-size:12.5px;font-weight:600;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:opacity .3s;}
-  .toast-ok{background:var(--bear);}
-  .toast-err{background:var(--accent);}
+  .refresh-toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:999;padding:9px 18px;font-size:12.5px;font-weight:600;color:#fff;transition:opacity .3s;}
+  .toast-ok{background:var(--green);}
+  .toast-err{background:var(--red);}
 
-  /* Nav —— 白底下划线页签,贴近财联社的导航处理 */
-  .nav{display:flex;align-items:stretch;background:var(--card-bg);border-bottom:1px solid var(--border);padding:0 22px;flex-wrap:wrap;}
-  .nav a{display:inline-flex;align-items:center;font-size:13.5px;font-weight:600;color:var(--text-dim);text-decoration:none;padding:10px 14px 9px;margin-bottom:-1px;border-bottom:2px solid transparent;cursor:pointer;transition:color .15s;}
-  .nav a:first-child{padding-left:0;}
-  .nav a:hover{color:var(--text);}
-  .nav a:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;}
-  .nav a.on{color:var(--accent);border-bottom-color:var(--accent);}
-  .nav .ctrl{margin-left:auto;display:flex;align-items:center;gap:6px;padding:5px 0;font-size:12.5px;color:var(--text-dim);}
-  .nav select{font:inherit;font-size:12.5px;padding:3px 8px;border:1px solid var(--border-strong);background:var(--card-bg);color:var(--text);cursor:pointer;max-width:190px;}
-  .nav select:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
-  .nav button{font:inherit;font-size:12.5px;font-weight:600;padding:3px 12px;border:1px solid var(--border-strong);background:var(--card-bg);color:var(--text-dim);cursor:pointer;transition:background .15s,color .15s,border-color .15s;}
-  .nav button:hover{border-color:var(--text);color:var(--text);}
-  .nav button.active{background:var(--text);border-color:var(--text);color:#fff;}
+  .nav{border-bottom:1px solid var(--rule);}
+  .nav .wrap{display:flex;align-items:center;height:64px;}
+  .brand{font-size:24px;font-weight:800;letter-spacing:-.6px;margin:0 40px 0 0;white-space:nowrap;}
+  .brand em{font-style:normal;color:var(--red);}
+  .nav-links{display:flex;gap:32px;}
+  .nav-links a{font-size:18px;color:#4d4d4d;line-height:1;}
+  .nav-links a:hover{color:var(--red);}
+  .nav-right{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap;}
+  .nav-right b{color:var(--ink);font-weight:600;}
 
-  /* Stats —— 数字承担层级,颜色只留给涨跌和「极高」 */
-  .stats-mini{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-bottom:1px solid var(--border);}
-  .st{display:block;padding:12px 22px 14px;border-right:1px solid var(--border);font-size:11.5px;color:var(--text-muted);letter-spacing:.02em;}
-  .st:last-child{border-right:0;}
-  .st b{display:block;font-size:26px;font-weight:700;line-height:1.2;color:var(--text);font-family:var(--num);letter-spacing:-.01em;}
-  .st.bull b{color:var(--bull);}
-  .st.bear b{color:var(--bear);}
-  .st.vhigh b{color:var(--accent);}
-  .st.high b{color:var(--text);}
-  @media(max-width:640px){
-    .stats-mini{grid-template-columns:repeat(3,minmax(0,1fr));}
-    .st{padding:9px 14px 10px;border-bottom:1px solid var(--border);}
-    .st b{font-size:21px;}
-  }
-
-  /* ETF —— 四栏并排报价表;净值挪进 title 提示,主视觉只留涨跌幅 */
-  .etf-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:12px 22px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
-  @media(max-width:640px){
-    .etf-grid{grid-template-columns:repeat(2,minmax(0,1fr));margin:10px 14px 0;}
-    .etf-group:nth-child(2n){border-right:0;}
-    .etf-group:nth-child(-n+2){border-bottom:1px solid var(--border);}
-  }
-  .etf-group{background:var(--card-bg);padding:11px 14px 9px;border-right:1px solid var(--border);}
-  .etf-group:last-child{border-right:0;}
-  .etf-group-name{font-size:12.5px;font-weight:700;color:var(--text);letter-spacing:.04em;padding-bottom:6px;margin-bottom:2px;border-bottom:1px solid var(--border);}
-  .etf-item{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px dashed var(--border);}
-  .etf-item:last-child{border-bottom:0;}
-  .etf-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;color:var(--text);}
-  .etf-name i{font-style:normal;margin-left:4px;font-size:11px;font-family:var(--num);color:var(--text-muted);}
-  .etf-change{flex:none;min-width:58px;text-align:right;font-size:12.5px;font-weight:700;font-family:var(--num);}
-  .etf-change.up{color:var(--bull);}
-  .etf-change.down{color:var(--bear);}
-  .etf-change.neu{color:var(--text-muted);}
-
-  /* Sector summary row — .sc 是可点的板块筛选按钮,行为见页尾脚本「板块筛选」 */
-  .sector-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 22px 0;}
-  @media(max-width:640px){.sector-row{grid-template-columns:repeat(2,minmax(0,1fr));margin:12px 14px 0;}}
-  .sc{display:block;width:100%;text-align:left;background:var(--card-bg);border:1px solid var(--border);padding:11px 13px 12px;cursor:pointer;font:inherit;color:inherit;transition:border-color .15s,background .15s;}
-  .sc:hover{border-color:var(--border-strong);background:var(--tint);}
-  .sc:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
-  .sc.active{background:var(--tint-ink);border-color:var(--text);}
-  .sc-name{display:flex;align-items:baseline;justify-content:space-between;gap:6px;font-size:14px;font-weight:600;color:var(--text);}
-  .sc-name b{font-size:20px;font-weight:700;font-family:var(--num);color:var(--text);letter-spacing:-.01em;}
-  .sc-stat{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:4px;font-size:12px;color:var(--text-dim);}
-  /* 板块速览一行四张卡:程度标记不再填色,否则四块实心红会把红色预算一次吃光 */
-  .sc .impact-vhigh{background:none;color:var(--accent);padding:0;font-weight:700;}
-
-  /* Section divider —— 细红竖条 + 黑体标题,红只占 3px */
-  .sec-title{display:flex;align-items:center;gap:9px;margin:26px 22px 0;padding-bottom:9px;border-bottom:1px solid var(--border);font-size:16px;font-weight:700;color:var(--text);letter-spacing:.01em;}
-  .sec-title::before{content:'';width:3px;height:15px;background:var(--accent);flex:none;}
-  @media(max-width:640px){.sec-title{margin-left:14px;margin-right:14px;font-size:15px;}}
-  .sec-hint{margin-left:auto;font-size:12px;font-weight:400;color:var(--text-muted);}
-  /* 「今日复盘 / 次日倾向」两个方向的释义条:两者语义不同,必须让读者一眼看出差别 */
-  .dir-legend{margin:8px 22px 0;font-size:12px;line-height:1.6;color:var(--text-muted);}
-  .dir-legend b{font-weight:700;color:var(--text-dim);}
-  @media(max-width:640px){.dir-legend{margin-left:14px;margin-right:14px;}}
-
-  /* News cards —— 电报式:左侧独立时间列,右侧标题/摘要,细分隔线
-     标题用字号和字重压住场,元信息一律退到灰色。 */
-  .news-grid{display:grid;gap:0;margin:0 22px;}
-  /* 筛选靠 hidden 属性,但 .news-card 的 display:grid 特异性高于 UA 的
-     [hidden]{display:none} —— 不显式补这条,设了 hidden 也藏不住。 */
-  .news-card[hidden]{display:none;}
-  .news-empty{margin:10px 22px 0;padding:16px;text-align:center;font-size:12.5px;color:var(--text-dim);border:1px dashed var(--border-strong);}
-  .news-count{margin-left:auto;font-size:12px;font-weight:400;color:var(--text-muted);white-space:nowrap;}
-  /* 新闻列表上方的筛选页签:选中用墨色文字 + 红色短线,不再整颗填红 */
-  .news-filter{display:flex;flex-wrap:wrap;gap:0 20px;margin:10px 22px 0;border-bottom:1px solid var(--border);}
-  @media(max-width:640px){.news-filter,.news-grid,.news-empty{margin-left:14px;margin-right:14px;}}
-  .fchip{display:inline-flex;align-items:center;font:inherit;font-size:13px;font-weight:600;color:var(--text-muted);background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;padding:6px 0 8px;cursor:pointer;transition:color .15s,border-color .15s;}
-  .fchip:hover{color:var(--text);}
-  .fchip:focus-visible{outline:2px solid var(--accent);outline-offset:-1px;}
-  .fchip b{margin-left:5px;font-weight:600;font-family:var(--num);color:var(--text-muted);}
-  .fchip.active{color:var(--text);border-bottom-color:var(--accent);}
-  .fchip.active b{color:var(--text-dim);}
-  .news-card{display:grid;grid-template-columns:74px minmax(0,1fr);gap:14px;padding:15px 10px 16px;margin:0 -10px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;}
-  .news-card:hover,.news-card:focus-within,.news-card.expanded{background:var(--tint);}
-  .card-aside{padding-top:2px;font-family:var(--num);font-size:11.5px;line-height:1.5;color:var(--text-muted);white-space:nowrap;}
-  .card-aside time{display:block;font-size:12px;font-weight:600;color:var(--text-dim);}
-  .card-aside .d{display:block;}
-  @media(max-width:640px){
-    .news-card{grid-template-columns:1fr;gap:3px;padding:13px 8px 14px;margin:0 -8px;}
-    .card-aside{display:flex;align-items:baseline;gap:7px;padding-top:0;}
-    .card-aside time{font-size:11.5px;}
-  }
-  .card-body{min-width:0;}
-  .card-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:5px;}
-  .card-cat{font-size:11.5px;font-weight:600;color:var(--text-dim);background:var(--tint-ink);padding:1px 6px;white-space:nowrap;}
-  .card-time{margin-left:auto;font-size:11.5px;color:var(--text-muted);font-family:var(--num);}
-  .fresh-badge{font-size:10.5px;font-weight:700;color:var(--accent);border:1px solid currentColor;padding:0 4px;line-height:1.45;}
-
-  .card-title{font-size:16px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:4px;letter-spacing:.005em;text-wrap:pretty;}
-  .card-original-title{font-size:12px;color:var(--text-muted);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .card-summary{font-size:13px;color:var(--text-dim);line-height:1.65;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-wrap:pretty;}
-  .card-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:11.5px;color:var(--text-muted);}
-  .card-meta a{color:var(--link);text-decoration:none;}
-  .card-meta a:hover{text-decoration:underline;}
-  .src-link{padding-left:2px;}
-  /* 方向徽标:色点 + 同色文字,不做底色;程度徽标只给「极高」实心红 */
-  .badge{display:inline-flex;align-items:center;gap:5px;padding:0;font-size:11.5px;font-weight:600;background:none;}
-  .badge::before{content:'';width:5px;height:5px;background:currentColor;flex:none;}
-  .badge-bull{color:var(--bull);}
-  .badge-bear{color:var(--bear);}
-  .badge-neutral{color:var(--text-muted);}
-  .badge-mixed{color:var(--mixed);}
-  .impact-tag{font-size:11.5px;font-weight:600;color:var(--text-muted);}
-  .impact-vhigh{background:var(--accent);color:#fff;font-weight:700;padding:1px 6px;}
-  .impact-high{color:var(--accent);}
-  .impact-mid,.impact-low{color:var(--text-muted);}
-  .ticker-inline{color:var(--text-dim);font-family:var(--num);font-size:11.5px;}
-
-  /* Expand detail */
-  .card-detail{display:none;margin-top:9px;padding-top:9px;border-top:1px solid var(--border-strong);font-size:13px;color:var(--text);line-height:1.65;}
-  .news-card.expanded .card-detail{display:block;}
-  .detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:7px;}
-  @media(max-width:480px){.detail-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
-  .dl{display:block;font-size:11px;color:var(--text-muted);letter-spacing:.02em;}
-  .detail-extra{margin:2px 0 7px;}
-  .expl-text{font-size:13px;}
-  .expl-list{margin:2px 0 0;padding-left:17px;font-size:12.5px;}
-  .expl-list li{margin-bottom:2px;}
-  .verify-note{font-size:12px;color:var(--text-dim);padding:6px 9px;background:var(--tint);border-left:2px solid var(--border-strong);}
-
-  /* 事件级去重:来源徽标 + 相关报道 */
-  .ev-src-badges{display:inline-flex;flex-wrap:wrap;gap:4px;}
-  .ev-src-badge{font-size:11.5px;padding:1px 7px;background:var(--tint);color:var(--text-dim);border:1px solid var(--border);white-space:nowrap;}
-  .event-sources,.event-related{margin-top:4px;}
-  .related-list li{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .related-list a{color:var(--link);text-decoration:none;font-size:12px;font-family:var(--num);}
-  .related-list a:hover{text-decoration:underline;}
-
-  /* Matrix table */
-  .table-wrap{overflow-x:auto;margin:12px 22px 0;border:1px solid var(--border);}
-  @media(max-width:640px){.table-wrap{margin-left:14px;margin-right:14px;}}
-  table{width:100%;border-collapse:collapse;font-size:12.5px;}
-  th{background:var(--tint);color:var(--text-dim);padding:7px 10px;text-align:left;font-weight:600;white-space:nowrap;border-bottom:1px solid var(--border-strong);font-size:11.5px;}
-  td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
-  tr:last-child td{border-bottom:none;}
-  .mx-name{font-weight:700;}
-  .dir-bull{color:var(--bull);font-weight:600;}
-  .dir-bear{color:var(--bear);font-weight:600;}
-  .dir-flat{color:var(--text-dim);}
-  .dir-mixed{color:var(--mixed);font-weight:600;}
-  /* 冲击程度不用红绿——那两色在本站已被「涨/跌」占用;只有最强档保留红字 */
-  .shock-strong{color:var(--accent);font-weight:700;}
-  .shock-mid{color:var(--text-dim);font-weight:600;}
-  .shock-weak{color:var(--text-muted);}
-
-  /* Key points —— 细竖线列表,不再是浅灰块 */
-  .key-points{display:grid;gap:9px;margin:14px 22px 0;}
-  .kp-card{border-left:2px solid var(--border-strong);padding:1px 0 1px 13px;font-size:13.5px;line-height:1.65;color:var(--text);}
-  .kp-card::before{content:'—';margin-right:7px;font-weight:700;color:var(--text-muted);}
-
-  /* 今日复盘 —— 全页导语:3px 红竖线 + 15px 正文,靠位置和字号抢注意力 */
-  .market-summary{display:flex;gap:16px;margin:16px 22px 0;padding:16px 18px 17px 16px;border-left:3px solid var(--accent);background:var(--tint);}
-  .ms-label{flex:none;font-size:11.5px;font-weight:700;color:var(--text);letter-spacing:.08em;padding-top:4px;white-space:nowrap;}
-  .market-summary p{font-size:15px;line-height:1.75;color:var(--text);max-width:76ch;text-wrap:pretty;}
+  /* 今日复盘:全页导语 */
+  .market-summary{display:flex;gap:16px;margin:22px 0 0;padding:16px 18px 17px 16px;border-left:3px solid var(--red);background:var(--tint);}
+  .ms-label{flex:none;font-size:11.5px;font-weight:700;color:var(--ink);letter-spacing:.08em;padding-top:4px;white-space:nowrap;}
+  .market-summary p{font-size:15px;line-height:1.75;color:var(--ink);max-width:76ch;text-wrap:pretty;}
   .market-summary b{font-weight:700;font-family:var(--num);}
-  @media(max-width:640px){
-    .key-points{margin-left:14px;margin-right:14px;}
-    .market-summary{flex-direction:column;gap:5px;margin:14px 14px 0;padding:13px 14px 14px;}
+
+  /* 三栏 */
+  .cols{display:grid;grid-template-columns:280px minmax(0,1fr) 260px;gap:24px;align-items:start;padding-top:22px;}
+  .feed,.quotes,.rail{min-width:0;}
+  .ph{display:flex;align-items:center;gap:8px;height:48px;border-top:2px solid var(--ink);}
+  .ph h2{margin:0;font-size:16px;font-weight:700;line-height:1;}
+  .ph .note{margin-left:auto;font-size:12px;color:var(--muted);font-weight:400;}
+  .ph .more{font-size:12px;color:var(--muted);font-weight:400;}
+
+  /* 左栏 */
+  .qsec{padding:11px 0 9px;border-bottom:1px solid var(--rule);}
+  .qsec-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:7px;}
+  .sc{font:inherit;display:flex;align-items:baseline;flex-wrap:wrap;gap:3px 8px;min-width:0;flex:1;background:none;border:0;padding:0;text-align:left;cursor:pointer;color:inherit;}
+  .sc:hover .qname{color:var(--red);}
+  .sc[aria-pressed="true"] .qname{color:var(--red);}
+  .qname{font-size:16px;font-weight:700;line-height:1.3;}
+  .sc-badges{display:inline-flex;flex-wrap:wrap;gap:3px 8px;align-items:baseline;}
+  .qchg{font-size:15px;font-weight:700;flex:none;}
+  .qetf{display:grid;grid-template-columns:52px 1fr auto;gap:8px;align-items:center;padding:4px 9px;margin-bottom:3px;background:var(--chip);font-size:12px;line-height:20px;transition:background-color .12s ease,color .12s ease;}
+  .qetf:hover{background:var(--red);color:#fff;}
+  .qetf:hover .qcode,.qetf:hover .qetf-name,.qetf:hover .qchg{color:#fff;}
+  .qcode{font-family:var(--mono);font-size:10.5px;color:var(--muted);}
+  .qetf-name{color:var(--ink2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+  .qetf .qchg{font-weight:700;}
+  .qstats{margin-top:14px;}
+  .qstats div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--rule2);font-size:12px;color:var(--muted);}
+  .qstats b{font-weight:700;color:var(--ink);}
+  .qstats b.bull{color:var(--red);}
+  .qstats b.bear{color:var(--green);}
+  .qfoot{margin-top:10px;font-size:11px;line-height:1.7;color:var(--faint);}
+
+  /* 徽标 */
+  .badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;}
+  .badge::before{content:'';width:4px;height:4px;background:currentColor;flex:none;}
+  .badge-bull{color:var(--red);}
+  .badge-bear{color:var(--green);}
+  .badge-neutral{color:var(--muted);}
+  .badge-mixed{color:var(--muted);}
+  .dir-legend{margin:12px 0 0;padding:9px 12px;background:var(--tint);border-left:2px solid var(--rule);font-size:12px;line-height:1.7;color:var(--link);}
+  .dir-legend b{color:var(--ink);font-weight:700;margin:0 2px;}
+
+  /* 中栏 */
+  .lead{padding:6px 0 18px;border-bottom:1px solid var(--rule);}
+  .lead h2{margin:0;font-size:27px;line-height:1.42;font-weight:700;letter-spacing:-.3px;color:var(--ink);}
+  .flag{display:inline-block;background:var(--red);color:#fff;font-size:15px;font-weight:400;font-style:normal;line-height:1;padding:4px 5px;margin-right:8px;vertical-align:3px;letter-spacing:.02em;}
+  .lead .meta{margin:9px 0 8px;font-size:12px;color:var(--muted);}
+  .lead p{margin:0;font-size:15px;line-height:1.75;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+  .top-item{padding:14px 0 13px;border-bottom:1px solid var(--rule);}
+  .top-item h3{margin:0 0 6px;font-size:22px;line-height:1.4;font-weight:700;letter-spacing:-.2px;color:var(--ink);}
+  .top-item .meta{font-size:12px;color:var(--muted);}
+  .feed-empty{padding:28px 0;font-size:13px;color:var(--muted);}
+
+  /* 新闻流 */
+  .stream{margin-top:34px;}
+  .stream-bar{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;gap:32px;border-top:2px solid var(--ink);border-bottom:1px solid var(--rule);}
+  .stream-head{display:flex;align-items:baseline;gap:10px;padding:12px 0;white-space:nowrap;}
+  .stream-head h2{margin:0;font-size:16px;font-weight:700;}
+  .count{font-size:12px;color:var(--muted);}
+  .tabs{display:flex;gap:24px;margin-left:auto;align-self:stretch;align-items:center;overflow-x:auto;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{background:none;border:0;padding:14px 0;margin-bottom:-1px;font:inherit;font-size:14px;color:var(--link);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+  .tab b{margin-left:4px;font-size:11px;font-weight:400;color:var(--faint);font-variant-numeric:tabular-nums;}
+  .tab:hover{color:var(--ink);}
+  .tab.on{color:var(--red);font-weight:700;border-bottom-color:var(--red);}
+  .tab.on b{color:var(--red);}
+  .grp{margin-top:26px;}
+  .grp[hidden]{display:none!important;}
+  .grp-head{display:flex;align-items:baseline;gap:10px;padding:0 0 10px;border-bottom:2px solid var(--ink);font-size:15px;font-weight:700;color:var(--ink);}
+  .grp-head i{font-style:normal;font-size:11px;font-weight:400;color:var(--muted);}
+  .grp-head b{margin-left:auto;font-size:11px;font-weight:400;color:var(--muted);font-family:var(--mono);}
+  .grp-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:52px;align-items:start;}
+  .scol{min-width:0;position:relative;}
+  .scol+.scol::before{content:"";position:absolute;left:-26px;top:2px;bottom:0;width:1px;background:var(--rule);}
+  .item{border-bottom:1px solid var(--rule);}
+  .item[hidden]{display:none!important;}
+  .item>summary{display:grid;grid-template-columns:42px minmax(0,1fr) 14px;cursor:pointer;list-style:none;padding:10px 6px 10px 0;transition:background-color .12s ease;}
+  .item>summary::-webkit-details-marker{display:none;}
+  .item>summary::after{content:"+";font-family:var(--mono);font-size:14px;line-height:22px;color:#c9c9c9;text-align:right;transition:color .12s ease;}
+  .item[open]>summary::after{content:"−";color:var(--red);}
+  .item>summary:hover{background:var(--hover);}
+  .item>summary:hover::after{color:var(--muted);}
+  .item .t{font-size:12px;color:var(--muted);text-align:right;padding:2px 8px 0 0;font-family:var(--mono);}
+  .item .c{display:block;min-width:0;}
+  .item .title{display:block;font-size:14px;line-height:22px;color:var(--ink2);}
+  .item.high .title{font-size:15px;font-weight:700;color:var(--ink);}
+  .item.key .title{font-size:16px;font-weight:700;color:var(--ink);}
+  .item .summary{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:13px;line-height:20px;color:#777;margin-top:2px;}
+  .item[open] .summary{display:none;}
+  .item .meta{display:block;font-size:12px;color:var(--muted);margin-top:2px;}
+  .flag.sm{font-size:11px;padding:1px 5px;margin-right:6px;vertical-align:1px;}
+  .item .detail{padding:2px 0 14px 42px;font-size:13px;line-height:1.75;color:var(--link);}
+  .item .detail p{margin:0 0 6px;}
+  .item .detail .dl{font-size:11px;color:var(--muted);margin-right:5px;}
+  .item .detail .dim{color:var(--muted);}
+  .item .detail .src{color:var(--red);border-bottom:1px solid currentColor;padding-bottom:1px;}
+  .dgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:2px 0 8px;}
+  .dgrid>div{display:flex;flex-direction:column;gap:1px;}
+  .dgrid .dl{margin:0;}
+  .dgrid b{font-size:12.5px;color:var(--ink2);}
+  .dsec{margin:0 0 7px;}
+  .dlist{margin:2px 0 0;padding-left:16px;font-size:12.5px;}
+  .dlist li{margin-bottom:2px;}
+  .related li{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .related a{color:var(--link);font-family:var(--mono);font-size:12px;}
+  .related a:hover{text-decoration:underline;}
+  .ev-src{display:inline-flex;flex-wrap:wrap;gap:4px;}
+  .ev-src-badge{font-size:11px;padding:1px 6px;background:var(--tint);color:var(--link);border:1px solid var(--rule);white-space:nowrap;}
+  .stream-empty{padding:30px 0;text-align:center;font-size:13px;color:var(--muted);border-bottom:1px solid var(--rule);}
+  .stream-empty[hidden]{display:none!important;}
+  .stream-end{padding:18px 0 2px;font-size:12px;color:var(--muted);text-align:center;border-top:1px solid var(--rule);margin-top:22px;}
+  .stream-end b{color:var(--link);}
+
+  /* 右栏 */
+  .rail-dist{margin-top:20px;}
+  .points{list-style:none;margin:0;padding:6px 0 0;}
+  .points li{position:relative;padding-left:13px;font-size:13px;line-height:1.75;color:var(--ink2);margin-bottom:9px;}
+  .points li::before{content:"•";position:absolute;left:0;top:0;color:var(--muted);font-size:15px;}
+  .points li b{font-weight:700;color:var(--ink);margin-right:3px;}
+  .mini{padding:13px 0;border-bottom:1px solid var(--rule);}
+  .mini:last-child{border-bottom:0;}
+  .mini h3{margin:0 0 2px;font-size:14px;font-weight:700;color:var(--ink);}
+  .mini .sub{font-size:11px;color:var(--muted);margin-left:4px;font-weight:400;}
+  .stack{display:flex;height:12px;margin:11px 0 9px;background:var(--track);}
+  .stack i{display:block;}
+  .f-red{background:var(--red);}
+  .f-green{background:var(--green);}
+  .f-g1{background:var(--g1);}
+  .f-g2{background:var(--g2);}
+  .lgd{display:grid;grid-template-columns:1fr 1fr;gap:3px 14px;font-size:12px;color:var(--link);}
+  .lgd span{display:flex;align-items:center;gap:5px;}
+  .lgd i{width:7px;height:7px;display:inline-block;}
+  .lgd b{margin-left:auto;font-weight:700;color:var(--ink);}
+  .drow{display:grid;grid-template-columns:44px 1fr 24px;align-items:center;gap:7px;margin-top:8px;}
+  .dn{font-size:12px;color:var(--ink2);}
+  .db{display:flex;height:8px;background:var(--track);}
+  .db i{display:block;}
+  .dt{font-size:11px;color:var(--muted);text-align:right;}
+
+  /* 数据 */
+  .viz{margin-top:38px;}
+  .viz-card{padding:6px 0 18px;}
+  .vtitle{display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:700;color:var(--ink);}
+  .vtitle span{font-size:12px;color:var(--muted);font-weight:400;}
+  .legend{display:flex;gap:22px;flex-wrap:wrap;margin:10px 0 2px;}
+  .lg{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--link);}
+  .lg i{width:16px;height:2px;display:inline-block;}
+  .lg b{font-weight:700;}
+  svg{display:block;width:100%;height:auto;}
+  svg.tchart{touch-action:pan-y;}
+  .only-narrow{display:none;}
+  .chart-plot{position:relative;}
+  .chart-plot .tip{position:absolute;z-index:3;width:178px;padding:9px 11px;background:#fff;border:1px solid var(--rule);pointer-events:none;font-size:12px;line-height:1.5;font-variant-numeric:tabular-nums;}
+  .tip[hidden]{display:none;}
+  .tip-d{display:flex;justify-content:space-between;font-size:11px;color:var(--link);font-family:var(--mono);padding-bottom:5px;margin-bottom:5px;border-bottom:1px solid var(--rule2);}
+  .tip-d span{color:var(--faint);font-family:inherit;}
+  .tip .tr{display:grid;grid-template-columns:7px 1fr auto 46px;gap:7px;align-items:baseline;padding:1.5px 0;}
+  .tip .tr i{width:7px;height:7px;display:block;}
+  .tip .tr span{color:var(--ink2);}
+  .tip .tr b{font-weight:700;color:var(--ink);}
+  .tip .tr em{font-style:normal;font-size:11px;text-align:right;}
+  .hint{margin-top:7px;font-size:11px;color:var(--faint);}
+  .base{stroke-width:1;stroke-dasharray:3 3;stroke:#e6e7ea;}
+  .tl{fill:none;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round;}
+  .lead-line{stroke-width:1;}
+  .axis{font-size:10px;fill:var(--faint);font-family:var(--mono);}
+  .endlab{font-size:11px;font-weight:700;fill:var(--ink2);}
+  .endlab .en{font-weight:600;}
+  table.heat{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px;}
+  table.heat th{font-size:12px;font-weight:600;color:var(--link);text-align:center;padding:8px 6px;background:var(--hover);border:1px solid var(--rule);width:19.5%;}
+  table.heat thead th:first-child{text-align:left;padding-left:12px;width:22%;}
+  table.heat tbody th{font-size:13px;font-weight:700;color:var(--ink);text-align:left;padding:9px 12px;background:#fff;border:1px solid var(--rule);}
+  table.heat td{text-align:center;padding:10px 6px;border:1px solid var(--rule);font-family:var(--mono);font-variant-numeric:tabular-nums;}
+
+  /* 矩阵 */
+  .matrix{margin-top:38px;}
+  .matrix-scroll{overflow-x:auto;}
+  .matrix table{width:100%;border-collapse:collapse;margin-top:12px;min-width:720px;}
+  .matrix th{font-size:12px;font-weight:600;color:var(--link);text-align:left;padding:10px 12px;background:var(--hover);border-bottom:1px solid var(--rule);white-space:nowrap;}
+  .matrix td{padding:13px 12px;border-bottom:1px solid var(--rule);vertical-align:top;font-size:13px;color:var(--ink2);}
+  .matrix .mx-name{font-size:15px;font-weight:700;color:var(--ink);white-space:nowrap;}
+  .matrix .tickers{font-size:12px;color:var(--link);line-height:1.7;}
+  .matrix .logic{line-height:1.7;}
+  .shock-strong{color:var(--red);font-weight:700;}
+  .shock-mid{color:var(--ink2);font-weight:600;}
+  .shock-weak{color:var(--muted);}
+  .dir-bull{color:var(--red);font-weight:600;}
+  .dir-bear{color:var(--green);font-weight:600;}
+  .dir-flat{color:var(--muted);}
+  .dir-mixed{color:var(--muted);font-weight:600;}
+
+  /* 页脚 */
+  .foot{margin:36px 0 56px;padding-top:14px;border-top:1px solid var(--rule);font-size:11px;line-height:1.9;color:var(--faint);}
+  .foot b{color:var(--muted);font-weight:600;}
+
+  @media (max-width:1080px){
+    .cols{grid-template-columns:250px minmax(0,1fr) 240px;gap:18px;}
+    .lead h2{font-size:25px;}
+    .top-item h3{font-size:21px;}
+  }
+  @media (max-width:900px){
+    main{display:flex;flex-direction:column;}
+    .cols{display:contents;}
+    .feed{order:1;margin-top:24px;}
+    .quotes{order:2;margin-top:30px;}
+    .rail{order:3;margin-top:30px;}
+    .stream{order:4;margin-top:28px;}
+    .viz{order:5;}
+    .matrix{order:6;}
+    .foot{order:7;}
+    .nav-links{gap:22px;}
+    .nav-links a{font-size:16px;}
+    .brand{margin-right:26px;font-size:22px;}
+  }
+  @media (max-width:860px){
+    .grp-cols{display:block;}
+    .scol+.scol::before{display:none;}
+  }
+  @media (max-width:720px){
+    .topbar .wrap{gap:10px;}
+    .topbar .tb-links{display:none;}
+    .tb-right{margin-left:0;flex-wrap:wrap;gap:8px;white-space:normal;}
+    .nav .wrap{height:56px;}
+    .nav-links{display:none;}
+    .nav-right{font-size:11px;}
+    .nav-right .gen-note{display:none;}
+    .brand{font-size:21px;margin-right:0;}
+    .wrap{padding:0 16px;}
+    .market-summary{flex-direction:column;gap:5px;margin-top:16px;padding:13px 14px 14px;}
     .ms-label{padding-top:0;}
     .market-summary p{font-size:14px;}
+    .lead h2{font-size:23px;line-height:1.45;}
+    .top-item h3{font-size:19px;}
+    .stream-bar{flex-wrap:wrap;gap:0;padding-top:12px;}
+    .stream-head{width:100%;padding:0;flex-wrap:wrap;white-space:normal;}
+    .count{font-size:11px;}
+    .tabs{width:100%;margin:8px 0 0;gap:16px;overflow-x:auto;}
+    .tab{padding:10px 0;}
+    .item>summary{grid-template-columns:40px minmax(0,1fr) 14px;padding-right:0;}
+    .item .detail{padding-left:40px;}
+    .dgrid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .only-wide{display:none;}
+    .only-narrow{display:block;}
+    .foot{margin-bottom:36px;}
   }
-
-  /* Footer */
-  .footer{margin-top:24px;padding:14px 22px;border-top:1px solid var(--border);font-size:12px;color:var(--text-muted);line-height:1.8;}
-  .footer strong{color:var(--text-dim);}
-
-  /* Charts */
-  .chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 22px 0;}
-  @media(max-width:640px){.chart-grid{grid-template-columns:1fr;margin:12px 14px 0;}}
-  .chart-card{border:1px solid var(--border);background:var(--card-bg);padding:13px 15px;}
-  .wide-chart{grid-column:1/-1;}
-  .chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;}
-  .chart-wrap{position:relative;width:100%;}
-  .wide-chart .chart-wrap{height:240px;}
-  .chart-card .chart-wrap{height:200px;}
-  .chart-donut .chart-wrap{height:180px;max-width:240px;margin:0 auto;}
 </style>
 <script>
-// Site root derived from the current URL. On gh-pages the app lives under a
-// repo subpath (…/daily-stock-news/). A static relative <script src="assets/…">
-// resolves correctly on the index page but breaks on history pages, which sit
-// under /history/ — the browser would look for /history/assets/… → 404, and
-// Chart.js never loads (5 charts go blank). Derive the root and load the chart
-// library synchronously via document.write so it's ready before the chart
-// <script> at the bottom of <body> runs.
 (function(){
   var p = window.location.pathname;
   if (p.indexOf('/history/') >= 0) p = p.slice(0, p.indexOf('/history/'));
   else if (p.slice(-5) === '.html') p = p.slice(0, p.lastIndexOf('/'));
   else if (p.slice(-1) === '/') p = p.slice(0, -1);
-  window.BASE = p; // '' when deployed at the domain root (local preview)
-  document.write('<script src="' + p + '/assets/chart.umd.min.js"><\\/scr' + 'ipt>');
+  window.BASE = p;
 })();
 </script>
 </head>
 <body>
-<div class="container">
 
-<div class="header">
-  <h1>行业板块日报</h1>
-  <div class="head-meta">
-    <div><b>${todayDisplay}</b> · ${analyzed.length} 条精选 · 半导体 / 光模块 / 创新药 / 黄金</div>
-    <div class="dim">最后更新 ${result.generatedAt ? beijingNowString(new Date(result.generatedAt)) : beijingNowString()}（北京时间）</div>
-  </div>
-  <div class="head-right">
-    <span class="src-tag">${isAi ? 'Claude API 分析 + 中文翻译' : '关键词引擎分类'}</span>
-    <button class="refresh-btn" onclick="triggerRefresh()" title="手动刷新日报">刷新日报</button>
-  </div>
-</div>
-
-<div class="nav">
-  <a class="on" onclick="goToday()">今日日报</a>
-  <a onclick="location.href=(window.BASE||'')+'/db.html'">数据查询</a>
-  <span class="ctrl">
-    <label for="historySelect">历史</label>
-    <select id="historySelect" onchange="showHistoryDate()">
-      <option value="">-- 选择日期 --</option>
-    </select>
-    <button id="today-btn" onclick="goToday()">今天</button>
-  </span>
-</div>
-
-<div class="stats-mini">
-  <div class="st bull">利好<b>${stats.bull}</b></div>
-  <div class="st bear">利空<b>${stats.bear}</b></div>
-  <div class="st vhigh">极高冲击<b>${stats.vhigh}</b></div>
-  <div class="st high">高影响<b>${stats.high}</b></div>
-  <div class="st">板块<b>${sectorMatrix.length}</b></div>
-</div>
-
-${summaryText ? `
-<div class="market-summary">
-  <span class="ms-label">今日复盘</span>
-  <p>${emphasizePct(escHtml(summaryText))}</p>
-</div>` : ''}
-
-${etfData.length > 0 ? `
-<div class="sec-title">板块 ETF 指标<span class="sec-hint">悬停查看净值</span></div>
-<div class="etf-grid">
-${SECTORS.map(cat => {
-  const items = etfData.filter(e => e.category === cat);
-  if (!items.length) return '';
-  return '<div class="etf-group">' +
-    '<div class="etf-group-name">' + cat + '</div>' +
-    items.map(e => {
-      const dir = e.change > 0 ? 'up' : e.change < 0 ? 'down' : 'neu';
-      const pctSign = e.change > 0 ? '+' : '';
-      return '<div class="etf-item" title="' + escHtml(e.name) + (e.code ? ' ' + escHtml(e.code) : '') + ' · 净值 ' + e.price.toFixed(3) + '">' +
-        '<span class="etf-name">' + escHtml(e.name) + (e.code ? '<i>' + escHtml(e.code) + '</i>' : '') + '</span>' +
-        '<span class="etf-change ' + dir + '">' + pctSign + e.change.toFixed(2) + '%</span>' +
-        '</div>';
-    }).join('') +
-    '</div>';
-}).filter(Boolean).join('')}
-</div>
-` : ''}
-
-${sectorMatrix.length > 0 ? `
-<div class="sec-title">板块速览<span class="sec-hint">点击卡片可只看该板块新闻</span></div>
-<div class="sector-row">
-${sectorMatrix.map(s => `
-  <button type="button" class="sc" data-sector="${escHtml(s.name)}" data-cat="${CATEGORY_CLS[s.name] || 'other'}" aria-pressed="false">
-    <span class="sc-name">${escHtml(s.name)}<b>${s.news_count}</b></span>
-    <span class="sc-stat">
-      ${hasForward ? `
-      <span class="badge ${dirCls(s.direction)}" title="今日复盘：板块方向以当日 ETF 实际涨跌校准">复盘 ${s.direction}</span>
-      <span class="badge ${s.forwardDirection ? dirCls(s.forwardDirection) : 'badge-neutral'}" title="次日倾向：只由新闻内容研判，未经行情校准">次日 ${s.forwardDirection || '—'}</span>` : `
-      <span class="badge ${dirCls(s.direction)}">${s.direction}</span>`}
-      <span class="impact-tag ${impactCls(s.shock === '强' ? '极高' : s.shock === '中' ? '中' : '低')}">${s.shock}冲击</span>
+<div class="topbar">
+  <div class="wrap">
+    <span class="tb-links">
+      <a class="on" href="#" onclick="goToday();return false;">今日日报</a>
+      <a href="#" onclick="location.href=(window.BASE||'')+'/db.html';return false;">数据查询</a>
+      <a href="#" onclick="location.href=(window.BASE||'')+'/history/index.html';return false;">历史存档</a>
     </span>
-  </button>
-`).join('')}
-</div>
-${hasForward ? `<div class="dir-legend"><b>今日复盘</b>=板块方向以当日 ETF 实际涨跌校准（回答「今天为什么涨跌」）；<b>次日倾向</b>=只由新闻内容研判、未经行情校准（回答「明天可能怎样」）。</div>` : ''}
-` : ''}
-
-${chartPanels}
-
-<div class="sec-title" id="newsSection">新闻列表（按时间从近到远）<span class="news-count" id="newsCountText">共 ${analyzed.length} 条</span></div>
-<div class="news-filter" id="newsFilter" role="group" aria-label="按板块筛选新闻">
-  <button type="button" class="fchip active" data-sector="" aria-pressed="true">全部<b>${analyzed.length}</b></button>
-  ${sectorMatrix.map(s => `
-  <button type="button" class="fchip" data-sector="${escHtml(s.name)}" data-cat="${CATEGORY_CLS[s.name] || 'other'}" aria-pressed="false">${escHtml(s.name)}<b>${sectorCounts[s.name] || 0}</b></button>
-`).join('')}
-</div>
-<div class="news-grid" id="newsGrid">
-${newsCards}
-</div>
-<div class="news-empty" id="newsEmpty" hidden>该板块今日无入选新闻</div>
-
-<div class="sec-title">板块冲击矩阵</div>
-<div class="table-wrap">
-  <table>
-    <thead><tr><th>板块</th><th>冲击</th>${hasForward ? '<th>今日复盘</th><th>次日倾向</th>' : '<th>方向</th>'}<th>新闻</th><th>传导逻辑</th><th>关联标的</th></tr></thead>
-    <tbody>${matrixRows}</tbody>
-  </table>
+    <span class="tb-right">
+      <label for="historySelect">历史</label>
+      <select id="historySelect" onchange="showHistoryDate()"><option value="">选择日期</option></select>
+      <button type="button" id="today-btn" onclick="goToday()">今天</button>
+      <span class="src-tag">${isAi ? 'Claude API 分析 + 中文翻译' : '关键词引擎分类'}</span>
+      <button type="button" class="refresh-btn" onclick="triggerRefresh()" title="手动刷新日报">刷新日报</button>
+    </span>
+  </div>
 </div>
 
-${keyPoints.length > 0 ? `
-<div class="sec-title">今日要点</div>
-<div class="key-points">${pointsHTML}</div>
-` : ''}
+<header class="nav">
+  <div class="wrap">
+    <h1 class="brand">行业板块<em>日报</em></h1>
+    <nav class="nav-links">
+      <a href="#news">要闻</a>
+      <a href="#stream">新闻流</a>
+      <a href="#data">数据</a>
+      <a href="#matrix">板块矩阵</a>
+    </nav>
+    <div class="nav-right"><b>${escHtml(todayDisplay)}</b>${weekday ? '　' + weekday : ''}　·　${news.length} 条${result.generatedAt ? `<span class="gen-note">　·　更新 ${beijingNowString(new Date(result.generatedAt))}（北京时间）</span>` : ''}</div>
+  </div>
+</header>
 
-<div class="footer">
-  基于多源财经 API 自动抓取 · ${isAi ? 'Claude API 智能分析 + 中文翻译' : '关键词引擎自动分类'} · 每天更新（含周末）<br>
-  监控范围：半导体 / 光模块 / 创新药 / 黄金 &nbsp;|&nbsp; 包含韩国及美股半导体市场<br>
-  <strong>免责声明：</strong>基于公开信息自动整理，不构成投资建议。股市有风险，投资需谨慎。
-</div>
+<main class="wrap">
+  ${summaryText ? `<div class="market-summary">
+    <span class="ms-label">今日复盘</span>
+    <p>${emphasizePct(escHtml(summaryText))}</p>
+  </div>` : ''}
 
-</div>
+  <div class="cols">
+    ${quotesHTML}
+    ${feedHTML}
+    ${railHTML}
+  </div>
+
+  ${streamHTML}
+  ${dataHTML}
+  ${matrixHTML}
+
+  <footer class="foot">
+    基于多源财经 API 自动抓取 · ${isAi ? 'Claude API 智能分析 + 中文翻译' : '关键词引擎自动分类'} · 每天更新（含周末）<br>
+    监控范围：${sectorNames.join(' / ')} &nbsp;|&nbsp; 包含韩国及美股半导体市场<br>
+    <strong>免责声明：</strong>基于公开信息自动整理，不构成投资建议。股市有风险，投资需谨慎。
+  </footer>
+</main>
+
+${showTrend ? `<script type="application/json" id="trend-data">${trendJSON}</script>` : ''}
 <script>
 const REFRESH_URL = ${JSON.stringify(process.env.REFRESH_URL || 'https://1384887796-0ww1bkypy1.ap-guangzhou.tencentscf.com')};
 // 勿在此写死密钥: 该值会被内联进公开页面,等同于直接发布
 const REFRESH_SECRET = ${JSON.stringify(process.env.REFRESH_SECRET || '')};
-// BASE was set by the inline script in <head> (which also injected Chart.js).
-// It holds the site root derived from the current URL — '' at the domain root
-// (local preview), '/daily-stock-news' on gh-pages. All history/asset paths
-// below join against it so they resolve correctly on both the index page and
-// history pages under /history/.
 const BASE = window.BASE || '';
-// 页面自身构建时间(UTC ISO)。auto-check 用它和 history/build-state.json 的
-// generatedAt 比较:定时/推送构建完成后,停留在首页的用户会自动刷新到最新版。
 const PAGE_GENERATED_AT = ${JSON.stringify(result.generatedAt || null)};
 const PHASE_CN = { fetch: '抓取新闻', analyze: 'AI 分析', 'analyze-kw': '关键词引擎', chart: '图表数据', write: '写入文件', commit: '提交 git', push: '推送 git', cloud: '云端构建', done: '完成', skipped: '空报告,跳过推送', error: '失败' };
 let refreshStartedAt = 0;
 let refreshTimer = null;
 let lastPhase = 'fetch';
 function isLocalHost() { return ['localhost', '127.0.0.1', '::1', '0.0.0.0'].includes(location.hostname); }
-// 公网可用: 配置了云端刷新代理(REFRESH_URL 非空); 本机可用: 本地预览服务
 function refreshAvailable() { return !!(REFRESH_URL || isLocalHost()); }
-// 云端代理仅在公网域名生效; 本机(localhost)下即使注入了云端 URL 也走本地 refresh-server
 const isCloud = !!(REFRESH_URL && !isLocalHost());
 function updateBtnPhase(phase) {
   const btn = document.querySelector('.refresh-btn');
@@ -682,16 +864,11 @@ function startBtnTimer() {
 function stopBtnTimer() { if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; } }
 async function triggerRefresh() {
   const btn = document.querySelector('.refresh-btn');
-  if (!refreshAvailable()) {
-    showToast('刷新服务不可用', 'err');
-    return;
-  }
-  if (btn.disabled) return; // 已在进行中,避免重复轮询
+  if (!refreshAvailable()) { showToast('刷新服务不可用', 'err'); return; }
+  if (btn.disabled) return;
   btn.disabled = true;
   btn.textContent = '提交中…';
   refreshStartedAt = Date.now();
-
-  // ── 云端代理模式: 触发 GitHub Actions 重建,前端轮询 build-state.json ──
   if (isCloud) {
     const runId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
     try {
@@ -717,8 +894,6 @@ async function triggerRefresh() {
     }
     return;
   }
-
-  // ── 本机模式: 本地 refresh-server 的 /refresh + /status ──
   if (!isLocalHost()) {
     showToast('刷新按钮仅在本机预览 (http://127.0.0.1:3456) 可用', 'err');
     return;
@@ -751,25 +926,23 @@ function showToast(msg, type) {
 function resetBtn() {
   stopBtnTimer();
   const btn = document.querySelector('.refresh-btn');
+  if (!btn) return;
   btn.disabled = false;
   btn.textContent = '刷新日报';
 }
 async function pollStatus(myRunId) {
-  let previewNotified = false; // 每次轮询会话只提示一次"基础版已发布"
-  // ── 云端模式: 轮询 history/build-state.json,用 runId 精确判断"这一次"构建完成 ──
+  let previewNotified = false;
   if (isCloud) {
-    const MAX = 90; // 8s × 90 ≈ 12 分钟,覆盖 Actions 排队 + 构建 + 部署
+    const MAX = 90;
     let netErrors = 0;
     for (let i = 0; i < MAX; i++) {
       await new Promise(r => setTimeout(r, 8000));
       try {
-        // _t 时间戳 + no-store,双重防 GitHub Pages 缓存旧文件
         const r = await fetch(BASE + '/history/build-state.json?_t=' + Date.now(), { cache: 'no-store' });
         if (!r.ok) throw new Error('HTTP ' + r.status);
         const d = await r.json();
         netErrors = 0;
         updateBtnPhase('cloud');
-        // 两阶段构建:preview = 纯关键词简报已上线,提示后继续轮询,等 AI 版 done
         if (d.state === 'preview' && myRunId && d.runId === myRunId && !previewNotified) {
           previewNotified = true;
           showToast('基础版已发布（关键词引擎），AI 研判生成中，完成后自动刷新', 'ok');
@@ -789,9 +962,7 @@ async function pollStatus(myRunId) {
     resetBtn();
     return;
   }
-
-  // ── 本机模式: 轮询 /status ──
-  const MAX = 75; // 8s × 75 ≈ 10 分钟,覆盖 AI proxy 最坏 3×180s 重试
+  const MAX = 75;
   let netErrors = 0;
   for (let i = 0; i < MAX; i++) {
     await new Promise(r => setTimeout(r, 8000));
@@ -804,8 +975,6 @@ async function pollStatus(myRunId) {
       if (d.state === 'done') {
         stopBtnTimer();
         const pf = d.phase === 'push_failed';
-        // skipped = 推送闸门拦下的空报告(见 scripts/push-gate.mjs)。本地页面已按这次
-        // 构建重写,但没提交没推送 —— 得说清楚,否则用户以为刷新成功了线上却没动。
         const skipped = d.phase === 'skipped';
         const msg = skipped ? ('已跳过推送 —— ' + (d.error || '当日 0 条新闻'))
           : pf ? '刷新完成(推送 main 失败,本地已更新),即将重载'
@@ -828,131 +997,252 @@ async function pollStatus(myRunId) {
   showToast('构建超时,请查看服务端日志', 'err');
   resetBtn();
 }
-// ── 自动检测新构建 ─────────────────────────────────────────
-// 定时/推送构建完成后页面不会自己知道,这里低频轮询 history/build-state.json
-// 的 generatedAt(每次构建重写),发现比本页构建时间新就 toast 提示并自动刷新。
-// localStorage 记录已刷过的版本,防止 CDN 边缘时序造成刷新循环。
-const AUTO_CHECK_MS = 120000; // 2 分钟
+const AUTO_CHECK_MS = 120000;
 const AUTO_RELOAD_KEY = 'dailyStockAutoReloadAt';
 const isHistoryPage = window.location.pathname.indexOf('/history/') >= 0;
 async function checkForNewBuild() {
-  // 仅公网首页生效。历史页是当日固定存档、不会被新构建重写,自动刷新只会空转;
-  // 本机预览(localhost)不部署 build-state.json,也跳过。
   if (isLocalHost() || isHistoryPage) return;
   try {
     const r = await fetch(BASE + '/history/build-state.json?_t=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) return;
     const d = await r.json();
     if (!d.generatedAt || !PAGE_GENERATED_AT) return;
-    // 两阶段构建的 preview(纯关键词简报)不自动跳转 —— 定时/后台升级等 AI 版
-    // (done)落地后才刷新;只有手动刷新流程的 pollStatus 才提示预览版。
     if (d.state === 'preview') return;
-    if (d.generatedAt <= PAGE_GENERATED_AT) return; // 页面已是最新
-    if (d.generatedAt === localStorage.getItem(AUTO_RELOAD_KEY)) return; // 已为这一版刷过
+    if (d.generatedAt <= PAGE_GENERATED_AT) return;
+    if (d.generatedAt === localStorage.getItem(AUTO_RELOAD_KEY)) return;
     localStorage.setItem(AUTO_RELOAD_KEY, d.generatedAt);
     showToast('检测到新日报,即将自动刷新', 'ok');
     setTimeout(() => location.reload(), 3000);
-  } catch (e) { /* 网络抖动/部署时序,静默跳过,下轮再试 */ }
+  } catch (e) { /* 网络抖动/部署时序,静默跳过 */ }
 }
 function startAutoCheck() {
-  setTimeout(checkForNewBuild, 1500); // 页面渲染稳定后先查一次
+  setTimeout(checkForNewBuild, 1500);
   setInterval(() => {
-    if (document.visibilityState === 'hidden') return; // 后台标签页不查
+    if (document.visibilityState === 'hidden') return;
     checkForNewBuild();
   }, AUTO_CHECK_MS);
 }
 startAutoCheck();
-// History browsing — the archive lives as static files under history/ so the
-// picker works on the static gh-pages site (no local server needed).
-async function loadHistoryDates(){
+async function loadHistoryDates() {
   const sel = document.getElementById('historySelect');
-  if(!sel) return;
+  if (!sel) return;
   try {
     const r = await fetch(BASE + '/history/dates.json');
     const d = await r.json();
-    sel.innerHTML = '<option value="">-- 选择日期 --</option>';
+    sel.innerHTML = '<option value="">选择日期</option>';
     (d.dates || []).forEach(dt => {
       const opt = document.createElement('option');
       opt.value = dt;
-      const y=dt.slice(0,4), m=dt.slice(4,6), day=dt.slice(6,8);
+      const y = dt.slice(0, 4), m = dt.slice(4, 6), day = dt.slice(6, 8);
       opt.textContent = y + '-' + m + '-' + day;
       sel.appendChild(opt);
     });
-  } catch(e) { console.warn('加载历史日期失败', e); }
+  } catch (e) { console.warn('加载历史日期失败', e); }
 }
-function showHistoryDate(){
+function showHistoryDate() {
   const sel = document.getElementById('historySelect');
   const dt = sel.value;
-  if(!dt) return;
+  if (!dt) return;
   window.location.href = BASE + '/history/日报_' + dt + '.html';
 }
-function goToday(){
-  window.location.href = BASE + '/';
-}
-// ── 板块筛选 ─────────────────────────────────────────────
-// 两个入口共用同一个筛选状态:新闻列表上方的胶囊条 #newsFilter,以及「板块速览」
-// 的 .sc 卡片。再点当前选中的那个(或「全部」)取消。状态写进 URL hash(#半导体):
-// 120s 一次的新构建自动重载、手动刷新、分享链接都能带着筛选。用 replaceState
-// 写入,不往浏览器后退键里塞条目。
-let currentSector = '';
+function goToday() { window.location.href = BASE + '/'; }
+
+// ── 新闻流筛选:页签与左栏板块名共用一套状态,筛选后按权重重新分栏 ──
+var filterButtons = [].slice.call(document.querySelectorAll('#streamFilter .tab'));
+var filterNames = filterButtons.map(function(b){ return b.dataset.f; });
+var allItems = [].slice.call(document.querySelectorAll('.item'));
+var groupEls = [].slice.call(document.querySelectorAll('.grp'));
+var groupItems = groupEls.map(function(g){ return [].slice.call(g.querySelectorAll('.item')); });
+var countEl = document.getElementById('streamCount');
+var emptyEl = document.getElementById('streamEmpty');
+var totalItems = allItems.length;
+var currentFilter = 'all';
+
 function sectorFromHash() {
   try { return decodeURIComponent((location.hash || '').replace(/^#/, '')); }
   catch (e) { return ''; }
 }
-// 本页可筛的板块,取自胶囊条(「全部」那个 data-sector 是空串,filter 掉)。
-// hash 是用户可手改的,出现不在集合里的值就当没筛选,否则会得到一整页空白。
-function knownSectors() {
-  return Array.from(document.querySelectorAll('.news-filter .fchip')).map(b => b.dataset.sector).filter(Boolean);
-}
-function applySectorFilter(sector, opts) {
-  const grid = document.getElementById('newsGrid');
-  if (!grid) return; // 没有新闻列表的渲染路径(理论上不存在,防御一下)
-  const cards = grid.querySelectorAll('.news-card');
-  const active = knownSectors().indexOf(sector) >= 0 ? sector : '';
-  currentSector = active;
-  let shown = 0;
-  cards.forEach(c => {
-    const hit = !active || c.dataset.sector === active;
-    c.hidden = !hit;
-    if (hit) shown++;
+function tierWeight(it) { return { quiet: 88, normal: 120, high: 140, key: 165 }[it.dataset.tier] || 100; }
+function cutColumns(arr, k) {
+  var total = arr.reduce(function(s, x){ return s + tierWeight(x); }, 0);
+  var cols = [], ci = 0, acc = 0;
+  for (var j = 0; j < k; j++) cols.push([]);
+  arr.forEach(function(x){
+    while (ci < k - 1 && acc >= total * (ci + 1) / k) ci++;
+    cols[ci].push(x);
+    acc += tierWeight(x);
   });
-  const countEl = document.getElementById('newsCountText');
-  if (countEl) countEl.textContent = active
-    ? active + ' · ' + shown + ' / ' + cards.length + ' 条'
-    : '共 ' + cards.length + ' 条';
-  const emptyEl = document.getElementById('newsEmpty');
-  if (emptyEl) emptyEl.hidden = !(active && shown === 0);
-  // 两个入口的选中态一起同步;「全部」胶囊的 data-sector 是空串,未筛选时正好命中
-  document.querySelectorAll('.news-filter .fchip, .sector-row .sc').forEach(b => {
-    const on = (b.dataset.sector || '') === active;
-    b.classList.toggle('active', on);
+  return cols;
+}
+function syncGroups() {
+  groupEls.forEach(function(g, gi){
+    var vis = groupItems[gi].filter(function(it){ return !it.hidden; });
+    var cols = [].slice.call(g.querySelectorAll('.scol'));
+    cols.forEach(function(c){ c.textContent = ''; });
+    var buckets = cutColumns(vis, cols.length);
+    buckets.forEach(function(b, i){ b.forEach(function(it){ cols[i].appendChild(it); }); });
+    groupItems[gi].forEach(function(it){ if (it.hidden) cols[cols.length - 1].appendChild(it); });
+    g.hidden = !vis.length;
+    var counter = g.querySelector('[data-gcount]');
+    if (counter) counter.textContent = vis.length;
+  });
+}
+function applyFilter(f, opts) {
+  var active = f === 'key' || f === 'all' || filterNames.indexOf(f) >= 0 ? f : 'all';
+  currentFilter = active;
+  var shown = 0;
+  allItems.forEach(function(it){
+    var show = active === 'all' ? true
+      : active === 'key' ? (it.dataset.tier === 'key' || it.dataset.tier === 'high')
+      : it.dataset.sector === active;
+    it.hidden = !show;
+    if (show) shown++;
+  });
+  syncGroups();
+  if (countEl) {
+    if (active === 'all') countEl.innerHTML = '共 <span class="num">' + totalItems + '</span> 条 · 按发布时间倒序';
+    else countEl.textContent = (active === 'key' ? '高影响' : active) + ' · ' + shown + ' / ' + totalItems + ' 条';
+  }
+  if (emptyEl) {
+    emptyEl.hidden = shown !== 0;
+    emptyEl.textContent = active === 'key' ? '今日没有高影响新闻' : active === 'all' ? '今日暂无入选新闻' : '该板块今日无入选新闻';
+  }
+  filterButtons.forEach(function(b){
+    var on = b.dataset.f === active;
+    b.classList.toggle('on', on);
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
-  history.replaceState(null, '', active
-    ? '#' + encodeURIComponent(active)
-    : location.pathname + location.search);
-  // 速览在页面上半部、列表在中部(中间隔着图表),筛选后滚过去才看得到结果
-  if (active && opts && opts.scroll) {
-    (document.getElementById('newsSection') || grid).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  [].slice.call(document.querySelectorAll('.sc')).forEach(function(b){
+    var on = (b.dataset.sector || '') === active;
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  history.replaceState(null, '', active === 'all'
+    ? location.pathname + location.search
+    : '#' + encodeURIComponent(active));
+  if (opts && opts.scroll && active !== 'all') {
+    var sec = document.getElementById('stream');
+    if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
-// 两个入口绑同一段逻辑:点到当前选中的那个就取消筛选
-function bindSectorTrigger(container, opts) {
-  if (!container) return;
-  container.addEventListener('click', (e) => {
-    const btn = e.target.closest('.fchip, .sc');
-    if (!btn || btn.dataset.sector === undefined) return;
-    const s = btn.dataset.sector;
-    applySectorFilter(s && s !== currentSector ? s : '', opts);
+filterButtons.forEach(function(b){
+  b.addEventListener('click', function(){ applyFilter(b.dataset.f === currentFilter && b.dataset.f !== 'all' ? 'all' : b.dataset.f, {}); });
+});
+[].slice.call(document.querySelectorAll('.sc')).forEach(function(b){
+  b.addEventListener('click', function(){
+    var s = b.dataset.sector || '';
+    applyFilter(s && s !== currentFilter ? s : 'all', { scroll: true });
   });
-}
-bindSectorTrigger(document.getElementById('newsFilter'), { scroll: false });
-bindSectorTrigger(document.querySelector('.sector-row'), { scroll: true });
-window.addEventListener('hashchange', () => applySectorFilter(sectorFromHash()));
-applySectorFilter(sectorFromHash()); // 带 hash 的链接/刷新后首屏即生效
+});
+window.addEventListener('hashchange', function(){ applyFilter(sectorFromHash() || 'all'); });
+applyFilter(sectorFromHash() || 'all');
+
+// ── 走势图悬浮:任意一天各板块指数 ──
+(function(){
+  var dataEl = document.getElementById('trend-data');
+  var tip = document.getElementById('trendTip');
+  var plot = document.getElementById('trendPlot');
+  if (!dataEl || !tip || !plot) return;
+  var TD = JSON.parse(dataEl.textContent);
+  var NS = 'http://www.w3.org/2000/svg';
+  var PT = 16, PB = 30, PL = 8, TH = 240;
+  var n = TD.dates.length;
+  var step0 = n > 1 ? 1 : 0;
+  var all = TD.series.reduce(function(a, s){ return a.concat(s.data); }, []).filter(function(v){ return typeof v === 'number' && isFinite(v); });
+  if (!all.length) return;
+  var yMin = Math.floor(Math.min.apply(null, all) / 5) * 5;
+  var yMax = Math.ceil(Math.max.apply(null, all) / 5) * 5;
+  if (yMax === yMin) yMax = yMin + 1;
+
+  function mk(tag, attrs) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  [].slice.call(document.querySelectorAll('svg.tchart')).forEach(function(svg){
+    var W = +svg.getAttribute('data-w');
+    var PR = +svg.getAttribute('data-pr');
+    var step = n > 1 ? (W - PL - PR) / (n - 1) : 0;
+    var sx = function(i){ return PL + i * step; };
+    var sy = function(v){ return PT + ((yMax - v) / (yMax - yMin)) * (TH - PT - PB); };
+
+    var g = mk('g', {});
+    g.style.display = 'none';
+    g.style.pointerEvents = 'none';
+    var guide = mk('line', { y1: PT, y2: TH - PB, stroke: '#999', 'stroke-width': 1, 'stroke-dasharray': '3 3' });
+    g.appendChild(guide);
+    var dots = TD.series.map(function(s){
+      var c = mk('circle', { r: 2.8, fill: '#fff', 'stroke-width': 1 });
+      c.style.stroke = s.color;
+      g.appendChild(c);
+      return c;
+    });
+    svg.appendChild(g);
+    var idx = -1;
+
+    function moveTip(clientX, clientY) {
+      var box = plot.getBoundingClientRect();
+      var x = clientX - box.left, y = clientY - box.top;
+      var tw = tip.offsetWidth || 172, th = tip.offsetHeight || 112;
+      var left = x + 16;
+      if (left + tw > box.width - 4) left = x - tw - 16;
+      if (left < 4) left = 4;
+      var top = y - th - 14;
+      if (top < 4) top = y + 20;
+      if (top + th > box.height - 4) top = Math.max(4, box.height - th - 4);
+      tip.style.left = left + 'px';
+      tip.style.top = top + 'px';
+    }
+    function place(clientX, clientY) {
+      var box = svg.getBoundingClientRect();
+      if (!box.width) return;
+      var x = (clientX - box.left) * (W / box.width);
+      var i = step ? Math.round((x - PL) / step) : 0;
+      if (i < 0) i = 0;
+      if (i > n - 1) i = n - 1;
+      if (i !== idx) {
+        idx = i;
+        g.style.display = '';
+        guide.setAttribute('x1', sx(i));
+        guide.setAttribute('x2', sx(i));
+        TD.series.forEach(function(s, k){
+          var v = s.data[i];
+          if (typeof v === 'number' && isFinite(v)) {
+            dots[k].style.display = '';
+            dots[k].setAttribute('cx', sx(i));
+            dots[k].setAttribute('cy', sy(v));
+          } else {
+            dots[k].style.display = 'none';
+          }
+        });
+        tip.innerHTML = '<div class="tip-d">' + TD.dates[i] + '<span>第 ' + (i + 1) + ' 日</span></div>' +
+          TD.series.map(function(s){
+            var v = s.data[i];
+            if (typeof v !== 'number' || !isFinite(v)) return '<div class="tr"><i style="background:' + s.color + '"></i><span>' + s.label + '</span><b class="num">—</b><em></em></div>';
+            var prev = i > 0 ? s.data[i - 1] : 100;
+            var dod = (typeof prev === 'number' && prev) ? (v - prev) / prev * 100 : 0;
+            var mark = i === 0 || typeof prev !== 'number' ? '基准' : (dod >= 0 ? '+' : '−') + Math.abs(dod).toFixed(2) + '%';
+            var cls = i === 0 || typeof prev !== 'number' ? 'neutral' : dod >= 0 ? 'bull' : 'bear';
+            return '<div class="tr"><i style="background:' + s.color + '"></i><span>' + s.label + '</span><b class="num">' + v.toFixed(1) + '</b><em class="num ' + cls + '">' + mark + '</em></div>';
+          }).join('');
+        tip.hidden = false;
+      }
+      moveTip(clientX, clientY);
+    }
+    function hide() {
+      g.style.display = 'none';
+      tip.hidden = true;
+      idx = -1;
+    }
+    svg.addEventListener('pointermove', function(e){ place(e.clientX, e.clientY); });
+    svg.addEventListener('pointerdown', function(e){ place(e.clientX, e.clientY); });
+    svg.addEventListener('pointerleave', function(e){ if (e.pointerType === 'touch') return; hide(); });
+    document.addEventListener('pointerdown', function(e){ if (!plot.contains(e.target)) hide(); });
+  });
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
   loadHistoryDates();
-  // 刷新按钮显隐: 公网无代理时隐藏(避免不可用的按钮),历史页隐藏;本机预览始终显示
   const btn = document.querySelector('.refresh-btn');
   if (btn) {
     const onHistory = window.location.pathname.indexOf('/history/') >= 0;
@@ -961,7 +1251,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 </script>
-${chartJS}
 </body>
 </html>`;
 }
