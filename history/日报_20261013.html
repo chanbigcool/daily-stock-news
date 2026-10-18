@@ -1492,6 +1492,7 @@ function sectorFromHash() {
   try { return decodeURIComponent((location.hash || '').replace(/^#/, '')); }
   catch (e) { return ''; }
 }
+var SECTION_HASHES = ['news', 'stream', 'data', 'matrix'];
 function tierWeight(it) { return { quiet: 88, normal: 120, high: 140, key: 165 }[it.dataset.tier] || 100; }
 function cutColumns(arr, k) {
   var total = arr.reduce(function(s, x){ return s + tierWeight(x); }, 0);
@@ -1546,9 +1547,12 @@ function applyFilter(f, opts) {
     var on = (b.dataset.sector || '') === active;
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
   });
-  history.replaceState(null, '', active === 'all'
-    ? location.pathname + location.search
-    : '#' + encodeURIComponent(active));
+  // 板块导航锚点(#news/#stream/#data/#matrix)不是筛选状态,别把它们写掉
+  if (!(active === 'all' && SECTION_HASHES.indexOf(sectorFromHash()) >= 0)) {
+    history.replaceState(null, '', active === 'all'
+      ? location.pathname + location.search
+      : '#' + encodeURIComponent(active));
+  }
   if (opts && opts.scroll && active !== 'all') {
     var sec = document.getElementById('stream');
     if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1563,7 +1567,11 @@ filterButtons.forEach(function(b){
     applyFilter(s && s !== currentFilter ? s : 'all', { scroll: true });
   });
 });
-window.addEventListener('hashchange', function(){ applyFilter(sectorFromHash() || 'all'); });
+window.addEventListener('hashchange', function(){
+  var h = sectorFromHash();
+  if (SECTION_HASHES.indexOf(h) >= 0) return;
+  applyFilter(h || 'all');
+});
 applyFilter(sectorFromHash() || 'all');
 
 // ── 走势图悬浮:任意一天各板块指数 ──
