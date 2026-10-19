@@ -2898,21 +2898,21 @@
     {
       "date": "20261019",
       "displayDate": "2026-10-19",
-      "isAi": true,
-      "aiCoverage": 100,
-      "newsCount": 33,
+      "isAi": false,
+      "aiCoverage": 0,
+      "newsCount": 51,
       "missingSectors": [],
       "covered": true,
       "impact": {
-        "vhigh": 0,
-        "high": 4
+        "vhigh": 1,
+        "high": 3
       },
-      "signalHitRate": 21,
+      "signalHitRate": 61,
       "directions": {
-        "利好": 2,
+        "利好": 1,
         "利空": 0,
         "分化": 0,
-        "中性": 2
+        "中性": 3
       },
       "health": {
         "level": "ok",
@@ -2925,18 +2925,18 @@
           "shock": "强"
         },
         {
-          "name": "创新药",
-          "direction": "利好",
-          "shock": "中"
+          "name": "黄金",
+          "direction": "中性",
+          "shock": "强"
         },
         {
-          "name": "黄金",
-          "direction": "利好",
+          "name": "创新药",
+          "direction": "中性",
           "shock": "中"
         },
         {
           "name": "光模块",
-          "direction": "中性",
+          "direction": "利好",
           "shock": "中"
         }
       ]
@@ -2951,7 +2951,7 @@
   "research": {
     "total": 145,
     "stated": 124,
-    "correct": 59,
+    "correct": 60,
     "abstained": 21,
     "abstainRate": 14,
     "statedShare": 0.8551724137931035,
@@ -2984,11 +2984,11 @@
       "创新药": {
         "total": 34,
         "stated": 27,
-        "correct": 12,
+        "correct": 13,
         "abstained": 7,
         "abstainRate": 21,
         "statedShare": 0.7941176470588235,
-        "accuracy": 44,
+        "accuracy": 48,
         "lowSample": true,
         "reliable": false
       },
@@ -3004,8 +3004,8 @@
         "reliable": true
       }
     },
-    "spearmanBinary": -0.0009382160753247619,
-    "spearmanWeighted": -0.16899934897435426,
+    "spearmanBinary": 0.005942035143723492,
+    "spearmanWeighted": -0.16413729290299864,
     "baselines": {
       "inSample": {
         "alwaysUp": 44,
@@ -3022,8 +3022,8 @@
     }
   },
   "recap": {
-    "fired": 79,
-    "hit": 75,
+    "fired": 78,
+    "hit": 74,
     "rate": 95,
     "since": "2026-08-19",
     "bySector": {
@@ -3033,9 +3033,9 @@
         "rate": 91
       },
       "光模块": {
-        "fired": 23,
-        "hit": 22,
-        "rate": 96
+        "fired": 22,
+        "hit": 21,
+        "rate": 95
       },
       "创新药": {
         "fired": 18,
