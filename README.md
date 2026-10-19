@@ -69,8 +69,6 @@ flowchart LR
 - **主链接（GitHub Pages）**：<https://chanbigcool.github.io/daily-stock-news/> —— 本机实测可直连（2026-10-14 三次探测均 HTTP 200，1.5~2.0s），正确渲染为网页；每次构建后由 Actions 自动部署，构建完即可看到最新日报（页面带 no-cache 控制，普通刷新即更新）
 - **公网一键刷新**：网页顶部「🔄 刷新日报」按钮在公网也可用 —— 点击后由腾讯云 SCF 云函数**在云端抓取**，把结果写成 payload 推到 `fetch-cache` 分支，再触发 GitHub Actions 完成清洗/研判/渲染/部署，约 2~6 分钟后页面自动更新到最新版（无需本机运行任何服务）
 - **辅助（EdgeOne Pages 预览，国内节点）**：构建后 3 小时内可通过 EdgeOne 预览链接查看最新版（免 CDN 缓存延迟），每次构建后去 [EdgeOne 控制台](https://edgeone.cloud.tencent.com/pages) → `daily-stock-news` 项目 → 部署列表 → 预览获取。长期稳定访问需绑定已备案自定义域名
-- ~~jsDelivr 镜像~~：jsDelivr 对仓库内 `.html` 文件强制返回 `text/plain`（防钓鱼的安全设计），浏览器只会显示源代码而不会渲染成网页，因此不能作为页面入口；仅作 Chart.js 等静态资源 CDN 使用
-- ~~Zeabur~~：免费档已关停（2026/3 起共享集群停止接受新项目），不再作为主链接
 
 > **为什么抓取不在 GitHub Actions 里（2026-10-15）**：旧账号被封的依据正是「**在 Actions 里定时抓第三方站点**」这个架构形态，不是代码质量 —— 停掉 `schedule:` 只解决了「定时」，抓取本身还在 Actions 里跑，形态没变。所以抓取整体搬到了腾讯云 SCF：云函数抓 6 个国内财经源 + 12 只 ETF 行情 + ETF K 线，把结果写成 payload 推到孤儿分支 `fetch-cache`，再 `workflow_dispatch` 触发 Actions 做清洗 / 研判 / 渲染 / 部署。
 >
