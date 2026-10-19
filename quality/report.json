@@ -2898,21 +2898,21 @@
     {
       "date": "20261019",
       "displayDate": "2026-10-19",
-      "isAi": true,
-      "aiCoverage": 100,
-      "newsCount": 25,
+      "isAi": false,
+      "aiCoverage": 0,
+      "newsCount": 33,
       "missingSectors": [],
       "covered": true,
       "impact": {
-        "vhigh": 0,
+        "vhigh": 1,
         "high": 3
       },
-      "signalHitRate": 24,
+      "signalHitRate": 61,
       "directions": {
-        "利好": 3,
-        "利空": 0,
+        "利好": 1,
+        "利空": 1,
         "分化": 0,
-        "中性": 1
+        "中性": 2
       },
       "health": {
         "level": "ok",
@@ -2921,23 +2921,23 @@
       "matrix": [
         {
           "name": "半导体",
-          "direction": "利好",
-          "shock": "强"
-        },
-        {
-          "name": "黄金",
-          "direction": "利好",
+          "direction": "中性",
           "shock": "强"
         },
         {
           "name": "创新药",
-          "direction": "中性",
+          "direction": "利空",
+          "shock": "中"
+        },
+        {
+          "name": "黄金",
+          "direction": "利好",
           "shock": "中"
         },
         {
           "name": "光模块",
-          "direction": "利好",
-          "shock": "中"
+          "direction": "中性",
+          "shock": "弱"
         }
       ]
     }
@@ -3004,8 +3004,8 @@
         "reliable": true
       }
     },
-    "spearmanBinary": 0.013447848390794997,
-    "spearmanWeighted": -0.16298477213764984,
+    "spearmanBinary": -0.0009382160753247619,
+    "spearmanWeighted": -0.16899934897435426,
     "baselines": {
       "inSample": {
         "alwaysUp": 44,
@@ -3022,20 +3022,20 @@
     }
   },
   "recap": {
-    "fired": 77,
-    "hit": 73,
+    "fired": 79,
+    "hit": 75,
     "rate": 95,
     "since": "2026-08-19",
     "bySector": {
       "半导体": {
-        "fired": 22,
-        "hit": 20,
+        "fired": 23,
+        "hit": 21,
         "rate": 91
       },
       "光模块": {
-        "fired": 22,
-        "hit": 21,
-        "rate": 95
+        "fired": 23,
+        "hit": 22,
+        "rate": 96
       },
       "创新药": {
         "fired": 18,
