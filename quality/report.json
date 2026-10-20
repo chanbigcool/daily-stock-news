@@ -2944,21 +2944,21 @@
     {
       "date": "20261020",
       "displayDate": "2026-10-20",
-      "isAi": true,
-      "aiCoverage": 100,
-      "newsCount": 63,
+      "isAi": false,
+      "aiCoverage": 0,
+      "newsCount": 97,
       "missingSectors": [],
       "covered": true,
       "impact": {
-        "vhigh": 0,
-        "high": 9
+        "vhigh": 1,
+        "high": 11
       },
-      "signalHitRate": 0,
+      "signalHitRate": 48,
       "directions": {
-        "利好": 0,
-        "利空": 1,
+        "利好": 2,
+        "利空": 0,
         "分化": 0,
-        "中性": 3
+        "中性": 2
       },
       "health": {
         "level": "ok",
@@ -2967,7 +2967,7 @@
       "matrix": [
         {
           "name": "半导体",
-          "direction": "中性",
+          "direction": "利好",
           "shock": "强"
         },
         {
@@ -2977,13 +2977,13 @@
         },
         {
           "name": "黄金",
-          "direction": "利空",
+          "direction": "中性",
           "shock": "强"
         },
         {
           "name": "光模块",
-          "direction": "中性",
-          "shock": "中"
+          "direction": "利好",
+          "shock": "强"
         }
       ]
     }
@@ -2993,7 +2993,7 @@
   "coverageRate": 90,
   "avgImpactHigh": 12,
   "matchedDays": 45,
-  "etfHistoryDays": 251,
+  "etfHistoryDays": 250,
   "research": {
     "total": 148,
     "stated": 126,
@@ -3050,8 +3050,8 @@
         "reliable": true
       }
     },
-    "spearmanBinary": 0.01859797062548,
-    "spearmanWeighted": -0.15483101188879675,
+    "spearmanBinary": 0.01676866203936721,
+    "spearmanWeighted": -0.15461302745657585,
     "baselines": {
       "inSample": {
         "alwaysUp": 45,
@@ -3060,7 +3060,7 @@
         "bullishBias": 85
       },
       "unconditional": {
-        "obs": 1000,
+        "obs": 996,
         "alwaysUp": 48,
         "alwaysDown": 52,
         "majority": 52
@@ -3079,9 +3079,9 @@
         "rate": 91
       },
       "光模块": {
-        "fired": 23,
-        "hit": 22,
-        "rate": 96
+        "fired": 22,
+        "hit": 21,
+        "rate": 95
       },
       "创新药": {
         "fired": 20,
@@ -3089,8 +3089,8 @@
         "rate": 95
       },
       "黄金": {
-        "fired": 15,
-        "hit": 15,
+        "fired": 16,
+        "hit": 16,
         "rate": 100
       }
     }
