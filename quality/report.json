@@ -2990,16 +2990,16 @@
     {
       "date": "20261021",
       "displayDate": "2026-10-21",
-      "isAi": true,
-      "aiCoverage": 100,
-      "newsCount": 65,
+      "isAi": false,
+      "aiCoverage": 0,
+      "newsCount": 148,
       "missingSectors": [],
       "covered": true,
       "impact": {
-        "vhigh": 0,
-        "high": 8
+        "vhigh": 1,
+        "high": 9
       },
-      "signalHitRate": 5,
+      "signalHitRate": 35,
       "directions": {
         "利好": 2,
         "利空": 1,
@@ -3039,15 +3039,15 @@
   "coverageRate": 90,
   "avgImpactHigh": 13,
   "matchedDays": 46,
-  "etfHistoryDays": 251,
+  "etfHistoryDays": 250,
   "research": {
     "total": 152,
     "stated": 130,
-    "correct": 66,
+    "correct": 65,
     "abstained": 22,
     "abstainRate": 14,
     "statedShare": 0.8552631578947368,
-    "accuracy": 51,
+    "accuracy": 50,
     "lowSample": false,
     "reliable": true,
     "bySector": {
@@ -3076,11 +3076,11 @@
       "创新药": {
         "total": 35,
         "stated": 28,
-        "correct": 14,
+        "correct": 13,
         "abstained": 7,
         "abstainRate": 20,
         "statedShare": 0.8,
-        "accuracy": 50,
+        "accuracy": 46,
         "lowSample": true,
         "reliable": false
       },
@@ -3096,17 +3096,17 @@
         "reliable": true
       }
     },
-    "spearmanBinary": 0.027270343605609777,
-    "spearmanWeighted": -0.13651156886139157,
+    "spearmanBinary": 0.030111127755840586,
+    "spearmanWeighted": -0.13637292706703852,
     "baselines": {
       "inSample": {
-        "alwaysUp": 46,
-        "alwaysDown": 54,
-        "majority": 54,
+        "alwaysUp": 45,
+        "alwaysDown": 55,
+        "majority": 55,
         "bullishBias": 85
       },
       "unconditional": {
-        "obs": 1000,
+        "obs": 996,
         "alwaysUp": 48,
         "alwaysDown": 52,
         "majority": 52
