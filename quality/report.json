@@ -3036,21 +3036,21 @@
     {
       "date": "20261022",
       "displayDate": "2026-10-22",
-      "isAi": true,
-      "aiCoverage": 100,
-      "newsCount": 57,
+      "isAi": false,
+      "aiCoverage": 0,
+      "newsCount": 100,
       "missingSectors": [],
       "covered": true,
       "impact": {
-        "vhigh": 0,
-        "high": 5
+        "vhigh": 1,
+        "high": 6
       },
-      "signalHitRate": 12,
+      "signalHitRate": 39,
       "directions": {
-        "利好": 0,
+        "利好": 1,
         "利空": 2,
         "分化": 0,
-        "中性": 2
+        "中性": 1
       },
       "health": {
         "level": "ok",
@@ -3063,19 +3063,19 @@
           "shock": "强"
         },
         {
+          "name": "黄金",
+          "direction": "利好",
+          "shock": "强"
+        },
+        {
           "name": "光模块",
           "direction": "利空",
           "shock": "强"
         },
         {
-          "name": "黄金",
+          "name": "创新药",
           "direction": "利空",
           "shock": "强"
-        },
-        {
-          "name": "创新药",
-          "direction": "中性",
-          "shock": "中"
         }
       ]
     }
@@ -3085,7 +3085,7 @@
   "coverageRate": 90,
   "avgImpactHigh": 13,
   "matchedDays": 47,
-  "etfHistoryDays": 251,
+  "etfHistoryDays": 250,
   "research": {
     "total": 156,
     "stated": 134,
@@ -3142,8 +3142,8 @@
         "reliable": true
       }
     },
-    "spearmanBinary": 0.01671713189861149,
-    "spearmanWeighted": -0.144619500412094,
+    "spearmanBinary": 0.020432050098302932,
+    "spearmanWeighted": -0.13883341166740354,
     "baselines": {
       "inSample": {
         "alwaysUp": 44,
@@ -3152,7 +3152,7 @@
         "bullishBias": 84
       },
       "unconditional": {
-        "obs": 1000,
+        "obs": 996,
         "alwaysUp": 48,
         "alwaysDown": 52,
         "majority": 52
