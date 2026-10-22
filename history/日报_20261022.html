@@ -330,7 +330,7 @@
       <label for="historySelect">历史</label>
       <select id="historySelect" onchange="showHistoryDate()"><option value="">选择日期</option></select>
       <button type="button" id="today-btn" onclick="goToday()">今天</button>
-      <span class="src-tag">关键词引擎分类</span>
+      <span class="src-tag">Claude API 分析 + 中文翻译</span>
       <button type="button" class="refresh-btn" onclick="triggerRefresh()" title="手动刷新日报">刷新日报</button>
     </span>
   </div>
@@ -345,14 +345,14 @@
       <a href="#data">数据</a>
       <a href="#matrix">板块矩阵</a>
     </nav>
-    <div class="nav-right"><b>2026-10-22</b>　周四　·　23 条<span class="gen-note">　·　更新 2026-10-22 09:00:52（北京时间）</span></div>
+    <div class="nav-right"><b>2026-10-22</b>　周四　·　23 条<span class="gen-note">　·　更新 2026-10-22 09:09:03（北京时间）</span></div>
   </div>
 </header>
 
 <main class="wrap">
   <div class="market-summary">
     <span class="ms-label">今日复盘</span>
-    <p>本日报聚焦半导体、光模块、创新药、黄金四大赛道，23 条新闻经关键词引擎自动分析生成。</p>
+    <p>SK海力士部署iHBM，特斯拉计划生产芯片，三季报披露加速；半导体ETF平均<b>+0.0%</b>，德州仪器营收指引超预期；光模块ETF平均<b>+0.0%</b> 光纤需求增长光模块受益AI基建；普洛药业共建实验室，阿斯利康FDA批准肾病药物；黄金ETF持仓减少，美国制裁伊朗黄金相关。</p>
   </div>
 
   <div class="cols">
@@ -371,7 +371,7 @@
       <div class="qsec-top">
         <button type="button" class="sc" data-sector="光模块" data-cat="optics" aria-label="只看光模块新闻" aria-pressed="false">
           <span class="qname">光模块</span>
-          <span class="sc-badges"><span class="badge badge-neutral" title="今日复盘：板块方向以当日 ETF 实际涨跌校准">复盘 中性</span><span class="badge badge-neutral" title="次日倾向：只由新闻内容研判，未经行情校准">次日 中性</span></span>
+          <span class="sc-badges"><span class="badge badge-bull" title="今日复盘：板块方向以当日 ETF 实际涨跌校准">复盘 利好</span><span class="badge badge-neutral" title="次日倾向：只由新闻内容研判，未经行情校准">次日 中性</span></span>
         </button>
         <span class="qchg num neutral">0.00%</span>
       </div>
@@ -380,7 +380,7 @@
       <div class="qsec-top">
         <button type="button" class="sc" data-sector="创新药" data-cat="pharma" aria-label="只看创新药新闻" aria-pressed="false">
           <span class="qname">创新药</span>
-          <span class="sc-badges"><span class="badge badge-neutral" title="今日复盘：板块方向以当日 ETF 实际涨跌校准">复盘 中性</span><span class="badge badge-neutral" title="次日倾向：只由新闻内容研判，未经行情校准">次日 中性</span></span>
+          <span class="sc-badges"><span class="badge badge-bull" title="今日复盘：板块方向以当日 ETF 实际涨跌校准">复盘 利好</span><span class="badge badge-neutral" title="次日倾向：只由新闻内容研判，未经行情校准">次日 中性</span></span>
         </button>
         <span class="qchg num neutral">0.00%</span>
       </div>
@@ -389,7 +389,7 @@
       <div class="qsec-top">
         <button type="button" class="sc" data-sector="黄金" data-cat="gold" aria-label="只看黄金新闻" aria-pressed="false">
           <span class="qname">黄金</span>
-          <span class="sc-badges"><span class="badge badge-neutral" title="今日复盘：板块方向以当日 ETF 实际涨跌校准">复盘 中性</span><span class="badge badge-neutral" title="次日倾向：只由新闻内容研判，未经行情校准">次日 中性</span></span>
+          <span class="sc-badges"><span class="badge badge-bear" title="今日复盘：板块方向以当日 ETF 实际涨跌校准">复盘 利空</span><span class="badge badge-neutral" title="次日倾向：只由新闻内容研判，未经行情校准">次日 中性</span></span>
         </button>
         <span class="qchg num neutral">0.00%</span>
       </div>
@@ -397,9 +397,9 @@
     </div>
     <div class="qstats">
       <div><span>收录</span><b class="num">23</b></div>
-      <div><span>高影响</span><b class="num">2</b></div>
-      <div><span>利好</span><b class="num bull">8</b></div>
-      <div><span>利空</span><b class="num bear">0</b></div>
+      <div><span>高影响</span><b class="num">3</b></div>
+      <div><span>利好</span><b class="num bull">12</b></div>
+      <div><span>利空</span><b class="num bear">2</b></div>
     </div>
     <div class="qfoot">涨跌幅为当日收盘口径；板块均值为组内 ETF 的简单平均。点击板块名可只看该板块新闻。</div>
   </aside>
@@ -411,14 +411,14 @@
     <p>当地时间10月21日，据报道，马斯克透露了公司芯片制造计划的一些细节。他表示，Terafab在设备方面的成本将达到“数百亿美元”，长期总成本将“超过1000亿美元”，由特斯拉和SpaceX共同分担。马斯克还表示，特斯拉计划于明年5月或6月生产出首款测试芯片。</p>
   </article>
     <article class="top-item">
-      <h3>光互联走向全链路协同 光纤产业链机遇多</h3>
-      <div class="meta">光模块 · <span class="neutral">中性</span> · 同花顺快讯 07:24</div>
+      <h3>阿斯利康：美国食品药品监督管理局（FDA）批准了一款用于治疗成人罕见肾病的药物</h3>
+      <div class="meta">创新药 · <span class="bull">利好</span> · 新浪财经 07:06</div>
     </article><article class="top-item">
-      <h3>普洛药业携手北京大学共建联合实验室</h3>
-      <div class="meta">创新药 · <span class="neutral">中性</span> · 新浪财经 08:37</div>
+      <h3>美国制裁与伊朗大宗商品运输相关的个人与实体</h3>
+      <div class="meta">黄金 · <span class="bear">利空</span> · 新浪财经 07:21</div>
     </article><article class="top-item">
-      <h3>全球最大的黄金ETF SPDR Gold Trust持仓较前日减少2.56吨</h3>
-      <div class="meta">黄金 · <span class="neutral">中性</span> · 新浪财经 08:12</div>
+      <h3>AI基建扩张加速，光通信锁定高增长预期</h3>
+      <div class="meta">光模块 · <span class="bull">利好</span> · 华尔街见闻 06:20</div>
     </article><article class="top-item">
       <h3>特斯拉三季度收入280.5亿美元，分析师预期281.3亿美元。</h3>
       <div class="meta">半导体 · <span class="bull">利好</span> · 华尔街见闻 04:02</div>
@@ -426,21 +426,21 @@
   </section>
     <aside class="rail">
     <div class="ph"><h2>今日要点</h2><span class="more">AI 研判</span></div>
-    <ul class="points"><li>今日共抓取 23 条新闻，聚焦半导体、光模块、创新药、黄金四大赛道。</li><li>极高影响事件 0 条，高影响 2 条，利好方向 8 条。</li><li>板块概况：半导体(利好, 强冲击, 16条)、光模块(中性, 弱冲击, 3条)、创新药(中性, 弱冲击, 2条)、黄金(中性, 弱冲击, 2条)。</li><li>重点关注：【韩国央行将基准利率维持在3.00%不变 符合预期】韩国央行在连续两次加息后维持政策利率不变。通胀虽有所回落，但仍高于目标水平，该央行因而暂停紧缩步伐。韩国央行周四将基准七天期回购利率维持在3.00%，此前该央行已在7月和8月上调这一利率。媒体调查的23位经济学家均预期利率不变，其中多数预计11月将再次加息。全球人工智能热潮和强劲的半导体出口继续支撑经济增长。决策者正关注这些增长动力是否会传导至国内需求并推升通胀，从而增强进一步加息的理由。韩国出口9月份加快增长，首次超过1,200亿美元，半导体出口较上年同期增长逾两倍，创历史新高。总体通胀率上月降至2.9%，剔除波动较大的食品和能源价格的核心通胀率小幅降至2.8%。两者仍高于韩国央行2%的目标。韩国央行决策者预计，稳健经济增长和高于目标的通胀将持续。他们还在关注中东紧张局势是否会加大成本压力。韩国央行在本月早些时候的一份政策报告中称，进一步加息的时机和步伐将取决于通胀、经济状况和金融稳定。；马斯克：预计明年6月前推出测试芯片，2028年三季度前实现量产。；盘前必读丨美股存储、半导体股大反弹；中办、国办发布“两创融合”重要文件。</li></ul>
+    <ul class="points"><li>【半导体】SK海力士iHBM散热提升30%</li><li>【半导体】特斯拉计划2027年6月生产测试芯片</li><li>【半导体】德州仪器营收指引超预期至63亿美元</li><li>【半导体】特斯拉FSD订阅达174万超预期</li><li>【光模块】数通用光纤占光纤总需求30%</li><li>【光模块】800G光模块将成出货主流，1.6T快速提升</li></ul>
     <div class="ph rail-dist"><h2>当日分布</h2><span class="more">23 条</span></div>
     <div class="mini">
       <h3>情绪<span class="sub">利好 / 利空 / 中性 / 分化</span></h3>
-      <div class="stack"><i class="f-red" style="width:34.78%"></i><i class="f-green" style="width:0.00%"></i><i class="f-g1" style="width:56.52%"></i><i class="f-g2" style="width:8.70%"></i></div>
-    <div class="lgd"><span><i class="f-red"></i>利好<b class="num">8</b></span><span><i class="f-green"></i>利空<b class="num">0</b></span><span><i class="f-g1"></i>中性<b class="num">13</b></span><span><i class="f-g2"></i>分化<b class="num">2</b></span></div>
+      <div class="stack"><i class="f-red" style="width:52.17%"></i><i class="f-green" style="width:8.70%"></i><i class="f-g1" style="width:30.43%"></i><i class="f-g2" style="width:8.70%"></i></div>
+    <div class="lgd"><span><i class="f-red"></i>利好<b class="num">12</b></span><span><i class="f-green"></i>利空<b class="num">2</b></span><span><i class="f-g1"></i>中性<b class="num">7</b></span><span><i class="f-g2"></i>分化<b class="num">2</b></span></div>
     </div>
     <div class="mini">
       <h3>方向<span class="sub">按板块</span></h3>
-      <div class="drow"><span class="dn">半导体</span><span class="db"><i class="f-red" style="width:50.00%"></i><i class="f-green" style="width:0.00%"></i><i class="f-g1" style="width:37.50%"></i><i class="f-g2" style="width:12.50%"></i></span><span class="dt num">16</span></div><div class="drow"><span class="dn">光模块</span><span class="db"><i class="f-red" style="width:0.00%"></i><i class="f-green" style="width:0.00%"></i><i class="f-g1" style="width:100.00%"></i><i class="f-g2" style="width:0.00%"></i></span><span class="dt num">3</span></div><div class="drow"><span class="dn">创新药</span><span class="db"><i class="f-red" style="width:0.00%"></i><i class="f-green" style="width:0.00%"></i><i class="f-g1" style="width:100.00%"></i><i class="f-g2" style="width:0.00%"></i></span><span class="dt num">2</span></div><div class="drow"><span class="dn">黄金</span><span class="db"><i class="f-red" style="width:0.00%"></i><i class="f-green" style="width:0.00%"></i><i class="f-g1" style="width:100.00%"></i><i class="f-g2" style="width:0.00%"></i></span><span class="dt num">2</span></div>
+      <div class="drow"><span class="dn">半导体</span><span class="db"><i class="f-red" style="width:56.25%"></i><i class="f-green" style="width:0.00%"></i><i class="f-g1" style="width:31.25%"></i><i class="f-g2" style="width:12.50%"></i></span><span class="dt num">16</span></div><div class="drow"><span class="dn">光模块</span><span class="db"><i class="f-red" style="width:33.33%"></i><i class="f-green" style="width:0.00%"></i><i class="f-g1" style="width:66.67%"></i><i class="f-g2" style="width:0.00%"></i></span><span class="dt num">3</span></div><div class="drow"><span class="dn">创新药</span><span class="db"><i class="f-red" style="width:100.00%"></i><i class="f-green" style="width:0.00%"></i><i class="f-g1" style="width:0.00%"></i><i class="f-g2" style="width:0.00%"></i></span><span class="dt num">2</span></div><div class="drow"><span class="dn">黄金</span><span class="db"><i class="f-red" style="width:0.00%"></i><i class="f-green" style="width:100.00%"></i><i class="f-g1" style="width:0.00%"></i><i class="f-g2" style="width:0.00%"></i></span><span class="dt num">2</span></div>
     </div>
     <div class="mini">
       <h3>时间窗口<span class="sub">短期 / 中期</span></h3>
-      <div class="stack"><i class="f-g2" style="width:21.74%"></i><i class="f-g1" style="width:78.26%"></i></div>
-    <div class="lgd"><span><i class="f-g2"></i>短期<b class="num">5</b></span><span><i class="f-g1"></i>中期<b class="num">18</b></span></div>
+      <div class="stack"><i class="f-g2" style="width:47.83%"></i><i class="f-g1" style="width:39.13%"></i><i class="f-g2" style="width:13.04%"></i></div>
+    <div class="lgd"><span><i class="f-g2"></i>短期<b class="num">11</b></span><span><i class="f-g1"></i>中期<b class="num">9</b></span><span><i class="f-g2"></i>长期<b class="num">3</b></span></div>
     </div>
   </aside>
   </div>
@@ -451,7 +451,7 @@
         <h2>新闻流</h2>
         <span class="count" id="streamCount">共 <span class="num">23</span> 条 · 按发布时间倒序</span>
       </div>
-      <div class="tabs" id="streamFilter" role="group" aria-label="按板块筛选新闻"><button type="button" class="tab on" data-f="all" aria-pressed="true">全部<b>23</b></button><button type="button" class="tab" data-f="半导体" data-cat="semi" aria-pressed="false">半导体<b>16</b></button><button type="button" class="tab" data-f="光模块" data-cat="optics" aria-pressed="false">光模块<b>3</b></button><button type="button" class="tab" data-f="创新药" data-cat="pharma" aria-pressed="false">创新药<b>2</b></button><button type="button" class="tab" data-f="黄金" data-cat="gold" aria-pressed="false">黄金<b>2</b></button><button type="button" class="tab" data-f="key" aria-pressed="false">高影响<b>2</b></button></div>
+      <div class="tabs" id="streamFilter" role="group" aria-label="按板块筛选新闻"><button type="button" class="tab on" data-f="all" aria-pressed="true">全部<b>23</b></button><button type="button" class="tab" data-f="半导体" data-cat="semi" aria-pressed="false">半导体<b>16</b></button><button type="button" class="tab" data-f="光模块" data-cat="optics" aria-pressed="false">光模块<b>3</b></button><button type="button" class="tab" data-f="创新药" data-cat="pharma" aria-pressed="false">创新药<b>2</b></button><button type="button" class="tab" data-f="黄金" data-cat="gold" aria-pressed="false">黄金<b>2</b></button><button type="button" class="tab" data-f="key" aria-pressed="false">高影响<b>3</b></button></div>
     </div>
     <div class="timeline" id="timeline">
       <div class="grp" data-session="pre">
@@ -465,7 +465,7 @@
           <span class="meta">光模块 · <span class="neutral">中性</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>10月21日194股获融资买入超亿元 宁德时代获买入31.99亿元居首</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">受影响公司</span>中际旭创、新易盛</p><p><span class="dl">关联标的</span>中际旭创(300308)、新易盛(300502)</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://news.10jqka.com.cn/20261022/c680956133.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+      <div class="detail"><p>10月21日194股获融资买入超亿元 宁德时代获买入31.99亿元居首</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>中际旭创、新易盛</p><p><span class="dl">关联标的</span>中际旭创(300308)、新易盛(300502)</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“宁德时代、中际旭创、新易盛融资买入金额排名前三”</li></ul></div><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://news.10jqka.com.cn/20261022/c680956133.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
     </details><details class="item normal" data-sector="半导体" data-tier="normal">
       <summary>
         <span class="t num">08:56</span>
@@ -475,7 +475,7 @@
           <span class="meta">半导体 · <span class="neutral">分化</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>韩国央行在连续两次加息后维持政策利率不变。通胀虽有所回落，但仍高于目标水平，该央行因而暂停紧缩步伐。韩国央行周四将基准七天期回购利率维持在3.00%，此前该央行已在7月和8月上调这一利率。媒体调查的23位经济学家均预期利率不变，其中多数预计11月将再次加息。全球人工智能热潮和强劲的半导体出口继续支撑经济增长。决策者正关注这些增长动力是否会传导至国内需求并推升通胀，从而增强进一步加息的理由。韩国出口9月份加快增长，首次超过1,200亿美元，半导体出口较上年同期增长逾两倍，创历史新高。总体通胀率上月降至2.9%，剔除波动较大的食品和能源价格的核心通胀率小幅降至2.8%。两者仍高于韩国央行2%的目标。韩国央行决策者预计，稳健经济增长和高于目标的通胀将持续。他们还在关注中东紧张局势是否会加大成本压力。韩国央行在本月早些时候的一份政策报告中称，进一步加息的时机和步伐将取决于通胀、经济状况和金融稳定。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>回购信号·利好(+60分·回购/增持,大股东看好)</li><li>行情信号·利空(-54分·板块行情走弱)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“回购”</li><li>“回落”</li></ul></div><p class="dim">回购·利好(60·回购/增持,大股东看好)+行情·利空(54·板块行情走弱)；体裁判定「观点/研报」,档位封顶「中」</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzyty4864809.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>韩国央行在连续两次加息后维持政策利率不变。通胀虽有所回落，但仍高于目标水平，该央行因而暂停紧缩步伐。韩国央行周四将基准七天期回购利率维持在3.00%，此前该央行已在7月和8月上调这一利率。媒体调查的23位经济学家均预期利率不变，其中多数预计11月将再次加息。全球人工智能热潮和强劲的半导体出口继续支撑经济增长。决策者正关注这些增长动力是否会传导至国内需求并推升通胀，从而增强进一步加息的理由。韩国出口9月份加快增长，首次超过1,200亿美元，半导体出口较上年同期增长逾两倍，创历史新高。总体通胀率上月降至2.9%，剔除波动较大的食品和能源价格的核心通胀率小幅降至2.8%。两者仍高于韩国央行2%的目标。韩国央行决策者预计，稳健经济增长和高于目标的通胀将持续。他们还在关注中东紧张局势是否会加大成本压力。韩国央行在本月早些时候的一份政策报告中称，进一步加息的时机和步伐将取决于通胀、经济状况和金融稳定。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%（中东紧张局势）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>利率中性</li><li>出口增长</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“半导体出口较上年同期增长逾两倍，创历史新高”</li></ul></div><p class="dim">利率中性；出口增长</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzyty4864809.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">08:41</span>
@@ -485,17 +485,17 @@
           <span class="meta">半导体 · <span class="neutral">中性</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>漫步者在互动平台表示，关于战略合作，公司始终保持开放态度，积极通过资源协同提升整体解决方案能力。公司近期上市的ComfoClipQ2基于OpenHarmony国产开源鸿蒙操作系统，搭载海思谛听芯片，实现速率、延时、抗干扰、适配性四大维度全面提升。未来，公司将继续评估技术路径与产业协作机会，不断提升产品竞争力。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzytw8078251.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
-    </details><details class="item quiet" data-sector="创新药" data-tier="quiet">
+      <div class="detail"><p>漫步者在互动平台表示，关于战略合作，公司始终保持开放态度，积极通过资源协同提升整体解决方案能力。公司近期上市的ComfoClipQ2基于OpenHarmony国产开源鸿蒙操作系统，搭载海思谛听芯片，实现速率、延时、抗干扰、适配性四大维度全面提升。未来，公司将继续评估技术路径与产业协作机会，不断提升产品竞争力。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>漫步者、海思谛听</p><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>产品发布</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“搭载海思谛听芯片”</li></ul></div><p class="dim">产品发布</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzytw8078251.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+    </details><details class="item normal" data-sector="创新药" data-tier="normal">
       <summary>
         <span class="t num">08:37</span>
         <span class="c">
           <span class="title">普洛药业携手北京大学共建联合实验室</span>
-          
-          <span class="meta">创新药 · <span class="neutral">中性</span> · 新浪财经</span>
+          <span class="summary">21日上午，北京大学与普洛药业股份有限公司共建“北京大学—普洛药业核酸药物与生物制造联合实验室”签约揭牌。双方将围绕小核酸原料药化学与生物合成开展产学研协同攻关，推动高校基础研究优势与企业产业化转化能力深度融合，为普洛药业CDMO业务在核酸药物与生物制造领域拓展提供技术支撑。</span>
+          <span class="meta">创新药 · <span class="bull">利好</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>21日上午，北京大学与普洛药业股份有限公司共建“北京大学—普洛药业核酸药物与生物制造联合实验室”签约揭牌。双方将围绕小核酸原料药化学与生物合成开展产学研协同攻关，推动高校基础研究优势与企业产业化转化能力深度融合，为普洛药业CDMO业务在核酸药物与生物制造领域拓展提供技术支撑。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzyty4846888.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>21日上午，北京大学与普洛药业股份有限公司共建“北京大学—普洛药业核酸药物与生物制造联合实验室”签约揭牌。双方将围绕小核酸原料药化学与生物合成开展产学研协同攻关，推动高校基础研究优势与企业产业化转化能力深度融合，为普洛药业CDMO业务在核酸药物与生物制造领域拓展提供技术支撑。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>普洛药业</p><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>产学研合作</li><li>技术支撑</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“双方将围绕小核酸原料药化学与生物合成开展产学研协同攻关”</li></ul></div><p class="dim">产学研合作；技术支撑</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzyty4846888.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item normal" data-sector="半导体" data-tier="normal">
       <summary>
         <span class="t num">08:22</span>
@@ -505,7 +505,7 @@
           <span class="meta">半导体 · <span class="bull">利好</span> · 财联社</span>
         </span>
       </summary>
-      <div class="detail"><p>SK海力士加速部署iHBM技术 新一代HBM散热能力提升30%</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>扩产信号·利好(+30分)</li><li>传闻信号·中性(±8分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“量产”</li><li>“计划”</li></ul></div><p class="dim">扩产·利好(30)+传闻·中性(8)</p><p><a class="src" href="https://www.cls.cn/detail/2511676" target="_blank" rel="noopener">原文 · 财联社</a></p></div>
+      <div class="detail"><p>SK海力士加速部署iHBM技术 新一代HBM散热能力提升30%</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">受影响公司</span>SK海力士</p><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>技术升级</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“散热能力提升30%”</li></ul></div><p class="dim">技术升级</p><p><a class="src" href="https://www.cls.cn/detail/2511676" target="_blank" rel="noopener">原文 · 财联社</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">08:21</span>
@@ -515,7 +515,7 @@
           <span class="meta">半导体 · <span class="neutral">中性</span> · 金十数据</span>
         </span>
       </summary>
-      <div class="detail"><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p></div>
+      <div class="detail"><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>长期</b></div></div><p><span class="dl">受影响公司</span>特斯拉、SpaceX</p><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>50%（未确认）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>传闻</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“据悉SpaceX与特斯拉瞄准在明年上半年达成合并交易”</li></ul></div><p class="dim">传闻</p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">08:18</span>
@@ -525,18 +525,18 @@
           <span class="meta">半导体 · <span class="neutral">中性</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>埃隆·马斯克终于把心里话说了出来：他全力支持SpaceX与特斯拉公司进行历史性的合并，这两家公司是他手中最有价值的资产，而此举也将创下史上最大规模企业并购交易的纪录。接下来，一场抢时间的赛跑正式拉开帷幕。知情人士透露，目前各方正推动在2027年上半年宣布交易，以便在本届政府任期内完成交割。此举将把两家总市值约3.7万亿美元的公司合而为一。同时，这也将在未来可能变得不再那么宽松的政治与金融环境到来之前，巩固马斯克的企业权力。距离中期选举已不足两周。如果民主党控制了国会任何一院，马斯克及其旗下企业可能会面临调查，同时也会削弱这位即将步入“跛脚鸭”（任期即将结束）阶段的总统的权力。与此同时，芯片制造商和人工智能股票的持续抛售，可能会侵蚀完成这一大胆交易所需的投资者支持。REX Financial研究主管比尔·伯明翰（Bill Birmingham）表示：“马斯克及其顾问无疑希望利用当前的时间窗口。这个时机既有利，又至关重要。”针对合并宣布的目标时间节点，SpaceX和特斯拉均未回应置评请求。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzyty4822450.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>埃隆·马斯克终于把心里话说了出来：他全力支持SpaceX与特斯拉公司进行历史性的合并，这两家公司是他手中最有价值的资产，而此举也将创下史上最大规模企业并购交易的纪录。接下来，一场抢时间的赛跑正式拉开帷幕。知情人士透露，目前各方正推动在2027年上半年宣布交易，以便在本届政府任期内完成交割。此举将把两家总市值约3.7万亿美元的公司合而为一。同时，这也将在未来可能变得不再那么宽松的政治与金融环境到来之前，巩固马斯克的企业权力。距离中期选举已不足两周。如果民主党控制了国会任何一院，马斯克及其旗下企业可能会面临调查，同时也会削弱这位即将步入“跛脚鸭”（任期即将结束）阶段的总统的权力。与此同时，芯片制造商和人工智能股票的持续抛售，可能会侵蚀完成这一大胆交易所需的投资者支持。REX Financial研究主管比尔·伯明翰（Bill Birmingham）表示：“马斯克及其顾问无疑希望利用当前的时间窗口。这个时机既有利，又至关重要。”针对合并宣布的目标时间节点，SpaceX和特斯拉均未回应置评请求。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>长期</b></div></div><p><span class="dl">受影响公司</span>特斯拉、SpaceX</p><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>50%（未确认）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>合并传闻</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“马斯克试图在特朗普离任前锁定特斯拉与SpaceX的合并”</li></ul></div><p class="dim">合并传闻</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzyty4822450.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="黄金" data-tier="quiet">
       <summary>
         <span class="t num">08:12</span>
         <span class="c">
           <span class="title">全球最大的黄金ETF SPDR Gold Trust持仓较前日减少2.56吨</span>
           
-          <span class="meta">黄金 · <span class="neutral">中性</span> · 新浪财经 · 2 家报道</span>
+          <span class="meta">黄金 · <span class="bear">利空</span> · 新浪财经 · 2 家报道</span>
         </span>
       </summary>
-      <div class="detail"><p>全球最大的黄金ETF SPDR Gold Trust持仓较前日减少2.56吨</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">同花顺快讯</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://news.10jqka.com.cn/20261022/c680954425.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261022/c680954425.shtml</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzyty4813755.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
-    </details></div><div class="scol"><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <div class="detail"><p>全球最大的黄金ETF SPDR Gold Trust持仓较前日减少2.56吨</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“截至2026年10月21日，全球最大的黄金ETF SPDR Gold Trust持仓量为1057.62吨，较前一个交易日减少2.56吨。”</li></ul></div><p class="dim">未命中明显信号,中性</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">同花顺快讯</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://news.10jqka.com.cn/20261022/c680954425.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261022/c680954425.shtml</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzyty4813755.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">08:07</span>
         <span class="c">
@@ -545,8 +545,8 @@
           <span class="meta">半导体 · <span class="bull">利好</span> · 东方财富</span>
         </span>
       </summary>
-      <div class="detail"><p>盘前必读丨美股存储、半导体股大反弹；中办、国办发布“两创融合”重要文件</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利好(+15分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“反弹”</li></ul></div><p class="dim">行情·利好(15·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="http://finance.eastmoney.com/news/1354,202610223903321968.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
-    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <div class="detail"><p>盘前必读丨美股存储、半导体股大反弹；中办、国办发布“两创融合”重要文件</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>美股反弹</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“美股存储、半导体股大反弹”</li></ul></div><p class="dim">美股反弹</p><p><a class="src" href="http://finance.eastmoney.com/news/1354,202610223903321968.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
+    </details></div><div class="scol"><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">08:03</span>
         <span class="c">
@@ -555,7 +555,7 @@
           <span class="meta">半导体 · <span class="neutral">中性</span> · 东方财富</span>
         </span>
       </summary>
-      <div class="detail"><p>聚焦集成电路装备 上海金桥持续完善芯片产业链</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="http://stock.eastmoney.com/news/11134,202610223903073786.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
+      <div class="detail"><p>聚焦集成电路装备 上海金桥持续完善芯片产业链</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">受影响公司</span>上海金桥</p><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>产业链完善</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“持续完善芯片产业链”</li></ul></div><p class="dim">产业链完善</p><p><a class="src" href="http://stock.eastmoney.com/news/11134,202610223903073786.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
     </details><details class="item normal" data-sector="半导体" data-tier="normal">
       <summary>
         <span class="t num">07:52</span>
@@ -565,7 +565,7 @@
           <span class="meta">半导体 · <span class="bull">利好</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>中信建投研报表示，超节点通过扩大ScaleUp互联域、统一内存编址并提升柜内互联效率，以系统工程能力突破传统八卡服务器在跨节点通信上的瓶颈，相比传统算力集群，超节点在算力利用率、互联带宽、吞吐、时延、MoE适配和单卡有效吞吐等维度均存在显著优势。目前国内外厂商当前正密集发布超节点产品，行业由方案验证正式进入规模化交付阶段。产业链细分环节来看，服务器整机、交换芯片、交换机、连接器等产业环节有望率先受益。此外，PCB、液冷、电源、CPU及国产算力芯片等环节也将随超节点渗透率提升而持续受益。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>技术信号·利好(+60分)</li><li>传闻信号·中性(±15分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“突破”</li><li>“有望”</li></ul></div><p class="dim">技术·利好(60)+传闻·中性(15)；体裁判定「观点/研报」,档位封顶「中」</p><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzyty4787879.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-10-22/detail-inivzyty478</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzyty4793247.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>中信建投研报表示，超节点通过扩大ScaleUp互联域、统一内存编址并提升柜内互联效率，以系统工程能力突破传统八卡服务器在跨节点通信上的瓶颈，相比传统算力集群，超节点在算力利用率、互联带宽、吞吐、时延、MoE适配和单卡有效吞吐等维度均存在显著优势。目前国内外厂商当前正密集发布超节点产品，行业由方案验证正式进入规模化交付阶段。产业链细分环节来看，服务器整机、交换芯片、交换机、连接器等产业环节有望率先受益。此外，PCB、液冷、电源、CPU及国产算力芯片等环节也将随超节点渗透率提升而持续受益。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（预测）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>研报利好</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“超节点产品密集发布”</li></ul></div><p class="dim">研报利好</p><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzyty4787879.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-10-22/detail-inivzyty478</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzyty4793247.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item high" data-sector="半导体" data-tier="high">
       <summary>
         <span class="t num">07:44</span>
@@ -575,37 +575,37 @@
           <span class="meta">半导体 · <span class="bull">利好</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>当地时间10月21日，据报道，马斯克透露了公司芯片制造计划的一些细节。他表示，Terafab在设备方面的成本将达到“数百亿美元”，长期总成本将“超过1000亿美元”，由特斯拉和SpaceX共同分担。马斯克还表示，特斯拉计划于明年5月或6月生产出首款测试芯片。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>技术信号·利好(+40分)</li><li>传闻信号·中性(±10分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“首款”</li><li>“据报道”</li></ul></div><p class="dim">技术·利好(40)+传闻·中性(10)</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzytw8013972.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
-    </details><details class="item quiet" data-sector="光模块" data-tier="quiet">
+      <div class="detail"><p>当地时间10月21日，据报道，马斯克透露了公司芯片制造计划的一些细节。他表示，Terafab在设备方面的成本将达到“数百亿美元”，长期总成本将“超过1000亿美元”，由特斯拉和SpaceX共同分担。马斯克还表示，特斯拉计划于明年5月或6月生产出首款测试芯片。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">受影响公司</span>特斯拉</p><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>90%（成本风险）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>芯片生产计划</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“特斯拉计划于明年5月或6月生产出首款测试芯片”</li></ul></div><p class="dim">芯片生产计划</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzytw8013972.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+    </details><details class="item normal" data-sector="光模块" data-tier="normal">
       <summary>
         <span class="t num">07:24</span>
         <span class="c">
           <span class="title">光互联走向全链路协同 光纤产业链机遇多</span>
-          
+          <span class="summary">在日前举行的2026全球光纤光缆大会上，多名行业人士表示，今年数通用光纤占光纤总需求量已超过30%。光模块的需求快速增长，带动光纤的需求，也使光纤逐渐成为算力基</span>
           <span class="meta">光模块 · <span class="neutral">中性</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>光互联走向全链路协同 光纤产业链机遇多</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>传闻信号·中性(±5分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“有望”</li></ul></div><p class="dim">传闻·中性(5)</p><p><a class="src" href="https://news.10jqka.com.cn/20261022/c680951002.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
-    </details><details class="item quiet" data-sector="黄金" data-tier="quiet">
+      <div class="detail"><p>光互联走向全链路协同 光纤产业链机遇多</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“光模块的需求快速增长，带动光纤的需求”</li></ul></div><p class="dim">传闻·中性(5)</p><p><a class="src" href="https://news.10jqka.com.cn/20261022/c680951002.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+    </details><details class="item normal" data-sector="黄金" data-tier="normal">
       <summary>
         <span class="t num">07:21</span>
         <span class="c">
           <span class="title">美国制裁与伊朗大宗商品运输相关的个人与实体</span>
-          
-          <span class="meta">黄金 · <span class="neutral">中性</span> · 新浪财经 · 2 家报道</span>
+          <span class="summary">美国财政部21日发布公告称，将多个个人和实体列入“特别指定国民清单”以实施制裁，理由是他们帮助隐藏和运输伊朗大宗商品。 美国财政部指认一家在巴拿马和希腊运营的律</span>
+          <span class="meta">黄金 · <span class="bear">利空</span> · 新浪财经 · 2 家报道</span>
         </span>
       </summary>
-      <div class="detail"><p>美国制裁与伊朗大宗商品运输相关的个人与实体</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">同花顺快讯</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://news.10jqka.com.cn/20261022/c680950899.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261022/c680950899.shtml</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzytw7992779.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
-    </details><details class="item quiet" data-sector="创新药" data-tier="quiet">
+      <div class="detail"><p>美国制裁与伊朗大宗商品运输相关的个人与实体</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>修正：政策事件影响</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“美国曾于8月24日对伊朗发起新一轮制裁措施，从当日起把对伊朗经济制裁范围扩大到航空、数字资产、黄金、航运和技术行业等5个领域。”</li></ul></div><p class="dim">修正：政策事件影响</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">同花顺快讯</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://news.10jqka.com.cn/20261022/c680950899.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261022/c680950899.shtml</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzytw7992779.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+    </details><details class="item high" data-sector="创新药" data-tier="high">
       <summary>
         <span class="t num">07:06</span>
         <span class="c">
           <span class="title">阿斯利康：美国食品药品监督管理局（FDA）批准了一款用于治疗成人罕见肾病的药物</span>
-          
-          <span class="meta">创新药 · <span class="neutral">中性</span> · 新浪财经</span>
+          <span class="summary">阿斯利康表示，美国食品药品监督管理局（FDA）已对其用于治疗成人免疫球蛋白A肾病的药物授予加速批准。该病是一种罕见的肾脏疾病，可能导致肾功能衰竭。阿斯利康表示，在该药物Ultomiris的晚期临床试验中期分析中，与安慰剂相比，该药物在34周后将蛋白尿（尿液中蛋白质含量过高）降低了43.4%。该制药公司表示，FDA是根据其加速审批途径批准了该药物，且正在进行的试验将持续至106周，以确定“Ultomiris”能否延缓肾功能衰退，从而为获得传统批准提供依据。该公司还表示，该药物是首个且唯一获批用于治疗该疾病的C5抑制剂，其作用机制是针对与肾脏炎症相关的免疫系统通路。</span>
+          <span class="meta">创新药 · <span class="bull">利好</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>阿斯利康表示，美国食品药品监督管理局（FDA）已对其用于治疗成人免疫球蛋白A肾病的药物授予加速批准。该病是一种罕见的肾脏疾病，可能导致肾功能衰竭。阿斯利康表示，在该药物Ultomiris的晚期临床试验中期分析中，与安慰剂相比，该药物在34周后将蛋白尿（尿液中蛋白质含量过高）降低了43.4%。该制药公司表示，FDA是根据其加速审批途径批准了该药物，且正在进行的试验将持续至106周，以确定“Ultomiris”能否延缓肾功能衰退，从而为获得传统批准提供依据。该公司还表示，该药物是首个且唯一获批用于治疗该疾病的C5抑制剂，其作用机制是针对与肾脏炎症相关的免疫系统通路。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzytw7976461.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>阿斯利康表示，美国食品药品监督管理局（FDA）已对其用于治疗成人免疫球蛋白A肾病的药物授予加速批准。该病是一种罕见的肾脏疾病，可能导致肾功能衰竭。阿斯利康表示，在该药物Ultomiris的晚期临床试验中期分析中，与安慰剂相比，该药物在34周后将蛋白尿（尿液中蛋白质含量过高）降低了43.4%。该制药公司表示，FDA是根据其加速审批途径批准了该药物，且正在进行的试验将持续至106周，以确定“Ultomiris”能否延缓肾功能衰退，从而为获得传统批准提供依据。该公司还表示，该药物是首个且唯一获批用于治疗该疾病的C5抑制剂，其作用机制是针对与肾脏炎症相关的免疫系统通路。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>FDA批准</li><li>新药上市</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“美国食品药品监督管理局（FDA）已对其用于治疗成人免疫球蛋白A肾病的药物授予加速批准”</li></ul></div><p class="dim">FDA批准；新药上市</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzytw7976461.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">06:22</span>
@@ -615,17 +615,17 @@
           <span class="meta">半导体 · <span class="bull">利好</span> · 华尔街见闻 · 2 家报道</span>
         </span>
       </summary>
-      <div class="detail"><p>A股上市公司三季报披露进入加速期，绩优股获青睐</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">受影响公司</span>海光信息</p><p><span class="dl">关联标的</span>海光信息(688041)</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利好(+8分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“大涨”</li></ul></div><p class="dim">行情·利好(8·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">东方财富</span><span class="ev-src-badge">华尔街见闻</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="http://finance.eastmoney.com/news/1350,202610223903087053.html" target="_blank" rel="noopener">finance.eastmoney.com/news/1350,202610223903087053</a></li></ul></div><p><a class="src" href="https://wallstreetcn.com/articles/3183008" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
-    </details></div><div class="scol"><details class="item quiet" data-sector="光模块" data-tier="quiet">
+      <div class="detail"><p>A股上市公司三季报披露进入加速期，绩优股获青睐</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>海光信息(688041)</p><p class="dim"><span class="dl">置信度</span>70%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>绩优股获青睐</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“绩优股获青睐”</li></ul></div><p class="dim">绩优股获青睐</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">东方财富</span><span class="ev-src-badge">华尔街见闻</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="http://finance.eastmoney.com/news/1350,202610223903087053.html" target="_blank" rel="noopener">finance.eastmoney.com/news/1350,202610223903087053</a></li></ul></div><p><a class="src" href="https://wallstreetcn.com/articles/3183008" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+    </details></div><div class="scol"><details class="item normal" data-sector="光模块" data-tier="normal">
       <summary>
         <span class="t num">06:20</span>
         <span class="c">
           <span class="title">AI基建扩张加速，光通信锁定高增长预期</span>
-          
-          <span class="meta">光模块 · <span class="neutral">中性</span> · 华尔街见闻</span>
+          <span class="summary">SpaceX超级智能业务第三季度营收同比增长超过8倍，超微电脑（SMCI）预计2027财年第一季度（截至9月30日）营收显著高于分析师平均预期……北美科技巨头披</span>
+          <span class="meta">光模块 · <span class="bull">利好</span> · 华尔街见闻</span>
         </span>
       </summary>
-      <div class="detail"><p>AI基建扩张加速，光通信锁定高增长预期</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://wallstreetcn.com/articles/3183007" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+      <div class="detail"><p>AI基建扩张加速，光通信锁定高增长预期</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>光模块受益AI基建</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“光模块将直接受益于AI新基建的快速扩张”</li></ul></div><p class="dim">光模块受益AI基建</p><p><a class="src" href="https://wallstreetcn.com/articles/3183007" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
     </details><details class="item normal" data-sector="半导体" data-tier="normal">
       <summary>
         <span class="t num">05:44</span>
@@ -635,7 +635,7 @@
           <span class="meta">半导体 · <span class="bull">利好</span> · 华尔街见闻 · 2 家报道</span>
         </span>
       </summary>
-      <div class="detail"><p>马斯克：预计明年6月前推出测试芯片，2028年三季度前实现量产。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>扩产信号·利好(+40分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“量产”</li></ul></div><p class="dim">扩产·利好(40)；体裁判定「观点/研报」,档位封顶「中」</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">华尔街见闻</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzuna4806390.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-10-22/detail-inivzuna480</a></li></ul></div><p><a class="src" href="https://wallstreetcn.com/articles/3182993" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+      <div class="detail"><p>马斯克：预计明年6月前推出测试芯片，2028年三季度前实现量产。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>长期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（量产时间可能延迟）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>测试芯片量产计划</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“马斯克：预计明年6月前推出测试芯片，2028年三季度前实现量产。”</li></ul></div><p class="dim">测试芯片量产计划</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">华尔街见闻</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzuna4806390.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-10-22/detail-inivzuna480</a></li></ul></div><p><a class="src" href="https://wallstreetcn.com/articles/3182993" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">05:30</span>
@@ -645,7 +645,7 @@
           <span class="meta">半导体 · <span class="bull">利好</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>全球最大的模拟和嵌入式处理芯片制造商德州仪器当季营收展望强劲，汽车和工业客户需求提供支撑。德州仪器周三在声明中表示，截至12月的季度营收预计为58亿至63亿美元。汇总数据显示，分析师预测均值为57.3亿美元。在人工智能(AI)泡沫担忧拖累芯片行业之际，这一展望对整体芯片市场而言是个积极信号。不过，德州仪器尤其受益于多元化的客户群，并非所有客户都处于AI基础设施建设热潮的中心。该公司表示，工业、汽车和数据中心业务出现普遍增长。德州仪器股价盘后一度上涨逾3%，随后涨幅收窄至约1%。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利好(+15分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“上涨”</li></ul></div><p class="dim">行情·利好(15·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzumy8023773.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>全球最大的模拟和嵌入式处理芯片制造商德州仪器当季营收展望强劲，汽车和工业客户需求提供支撑。德州仪器周三在声明中表示，截至12月的季度营收预计为58亿至63亿美元。汇总数据显示，分析师预测均值为57.3亿美元。在人工智能(AI)泡沫担忧拖累芯片行业之际，这一展望对整体芯片市场而言是个积极信号。不过，德州仪器尤其受益于多元化的客户群，并非所有客户都处于AI基础设施建设热潮的中心。该公司表示，工业、汽车和数据中心业务出现普遍增长。德州仪器股价盘后一度上涨逾3%，随后涨幅收窄至约1%。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“截至12月的季度营收预计为58亿至63亿美元，分析师预测均值为57.3亿美元。”</li></ul></div><p class="dim">行情·利好(15·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-10-22/detail-inivzumy8023773.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">05:20</span>
@@ -657,7 +657,7 @@
       </summary>
       <div class="detail"><p>周三（10月21日），彭博电动汽车价格回报指数跌1.08%，报2943.65点。
 
-成分股中，禾赛ADR跌5.72%，小马智行跌4.55%，Ola Electric Mobility Ltd.跌4.18%跌幅第三大，MP材料涨1.15%表现第四，意法半导体米兰股价涨2.46%，特斯拉涨3.41%，安霸股份涨4.4%。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://wallstreetcn.com/articles/3182981" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+成分股中，禾赛ADR跌5.72%，小马智行跌4.55%，Ola Electric Mobility Ltd.跌4.18%跌幅第三大，MP材料涨1.15%表现第四，意法半导体米兰股价涨2.46%，特斯拉涨3.41%，安霸股份涨4.4%。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>100%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情复述</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“彭博电动汽车价格回报指数跌1.08%”</li></ul></div><p class="dim">行情复述</p><p><a class="src" href="https://wallstreetcn.com/articles/3182981" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
     </details><details class="item high" data-sector="半导体" data-tier="high">
       <summary>
         <span class="t num">04:02</span>
@@ -733,17 +733,17 @@
 
 为得州奥斯汀芯片工厂/晶圆厂进行设备调试与投产的准备将于2027年启动。
 
-特斯拉美股盘后涨1.1%。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>扩产信号·利好(+60分)</li><li>传闻信号·中性(±15分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“投产”</li><li>“计划”</li></ul></div><p class="dim">扩产·利好(60)+传闻·中性(15)</p><p><a class="src" href="https://wallstreetcn.com/articles/3182948" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
-    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+特斯拉美股盘后涨1.1%。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“三季度FSD（全自动驾驶）订阅达到174万，分析师预期157万。”</li></ul></div><p class="dim">扩产·利好(60)+传闻·中性(15)</p><p><a class="src" href="https://wallstreetcn.com/articles/3182948" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+    </details><details class="item normal" data-sector="半导体" data-tier="normal">
       <summary>
         <span class="t num">04:02</span>
         <span class="c">
           <span class="title">德州仪器营收指引超预期</span>
-          
-          <span class="meta">半导体 · <span class="neutral">中性</span> · 华尔街见闻</span>
+          <span class="summary">全球最大模拟芯片和嵌入式处理芯片制造商德州仪器给出了强劲的当期营收指引，受汽车和工业客户需求提振。第三季度营收同比增长28%至60.6亿美元，高于分析师平均预期</span>
+          <span class="meta">半导体 · <span class="bull">利好</span> · 华尔街见闻</span>
         </span>
       </summary>
-      <div class="detail"><p>德州仪器营收指引超预期</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://wallstreetcn.com/articles/3182947" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+      <div class="detail"><p>德州仪器营收指引超预期</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>营收数据超预期</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“第三季度营收同比增长28%至60.6亿美元，高于分析师平均预期的59.3亿美元；”</li></ul></div><p class="dim">营收数据超预期</p><p><a class="src" href="https://wallstreetcn.com/articles/3182947" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">04:00</span>
@@ -753,7 +753,7 @@
           <span class="meta">半导体 · <span class="neutral">分化</span> · 华尔街见闻</span>
         </span>
       </summary>
-      <div class="detail"><p>中概指数收跌超2.3%，KWEB跌2.5%，禾赛、小鹏跌超5%，腾讯ADR跌4%，日月光半导体涨4%</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-36分·板块行情走弱)</li><li>行情信号·利好(+8分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“收跌”</li><li>“收涨”</li></ul></div><p class="dim">行情·利空(36·板块行情走弱)+行情·利好(8·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="https://wallstreetcn.com/articles/3182943" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+      <div class="detail"><p>中概指数收跌超2.3%，KWEB跌2.5%，禾赛、小鹏跌超5%，腾讯ADR跌4%，日月光半导体涨4%</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>100%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情分化</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“纳斯达克金龙中国指数收跌2.35%”</li></ul></div><p class="dim">行情分化</p><p><a class="src" href="https://wallstreetcn.com/articles/3182943" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
     </details></div></div>
     </div>
       <div class="stream-empty" id="streamEmpty" hidden>今日暂无入选新闻</div>
@@ -802,7 +802,7 @@
       <div class="vtitle">冲击热力图 <span>板块 × 影响等级</span></div>
       <table class="heat">
     <thead><tr><th></th><th>低</th><th>中</th><th>高</th><th>极高</th></tr></thead>
-    <tbody><tr><th>半导体</th><td style="background:rgba(222,4,34,0.65);color:#fff">10</td><td style="background:rgba(222,4,34,0.28);color:var(--ink)">4</td><td style="background:rgba(222,4,34,0.15);color:var(--ink)">2</td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td></tr><tr><th>光模块</th><td style="background:rgba(222,4,34,0.22);color:var(--ink)">3</td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td></tr><tr><th>创新药</th><td style="background:rgba(222,4,34,0.15);color:var(--ink)">2</td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td></tr><tr><th>黄金</th><td style="background:rgba(222,4,34,0.15);color:var(--ink)">2</td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td></tr></tbody>
+    <tbody><tr><th>半导体</th><td style="background:rgba(222,4,34,0.65);color:#fff">9</td><td style="background:rgba(222,4,34,0.37);color:#fff">5</td><td style="background:rgba(222,4,34,0.17);color:var(--ink)">2</td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td></tr><tr><th>光模块</th><td style="background:rgba(222,4,34,0.10);color:var(--ink)">1</td><td style="background:rgba(222,4,34,0.17);color:var(--ink)">2</td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td></tr><tr><th>创新药</th><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.10);color:var(--ink)">1</td><td style="background:rgba(222,4,34,0.10);color:var(--ink)">1</td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td></tr><tr><th>黄金</th><td style="background:rgba(222,4,34,0.10);color:var(--ink)">1</td><td style="background:rgba(222,4,34,0.10);color:var(--ink)">1</td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td></tr></tbody>
   </table>
     </div>
   </section>
@@ -813,15 +813,15 @@
       <table>
         <thead><tr><th>板块</th><th>冲击</th><th>今日复盘</th><th>次日倾向</th><th>新闻</th><th>传导逻辑</th><th>关联标的</th></tr></thead>
         <tbody><tr><td class="mx-name">半导体</td><td class="shock-strong">强</td><td class="dir-bull">利好</td><td class="dir-bull">利好</td><td class="num">16</td><td class="logic">半导体板块16条新闻，方向以利好为主</td><td class="num tickers">海光信息(688041)</td></tr>
-<tr><td class="mx-name">光模块</td><td class="shock-weak">弱</td><td class="dir-flat">中性</td><td class="dir-flat">中性</td><td class="num">3</td><td class="logic">光模块板块3条新闻，方向以中性为主。关注：光互联走向全链路协同 光纤产业链机遇多；在日前举行的2026全球光纤光缆大会上</td><td class="num tickers">中际旭创(300308)、新易盛(300502)</td></tr>
-<tr><td class="mx-name">创新药</td><td class="shock-weak">弱</td><td class="dir-flat">中性</td><td class="dir-flat">中性</td><td class="num">2</td><td class="logic">创新药板块2条新闻，方向以中性为主</td><td class="num tickers">百济神州、药明康德、恒瑞医药</td></tr>
-<tr><td class="mx-name">黄金</td><td class="shock-weak">弱</td><td class="dir-flat">中性</td><td class="dir-flat">中性</td><td class="num">2</td><td class="logic">黄金板块2条新闻，方向以中性为主</td><td class="num tickers">紫金矿业、山东黄金、中金黄金</td></tr></tbody>
+<tr><td class="mx-name">创新药</td><td class="shock-mid">中</td><td class="dir-bull">利好</td><td class="dir-flat">中性</td><td class="num">2</td><td class="logic">创新药板块2条新闻，方向以利好为主</td><td class="num tickers">百济神州、药明康德、恒瑞医药</td></tr>
+<tr><td class="mx-name">黄金</td><td class="shock-mid">中</td><td class="dir-bear">利空</td><td class="dir-flat">中性</td><td class="num">2</td><td class="logic">黄金板块2条新闻，方向以利空为主。关注：美国制裁与伊朗大宗商品运输相关的个人与实体；美国财政部21日发布公告称，将多个个</td><td class="num tickers">紫金矿业、山东黄金、中金黄金</td></tr>
+<tr><td class="mx-name">光模块</td><td class="shock-weak">弱</td><td class="dir-bull">利好</td><td class="dir-flat">中性</td><td class="num">3</td><td class="logic">光模块板块3条新闻，方向以利好为主。关注：光互联走向全链路协同 光纤产业链机遇多；在日前举行的2026全球光纤光缆大会上</td><td class="num tickers">中际旭创(300308)、新易盛(300502)</td></tr></tbody>
       </table>
     </div>
   </section>
 
   <footer class="foot">
-    基于多源财经 API 自动抓取 · 关键词引擎自动分类 · 每天更新（含周末）<br>
+    基于多源财经 API 自动抓取 · Claude API 智能分析 + 中文翻译 · 每天更新（含周末）<br>
     监控范围：半导体 / 光模块 / 创新药 / 黄金 &nbsp;|&nbsp; 包含韩国及美股半导体市场<br>
     <strong>免责声明：</strong>基于公开信息自动整理，不构成投资建议。股市有风险，投资需谨慎。
   </footer>
@@ -833,7 +833,7 @@ const REFRESH_URL = "https://1384887796-0ww1bkypy1.ap-guangzhou.tencentscf.com";
 // 勿在此写死密钥: 该值会被内联进公开页面,等同于直接发布
 const REFRESH_SECRET = "8d12ca84cba6f339f17425e8";
 const BASE = window.BASE || '';
-const PAGE_GENERATED_AT = "2026-10-22T01:00:52.261Z";
+const PAGE_GENERATED_AT = "2026-10-22T01:09:03.491Z";
 const PHASE_CN = { fetch: '抓取新闻', analyze: 'AI 分析', 'analyze-kw': '关键词引擎', chart: '图表数据', write: '写入文件', commit: '提交 git', push: '推送 git', cloud: '云端构建', done: '完成', skipped: '空报告,跳过推送', error: '失败' };
 let refreshStartedAt = 0;
 let refreshTimer = null;
