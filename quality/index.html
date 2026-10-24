@@ -25,31 +25,31 @@ th{color:#94a3b8;font-weight:600;background:#172033}
 .verdict{background:#1e293b;border:1px solid #334155;border-left:3px solid #ef4444;border-radius:8px;padding:12px 14px;font-size:13px;margin-bottom:8px}
 </style></head><body><div class="wrap">
 <h1>📊 数据质量 · 历史表现回看</h1>
-<div class="sub">统计区间 2026-08-06 ~ 2026-10-23 · 存档 70 个交易日 ·
-其中 48 天有 ETF 行情可比对(ETF 历史 250 天)</div>
+<div class="sub">统计区间 2026-08-06 ~ 2026-10-24 · 存档 71 个交易日 ·
+其中 49 天有 ETF 行情可比对(ETF 历史 251 天)</div>
 
 <div class="cards">
-  <div class="card"><div class="num" style="color:#ef4444">50%</div><div class="label">研判准确率 · 表态 136 次</div></div>
+  <div class="card"><div class="num" style="color:#ef4444">49%</div><div class="label">研判准确率 · 表态 139 次</div></div>
   <div class="card"><div class="num muted">52%</div><div class="label">对照基线 · 无条件多数类</div></div>
   <div class="card"><div class="num">15%</div><div class="label">回避率 · 中性+分化占比</div></div>
   <div class="card"><div class="num" style="color:#4ade80">96%</div><div class="label">回述一致率 · 校准触发 89 次</div></div>
 </div>
 
-<div class="verdict">研判准确率 <b style="color:#ef4444">50%</b>(表态 136 次 / 回避 15%),对照「无条件多数类」基线 52%:<b class="bad">低于基线 2 个百分点</b>。加权方向分秩相关 -0.121。</div>
+<div class="verdict">研判准确率 <b style="color:#ef4444">49%</b>(表态 139 次 / 回避 15%),对照「无条件多数类」基线 52%:<b class="bad">低于基线 3 个百分点</b>。加权方向分秩相关 -0.117。</div>
 
 <div class="section-title">研判准确率 分板块(纯新闻方向 → 次日 ETF)</div>
 <table>
     <tr><th>板块</th><th>研判准确率</th><th>对/表态</th><th>回避率</th></tr>
     <tr>
       <td><span style="color:#7c3aed">■</span> 半导体</td>
-      <td><b>44%</b></td>
-      <td class="muted">19/43</td>
-      <td class="muted">7%</td>
+      <td><b>43%</b></td>
+      <td class="muted">19/44</td>
+      <td class="muted">6%</td>
     </tr>
 <tr>
       <td><span style="color:#0891b2">■</span> 光模块</td>
-      <td><b>47%</b></td>
-      <td class="muted">14/30</td>
+      <td><b>45%</b></td>
+      <td class="muted">14/31</td>
       <td class="muted">9%</td>
     </tr>
 <tr>
@@ -60,9 +60,9 @@ th{color:#94a3b8;font-weight:600;background:#172033}
     </tr>
 <tr>
       <td><span style="color:#d97706">■</span> 黄金</td>
-      <td><b>64%</b></td>
-      <td class="muted">21/33</td>
-      <td class="muted">25%</td>
+      <td><b>62%</b></td>
+      <td class="muted">21/34</td>
+      <td class="muted">24%</td>
     </tr>
   </table>
 <div class="note">主指标。由当日该板块满足「除行情外仍有实质信号」的条目聚合出板块方向(不含 ETF 校准),再与次日 ETF 收盘涨跌比对 —— 衡量「新闻研判能不能预判行情」。
@@ -729,12 +729,21 @@ th{color:#94a3b8;font-weight:600;background:#172033}
       <td>22%</td>
       <td><span class="ok">正常</span></td>
     </tr>
+<tr>
+      <td>2026-10-24</td>
+      <td><span class="badge-kw">关键词</span></td>
+      <td>13</td>
+      <td><span class="warn">缺 光模块</span></td>
+      <td><b class="vhigh">极高1</b> <b>高1</b></td>
+      <td>46%</td>
+      <td><span class="ok">正常</span></td>
+    </tr>
 </table>
 <div class="note">
   信号命中率 = 简讯中命中评分引擎信号(非「未命中明显信号」)的比例。源健康取自当日构建的抓取判定(悬停可看具体问题);2026-09-13 之前的存档无此字段。
   引擎列的百分比为 AI 实际研判覆盖率(2026-10-16 起记录);更早的存档只有「AI 是否曾成功」的布尔标记,不能反映降级。
-  秩相关两种口径:二值方向 ±1 → 0.031,加权方向分 net/total → -0.121(后者才用上幅度信息)。
-  事后多数类基线 55%(永远看涨 45%),模型看多倾向 85%。
-  无条件基线基于 ETF 全历史 996 个板块日:次日上涨 48%。
+  秩相关两种口径:二值方向 ±1 → 0.035,加权方向分 net/total → -0.117(后者才用上幅度信息)。
+  事后多数类基线 56%(永远看涨 44%),模型看多倾向 85%。
+  无条件基线基于 ETF 全历史 1000 个板块日:次日上涨 48%。
 </div>
 </div></body></html>
