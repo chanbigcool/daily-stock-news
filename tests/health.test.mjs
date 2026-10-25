@@ -33,8 +33,9 @@ test('evaluateHealth:全部正常 → ok,无 issues', () => {
   assert.match(h.summary, /抓取正常/);
 });
 
-test('evaluateHealth:当日条数低于下限 → failed(复现 09-12 只剩 8 条)', () => {
-  const h = evaluateHealth(mkStats(), { kept: 8, analyzed: 8, now: BJ_NOON });
+test('evaluateHealth:当日条数低于折算下限 → failed(复现 09-12 只剩 8 条)', () => {
+  // 放在 20:00 终班:此时折算下限 9,8 条仍然判红 —— 与整日口径基本一致。
+  const h = evaluateHealth(mkStats(), { kept: 8, analyzed: 8, now: atBeijing(20) });
   assert.equal(h.level, 'failed');
   assert.ok(h.issues.some(i => i.code === 'low-volume'));
   assert.match(h.summary, /抓取异常/);
@@ -78,7 +79,7 @@ test('evaluateHealth:多条规则同时命中 → 取最重档(failed)', () => {
       { name: '财联社', kind: 'api', ok: false, count: 0, error: 'HTTP 503' },
       { name: '金十数据', kind: 'api', ok: true, count: 0, error: null },
     ],
-  }), { kept: 5, analyzed: 5, now: BJ_NOON });
+  }), { kept: 2, analyzed: 2, now: BJ_NOON });
   assert.equal(h.level, 'failed');
   assert.ok(h.issues.length >= 3);
 });
@@ -107,6 +108,42 @@ test('evaluateHealth:同一组 kept=0 放到北京白天 → 仍然 failed', () 
 test('evaluateHealth:宽限边界 —— 北京 5 点跳过,6 点起照判', () => {
   assert.equal(evaluateHealth(mkStats(), { kept: 0, now: atBeijing(5, 59) }).level, 'ok');
   assert.equal(evaluateHealth(mkStats(), { kept: 0, now: atBeijing(6, 0) }).level, 'failed');
+});
+
+// ── 规则 1:下限按已过时长折算 ──────────────────────────
+// 2026-10-25 周日 09:00:6 个源全健康、原始 869 条,当日只有 7 条 → 整日下限 10
+// 误判 failed。早班应按「北京今天已过去多少」折算下限,整日口径封顶不变。
+
+test('evaluateHealth:周日 09:00 的 7 条不再误报(折算下限 4)', () => {
+  const h = evaluateHealth(mkStats(), { kept: 7, analyzed: 7, now: atBeijing(9) });
+  assert.equal(h.level, 'ok');
+  assert.ok(!h.issues.some(i => i.code === 'low-volume'));
+  assert.equal(h.counts.minKept, 4);
+  assert.equal(h.counts.elapsedHours, 9);
+});
+
+test('evaluateHealth:09:00 只有 3 条仍判 failed(低于折算下限 4)', () => {
+  const h = evaluateHealth(mkStats(), { kept: 3, analyzed: 3, now: atBeijing(9) });
+  assert.equal(h.level, 'failed');
+  assert.match(h.issues.find(i => i.code === 'low-volume').message, /下限 4/);
+});
+
+test('evaluateHealth:12:30 的折算下限为 6', () => {
+  assert.equal(evaluateHealth(mkStats(), { kept: 6, now: atBeijing(12, 30) }).level, 'ok');
+  assert.equal(evaluateHealth(mkStats(), { kept: 6, now: atBeijing(12, 30) }).counts.minKept, 6);
+  assert.equal(evaluateHealth(mkStats(), { kept: 5, now: atBeijing(12, 30) }).level, 'failed');
+});
+
+test('evaluateHealth:20:00 的折算下限为 9', () => {
+  const h = evaluateHealth(mkStats(), { kept: 8, analyzed: 8, now: atBeijing(20) });
+  assert.equal(h.counts.minKept, 9);
+  assert.equal(h.level, 'failed');
+});
+
+test('evaluateHealth:折算下限封顶为整日 minKept(23:59 仍是 10)', () => {
+  const h = evaluateHealth(mkStats(), { kept: 9, analyzed: 9, now: atBeijing(23, 59) });
+  assert.equal(h.counts.minKept, CONFIG.health.minKept);
+  assert.equal(h.level, 'failed');
 });
 
 test('evaluateHealth:宽限窗口内真故障照判(API 全灭仍 degraded)', () => {

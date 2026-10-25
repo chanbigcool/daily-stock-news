@@ -36,13 +36,17 @@ export function evaluateHealth(stats = {}, { kept = 0, analyzed = 0, now = Date.
   };
 
   // 1. 当日可用新闻总量 —— 09-12 那天只有 8 条,由这条抓到。
-  // 但 minKept 是「一整天」口径的下限,kept 统计的却是「北京今天 00:00 以来」:
-  // 构建落在北京 0-6 点时,这天才开场几十分钟,当日量必然趋近 0 —— 09-12 起 266 次
-  // 构建的 22 次红灯里有 19 次就是这么来的(raw 792~1006、板块过滤后 33~70,只有
-  // dayFilter 塌成 0~5,管线本身是对的)。宽限窗口内整条跳过,不产 issue、不改 level。
-  const inDayStartGrace = beijingHour(now) < dayStartGraceHours;
-  if (kept < minKept && !inDayStartGrace) {
-    flag('failed', 'low-volume', `当日仅 ${kept} 条新闻(下限 ${minKept})`);
+  // 但 minKept 是「一整天」口径的下限,kept 统计的却是「北京今天 00:00 以来」。
+  // 拿整日下限直接量早班,周末必然误报:2026-10-25 周日 09:00,6 个源全健康、
+  // 原始 869 条,只是当日相关性新闻只有 7 条(前两个周末的早班也只有 11/13 条)。
+  // 所以下限按已过时长折算 —— 09:00 为 4、12:30 为 6、20:00 为 9,23:59 封顶回 10。
+  // 北京 0-6 点仍整条跳过:那时折算下限只有 1-3,日界刚翻篇,0-5 条是常态
+  // (09-12 起 266 次构建的 22 次红灯里有 19 次来自这个时段)。
+  const elapsedHours = beijingHour(now) + new Date(now).getUTCMinutes() / 60;
+  const inDayStartGrace = elapsedHours < dayStartGraceHours;
+  const minKeptByNow = Math.max(1, Math.ceil(minKept * elapsedHours / 24));
+  if (kept < minKeptByNow && !inDayStartGrace) {
+    flag('failed', 'low-volume', `当日仅 ${kept} 条新闻(下限 ${minKeptByNow},北京 ${beijingHour(now)} 点按已过时长折算)`);
   }
 
   // 2. 直连 API 成功源数过少
@@ -82,6 +86,9 @@ export function evaluateHealth(stats = {}, { kept = 0, analyzed = 0, now = Date.
     analyzed,
     apiOk: api.okSources || 0,
     apiTotal: api.total || 0,
+    // 早班的有效下限低于整日 minKept,回看时要能看清当时用的是哪把尺子。
+    minKept: minKeptByNow,
+    elapsedHours: Number(elapsedHours.toFixed(2)),
     // 宽限窗口内 kept 天然趋近 0,展示层要能说清「这不是异常」而不是干看着 0。
     dayStartGrace: inDayStartGrace,
   };
