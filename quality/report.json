@@ -3222,21 +3222,21 @@
     {
       "date": "20261026",
       "displayDate": "2026-10-26",
-      "isAi": true,
-      "aiCoverage": 100,
-      "newsCount": 51,
+      "isAi": false,
+      "aiCoverage": 0,
+      "newsCount": 80,
       "missingSectors": [],
       "covered": true,
       "impact": {
-        "vhigh": 0,
-        "high": 9
+        "vhigh": 1,
+        "high": 6
       },
-      "signalHitRate": 0,
+      "signalHitRate": 41,
       "directions": {
         "利好": 1,
-        "利空": 2,
+        "利空": 3,
         "分化": 0,
-        "中性": 1
+        "中性": 0
       },
       "health": {
         "level": "ok",
@@ -3245,7 +3245,7 @@
       "matrix": [
         {
           "name": "半导体",
-          "direction": "中性",
+          "direction": "利空",
           "shock": "强"
         },
         {
@@ -3261,7 +3261,7 @@
         {
           "name": "光模块",
           "direction": "利空",
-          "shock": "中"
+          "shock": "强"
         }
       ]
     }
@@ -3271,7 +3271,7 @@
   "coverageRate": 89,
   "avgImpactHigh": 12,
   "matchedDays": 49,
-  "etfHistoryDays": 251,
+  "etfHistoryDays": 250,
   "research": {
     "total": 163,
     "stated": 139,
@@ -3328,8 +3328,8 @@
         "reliable": true
       }
     },
-    "spearmanBinary": 0.021027500017287315,
-    "spearmanWeighted": -0.12113353528542314,
+    "spearmanBinary": 0.02052684525497095,
+    "spearmanWeighted": -0.12068944286053754,
     "baselines": {
       "inSample": {
         "alwaysUp": 44,
@@ -3338,7 +3338,7 @@
         "bullishBias": 85
       },
       "unconditional": {
-        "obs": 1000,
+        "obs": 996,
         "alwaysUp": 48,
         "alwaysDown": 52,
         "majority": 52
