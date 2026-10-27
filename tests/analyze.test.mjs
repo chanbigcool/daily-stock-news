@@ -770,6 +770,51 @@ test('buildSectorMatrix:四个板块都带 forwardDirection(缺新闻的板块�
   assert.equal(m.find(s => s.name === '半导体').forwardDirection, '中性', '无新闻的板块回中性');
 });
 
+// 130 个交易日的合成面板:指数持续下行。
+function marketPanel() {
+  const dates = Array.from({ length: 130 }, (_, i) => `2026-${String(4 + Math.floor(i / 30)).padStart(2, '0')}-${String((i % 30) + 1).padStart(2, '0')}`);
+  const closes = { '沪深300': dates.map((_, i) => 4000 - i * 8) };
+  for (const n of ['上证', '深成', '创业板', '中证500', '中证1000', '北证50']) {
+    closes[n] = dates.map((_, i) => 3000 - i * 6);
+  }
+  return {
+    dates,
+    indexHistory: { dates, closes },
+    etfHistory: { dates, prices: Object.fromEntries(SECTORS.map(s => [s, dates.map((_, i) => 1.5 - i * 0.002)])) },
+    date: dates[dates.length - 1],
+    market: { label: '普跌 · 下行', regime: '下行' },
+  };
+}
+
+test('buildSectorMatrix:传 ctx → 每个板块挂 forecast,forwardDirection 仍是影子', () => {
+  const panel = marketPanel();
+  const analyzed = [rated('中芯国际二季度业绩超预期', '营收创历史新高', '半导体', '利好', '高')];
+  const m = buildSectorMatrix(analyzed, [], panel);
+  for (const s of m) {
+    assert.ok(s.forecast, `${s.name} 缺 forecast`);
+    assert.equal(s.forecast.version, 'l2-2026-10-27');
+    assert.ok(s.forecast.p > 0 && s.forecast.p < 1);
+  }
+  const semi = m.find(s => s.name === '半导体');
+  assert.ok(semi.forecast.p <= 0.55, '下跌先验下正面新闻不得越过 0.55');
+  assert.equal(semi.forecast.direction, '利空');
+  assert.equal(semi.forwardDirection, '利好', 'forecast 不能改动影子列');
+});
+
+test('buildSectorMatrix:不传 ctx → 不出 forecast,旧存档重渲染保持原样', () => {
+  const m = buildSectorMatrix([rated('中芯国际二季度业绩超预期', '', '半导体', '利好', '高')], []);
+  assert.ok(m.every(s => s.forecast === undefined));
+});
+
+test('buildSectorMatrix:指数历史缺失 → forecast 退化 p=0.5,不阻断矩阵', () => {
+  const m = buildSectorMatrix([rated('中芯国际业绩超预期', '', '半导体', '利好', '高')], [], { market: null });
+  const semi = m.find(s => s.name === '半导体');
+  assert.ok(semi.forecast, '缺数据也应挂一个降级 forecast,而不是没有');
+  assert.equal(semi.forecast.p, 0.5);
+  assert.equal(semi.forecast.direction, '利空');
+  assert.equal(semi.forecast.confidence, '低');
+});
+
 test('AI 路径也受体裁封顶:模型无视 prompt 给汇总稿「极高」,代码兜底压到「低」', () => {
   return withFastRetry(async () => {
     // prompt 里写了「汇总/栏目稿不超过低」,但模型不保证遵守。这条钉住代码侧兜底 ——

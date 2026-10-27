@@ -190,3 +190,91 @@ test('有 forwardDirection 但某板块为空 → 该格显「—」而不是充
   assert.match(html, /创新药<\/td><td class="shock-weak">弱<\/td><td class="dir-flat">中性<\/td><td class="">—<\/td>/);
   assert.match(html, /class="badge badge-neutral" title="次日倾向[^"]*">次日 —<\/span>/);
 });
+
+// ── 次日概率(forecast):与影子 forwardDirection 的差别在页面 ─────
+// forecast 是校准后的概率,页面必须给出**数字**并把 driver 放进 tooltip,
+// 否则「利空 64%」和「利空」在视觉上无法区分,用户也看不到为什么。
+
+const forecast = (over = {}) => ({
+  p: 0.64,
+  direction: '利空',
+  confidence: '中',
+  drivers: [
+    { key: 'prior', label: '大盘', value: '普跌 · 下行', delta: -0.09 },
+    { key: 'negE', label: '利空证据', value: '2 条 · 6 档', delta: -0.6 },
+    { key: 'trend1', label: '昨日', value: '−1.2%', delta: null },
+  ],
+  ...over,
+});
+
+const withForecast = (fc) => mkResult({
+  // modelActive=true 是上线口径;影子模式下 forecast 只进存档,页面不显示概率
+  modelActive: true,
+  sectorMatrix: mkResult().sectorMatrix.map(s => ({
+    ...s,
+    forwardDirection: s.direction === '中性' ? '' : s.direction,
+    forecast: fc[s.name],
+  })),
+});
+
+test('有 forecast → 矩阵格显示概率,并把 drivers 放进 tooltip', () => {
+  const html = renderHTML(
+    withForecast({ 半导体: forecast(), 光模块: forecast({ p: 0.31, direction: '利空' }), 创新药: forecast({ p: 0.5, direction: '利空' }), 黄金: forecast({ p: 0.72, direction: '利好' }) }),
+    '2026-09-12', [], undefined);
+  assert.match(html, /<td class="dir-bear" title="次日概率：利空 64%（置信度中） · 大盘 普跌 · 下行 · 利空证据 2 条 · 6 档 · 昨日 −1\.2%">利空 64%<\/td>/);
+  assert.match(html, /title="次日概率：[^"]*">利空 31%<\/td>/, '低概率看空也要把数字写出来');
+  assert.match(html, />利空 50%<\/td>/, 'p=0.5 判利空,显示为 50% 而不是 0%');
+  assert.match(html, />利好 72%<\/td>/);
+});
+
+test('有 forecast → 速览徽章带数字,且不再显示影子的「次日倾向」', () => {
+  const html = renderHTML(
+    withForecast({ 半导体: forecast(), 光模块: forecast(), 创新药: forecast(), 黄金: forecast() }),
+    '2026-09-12', [], undefined);
+  assert.match(html, /class="badge badge-bear" title="次日概率：[^"]*">次日 利空 64%<\/span>/);
+  assert.doesNotMatch(html, /title="次日倾向/, 'forecast 存在时不应再回落到影子标签');
+});
+
+test('有 forecast 但无 forwardDirection → 依然出「次日倾向」列', () => {
+  // 线上 buildSectorMatrix 两个都给;但 rerender 或手工数据可能只带 forecast。
+  // hasForward 只看 forwardDirection 的话,概率会静默丢失。
+  const html = renderHTML(mkResult({
+    modelActive: true,
+    sectorMatrix: mkResult().sectorMatrix.map(s => ({ ...s, forecast: forecast() })),
+  }), '2026-09-12', [], undefined);
+  assert.match(html, /<th>今日复盘<\/th><th>次日倾向<\/th>/);
+  assert.match(html, />利空 64%<\/td>/);
+});
+
+// ── 影子模式:forecast 已算出,但闸门未过,页面必须保持旧口径 ────
+// 校准公式还在验证期(MODEL_ACTIVE 默认 false)。此时 forecast 只进存档供质量
+// 报告使用;页面一旦提前显示概率,等于把未验证的模型当结论发布出去。
+// 旧存档重渲染时的 modelActive 取存档里的值,所以已发布页面不会被改写。
+
+test('影子模式:forecast 存在但 modelActive 未开 → 页面不出现任何概率', () => {
+  const html = renderHTML(mkResult({
+    sectorMatrix: mkResult().sectorMatrix.map(s => ({
+      ...s,
+      forwardDirection: '利好',
+      forecast: forecast(),
+    })),
+  }), '2026-09-12', [], undefined);
+  assert.doesNotMatch(html, /\d+%<\/td>/, '影子模式下矩阵格不应出现概率');
+  assert.doesNotMatch(html, /次日概率/, '影子模式下不应出现概率 tooltip');
+  assert.match(html, /<td class="dir-bull">利好<\/td>/, '应回落到 forwardDirection');
+  assert.match(html, /">次日 利好<\/span>/, '徽章也回落到影子的次日倾向');
+});
+
+test('影子模式:modelActive 显式为 false 与缺省行为一致', () => {
+  const shadow = (modelActive) => renderHTML(mkResult({
+    ...(modelActive === undefined ? {} : { modelActive }),
+    sectorMatrix: mkResult().sectorMatrix.map(s => ({ ...s, forwardDirection: '利好', forecast: forecast() })),
+  }), '2026-09-12', [], undefined);
+  assert.equal(shadow(undefined), shadow(false));
+});
+
+test('条目利空/利好计数带释义,避免被读成涨跌预测', () => {
+  const html = render();
+  assert.match(html, /title="条目方向 = 这条新闻对基本面\/政策的影响，不是涨跌预测[^"]*"><span>利好<\/span>/);
+  assert.match(html, /title="条目方向 = 这条新闻对基本面\/政策的影响，不是涨跌预测[^"]*"><span>利空<\/span>/);
+});

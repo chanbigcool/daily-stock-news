@@ -65,6 +65,19 @@ const MIN_STATED_SAMPLE = 30;
 // 表态率门槛:中性/分化被剔出准确率分母(回避不算错),代价是系统可以靠大量回避刷高
 // 准确率。表态率低于此值时研判准确率判「不作数」,不参与与基线的对比。
 const MIN_STATED_SHARE = 0.60;
+// 校准后预测(forecast)的样本门槛。模型每个板块每天都给概率(不回避),所以这里
+// 只按样本量判「数字是否可信」;低于门槛时照常展示,但标注不作数。
+const MIN_FORECAST_SAMPLE = 30;
+
+// 概率分箱:围绕 0.5 加密。模型受「先验单边阀 + 利好 55% 封顶」约束,p 大多落在
+// 0.30–0.58,等距分箱会让两端空箱、中间挤成一团,校准曲线看不出形状。
+const FORECAST_BINS = [
+  { label: '≤40%', min: -Infinity, max: 0.40 },
+  { label: '40–48%', min: 0.40, max: 0.48 },
+  { label: '48–52%', min: 0.48, max: 0.52 },
+  { label: '52–58%', min: 0.52, max: 0.58 },
+  { label: '>58%', min: 0.58, max: Infinity },
+];
 
 // 回述一致率只在**当前校准规则生效之后**才有意义。
 // 存档是历史快照:早期日报的板块方向由当时那版校准规则发布。±1% 中性带是 2026-08-19
@@ -106,6 +119,79 @@ function researchRate(obs) {
     lowSample: stated.length < MIN_STATED_SAMPLE,
     // 两个门槛都过,数字才算数
     reliable: stated.length >= MIN_STATED_SAMPLE && statedShare >= MIN_STATED_SHARE,
+  };
+}
+
+// ── 校准后预测(forecast)────────────────────────────────
+// 与「研判准确率」的关键差别:那条链路是二值方向、可以回避(中性/分化);这里
+// 每个板块每天都给一个概率并强制表态,所以口径与页面上的「次日概率」一致 ——
+// 准确率按 p>0.5 → 利好、否则利空判,概率本身用 Brier 评分衡量校准度。
+// 影子模式下页面不展示概率,但这个块照常统计:上线的依据是它,不是页面看起来好看。
+
+// 大盘状态取自 forecast.drivers 里 prior 那一条(值形如「普跌 · 下行」),
+// 用来回答「下跌市里还看多吗」这个最该被盯住的问题。
+function forecastMarket(f = {}) {
+  const d = (Array.isArray(f.drivers) ? f.drivers : []).find(x => x && x.key === 'prior');
+  const v = String(d?.value || '').trim();
+  if (!v) return '未知';
+  const parts = v.split('·').map(s => s.trim()).filter(Boolean);
+  return parts.length > 1 ? parts[parts.length - 1] : v;
+}
+
+function forecastRate(obs) {
+  const n = obs.length;
+  const correct = obs.filter(o => (o.direction === '利好' ? o.change > 0 : o.change < 0)).length;
+  return { n, correct, accuracy: n ? Math.round(correct / n * 100) : null };
+}
+
+function calibrationBins(obs) {
+  return FORECAST_BINS.map(b => {
+    const sub = obs.filter(o => o.p >= b.min && o.p < b.max);
+    const ups = sub.filter(o => o.change > 0).length;
+    return {
+      label: b.label,
+      n: sub.length,
+      avgP: sub.length ? Math.round(sub.reduce((s, o) => s + o.p, 0) / sub.length * 100) : null,
+      upRate: sub.length ? Math.round(ups / sub.length * 100) : null,
+    };
+  });
+}
+
+function forecastStats(obs) {
+  const rate = forecastRate(obs);
+  const up = obs.filter(o => o.change > 0).length;
+  const majority = obs.length
+    ? Math.round(Math.max(up, obs.length - up) / obs.length * 100)
+    : null;
+  // 常数 0.5 的 Brier 恰为 0.25,是「什么都不预测」的水平;skill = 1 - brier/0.25。
+  const brier = obs.length
+    ? obs.reduce((s, o) => s + (o.p - (o.change > 0 ? 1 : 0)) ** 2, 0) / obs.length
+    : null;
+
+  const bySector = {};
+  for (const sector of SECTORS) {
+    const sub = obs.filter(o => o.sector === sector);
+    if (sub.length) bySector[sector] = forecastRate(sub);
+  }
+  const byMarket = {};
+  for (const market of [...new Set(obs.map(o => o.market))]) {
+    byMarket[market] = forecastRate(obs.filter(o => o.market === market));
+  }
+
+  return {
+    ...rate,
+    nDays: new Set(obs.map(o => o.day)).size,
+    brier: brier === null ? null : +brier.toFixed(4),
+    brierBaseline: 0.25,
+    brierSkill: brier === null ? null : +(1 - brier / 0.25).toFixed(3),
+    upRate: obs.length ? Math.round(up / obs.length * 100) : null,
+    majority,
+    edge: rate.accuracy === null || majority === null ? null : rate.accuracy - majority,
+    lowSample: obs.length < MIN_FORECAST_SAMPLE,
+    minSample: MIN_FORECAST_SAMPLE,
+    bins: calibrationBins(obs),
+    bySector,
+    byMarket,
   };
 }
 
@@ -192,6 +278,7 @@ export function computeDays() {
 
   const researchObs = []; // 纯新闻方向 vs 次日涨跌
   const recapObs = [];    // ETF 校准推出的方向 vs 当日涨跌
+  const forecastObs = []; // 校准后概率 vs 次日涨跌(影子对照)
 
   const files = readdirSync(_historyDir)
     .filter(f => /^日报_\d{8}\.json$/.test(f))
@@ -239,6 +326,28 @@ export function computeDays() {
     for (const sector of SECTORS) {
       const price = hist.prices?.[sector];
       const pubDir = matrix.find(s => s.name === sector)?.direction;
+      const fcRow = matrix.find(s => s.name === sector)?.forecast;
+
+      // ⓪ 校准后预测:与研判准确率用同一个「当日收盘 → 次日收盘」窗口。
+      //    概率与新方向都存进档案,所以这里不需要重算模型 —— 统计的正是当时
+      //    对外承诺的那个数。旧存档没有 forecast → 自动跳过,不会伪造样本。
+      if (fcRow && typeof fcRow.p === 'number' && Number.isFinite(fcRow.p)
+        && Array.isArray(price) && idx >= 0 && idx + 1 < hist.dates.length) {
+        const cur = price[idx], next = price[idx + 1];
+        if (typeof cur === 'number' && typeof next === 'number' && cur > 0) {
+          forecastObs.push({
+            sector,
+            day: d.displayDate,
+            p: fcRow.p,
+            direction: fcRow.direction === '利好' || fcRow.direction === '利空'
+              ? fcRow.direction
+              : (fcRow.p > 0.5 ? '利好' : '利空'),
+            confidence: fcRow.confidence || '',
+            market: forecastMarket(fcRow),
+            change: (next - cur) / cur,
+          });
+        }
+      }
 
       // ① 回述一致率:ETF 校准会推出的方向 vs 当日实际涨跌。
       //    用 etfDirectionFor 反推期望值 —— 校准在 |涨跌| 落在 1%~3% 时**故意**推出
@@ -340,6 +449,8 @@ export function computeDays() {
       since: CALIBRATION_RULES_SINCE,
       bySector: recapBySector,
     },
+    // 校准后预测:影子模式下页面不显示概率,但这里照常统计 —— 上线判定看它
+    forecast: forecastStats(forecastObs),
     minStatedSample: MIN_STATED_SAMPLE,
     minStatedShare: MIN_STATED_SHARE,
   };
@@ -391,6 +502,75 @@ function recapSectorTable(bySector) {
     <tr><th>板块</th><th>校准吻合率</th><th>吻合/触发</th></tr>
     ${rows}
   </table>`;
+}
+
+function forecastSectorTable(bySector) {
+  const rows = SECTORS.filter(s => bySector[s]).map(s => {
+    const r = bySector[s];
+    return `<tr>
+      <td><span style="color:${SECTOR_COLORS[s]}">■</span> ${s}</td>
+      <td>${r.n}</td>
+      <td><b>${r.accuracy}%</b></td>
+      <td class="muted">${r.correct}/${r.n}</td>
+    </tr>`;
+  }).join('\n');
+  if (!rows) return '<p class="muted">暂无数据</p>';
+  return `<table>
+    <tr><th>板块</th><th>预测次数</th><th>准确率</th><th>对/次数</th></tr>
+    ${rows}
+  </table>`;
+}
+
+// 校准曲线用表格:每箱给出平均预测概率与实际上涨率。校准好的模型,两列应同向
+// 且接近(预测 60% 的样本里约 60% 上涨)。影子模式没样本时整块显示为说明。
+export function forecastSection(fc) {
+  const title = '<div class="section-title">校准后预测 · 影子对照(概率 → 次日 ETF)</div>';
+  if (!fc || !fc.n) {
+    return `${title}
+<p class="muted">暂无预测样本。旧存档没有 forecast 字段,只统计新模型开始随日报落盘之后的数据;积累到 ${fc?.minSample ?? MIN_FORECAST_SAMPLE} 个板块日后开始有统计意义。此块在影子模式下只做内部对照,页面不展示概率。</p>`;
+  }
+  const tone = fc.edge >= 0 ? '#4ade80' : '#ef4444';
+  const skillTone = fc.brierSkill >= 0 ? '#4ade80' : '#ef4444';
+  const sampleNote = fc.lowSample
+    ? `<b class="warn">样本 ${fc.n} &lt; ${fc.minSample},数字暂不作数</b>`
+    : `样本 ${fc.n} 个板块日 / ${fc.nDays} 个交易日`;
+  const bins = fc.bins.map(b => `<tr>
+      <td>${b.label}</td>
+      <td>${b.n}</td>
+      <td>${b.avgP === null ? '<span class="muted">—</span>' : `${b.avgP}%`}</td>
+      <td>${b.upRate === null ? '<span class="muted">—</span>' : `${b.upRate}%`}</td>
+    </tr>`).join('\n');
+  const markets = Object.entries(fc.byMarket || {}).map(([m, r]) => `<tr>
+      <td>${escHtml(m)}</td>
+      <td>${r.n}</td>
+      <td><b>${r.accuracy}%</b></td>
+      <td class="muted">${r.correct}/${r.n}</td>
+    </tr>`).join('\n');
+  return `${title}
+<div class="verdict" style="border-left-color:${tone}">${sampleNote} ·
+准确率 <b style="color:${tone}">${fc.accuracy}%</b>(对 ${fc.correct}),对比「事后多数类」${fc.majority}%:
+${fc.edge > 0 ? `高出 <b style="color:${tone}">${fc.edge} 个百分点</b>`
+  : fc.edge === 0 ? '与基线持平'
+  : `<b class="bad">低于 ${Math.abs(fc.edge)} 个百分点</b>`}。
+Brier <b style="color:${skillTone}">${fc.brier}</b>(常数 0.5 基线 ${fc.brierBaseline},skill ${fc.brierSkill}),
+概率自带的校准信息 ${fc.brierSkill > 0 ? '为正' : '为负'}。
+注意模型每天对四个板块都表态(不回避),所以这里没有「回避率」这个退路。</div>
+
+<table>
+  <tr><th>预测概率区间</th><th>样本</th><th>平均预测</th><th>实际上涨率</th></tr>
+  ${bins}
+</table>
+<div class="note">校准好 = 「平均预测」与「实际上涨率」同向且接近;若预测越高、上涨率反而越低,说明概率方向是反的。</div>
+
+<div class="section-title">校准后预测 分板块</div>
+${forecastSectorTable(fc.bySector)}
+
+<div class="section-title">校准后预测 分大盘状态</div>
+${markets ? `<table>
+  <tr><th>大盘状态</th><th>预测次数</th><th>准确率</th><th>对/次数</th></tr>
+  ${markets}
+</table>
+<div class="note">状态取自预测当时的先验 driver(如「普跌 · 下行」)。单边阀的作用应体现在下跌市:那里看多的概率不该被抬高。</div>` : '<p class="muted">暂无数据</p>'}`;
 }
 
 function renderHTML(r) {
@@ -496,6 +676,8 @@ ${recapSectorTable(r.recap.bySector)}
 它按校准自己的档位规则比对(涨跌 1%~3% 时校准故意推「中性」,不能用「是否上涨」去判),且<b>只统计 ${r.recap.since} 起的日报</b> —— 更早的日报由旧版校准规则发布,拿今天的规则去审会得到一堆假失配。
 理论上不会刚好 100%:校准用同板块 3 只 ETF 的均值,这里只有单只代表 ETF 的价格序列,±1%/±3% 分界附近会抖动。<b>它不代表预测能力。</b></div>
 
+${forecastSection(r.forecast)}
+
 <div class="section-title">逐日明细</div>
 <table>
 <tr><th>日期</th><th>引擎</th><th>简讯数</th><th>板块覆盖</th><th>高影响</th><th>信号命中率</th><th>源健康</th></tr>
@@ -519,10 +701,12 @@ function main() {
   writeFileSync(join(QUALITY_DIR, 'report.json'), JSON.stringify(r, null, 2), 'utf-8');
   writeFileSync(join(QUALITY_DIR, 'index.html'), renderHTML(r), 'utf-8');
   const res = r.research;
+  const fc = r.forecast;
   const flag = res.reliable ? '' : ' [不作数]';
   console.log(`📊 数据质量回看: ${QUALITY_DIR}/index.html (${r.total} 天, 覆盖 ${r.coverageRate}%, `
     + `研判准确率 ${res.accuracy === null ? '—' : res.accuracy + '%'}${flag} (表态 ${res.stated}/${res.total}), `
-    + `回避率 ${res.abstainRate}%, 回述一致率 ${r.recap.rate === null ? '—' : r.recap.rate + '%'})`);
+    + `回避率 ${res.abstainRate}%, 回述一致率 ${r.recap.rate === null ? '—' : r.recap.rate + '%'}, `
+    + `校准预测 ${fc.n} 次${fc.n ? ` (准确率 ${fc.accuracy}%, Brier ${fc.brier}, skill ${fc.brierSkill})` : ''})`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

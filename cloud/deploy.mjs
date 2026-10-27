@@ -19,7 +19,13 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 // tests/cloud-deploy.test.mjs 会从 pipeline/fetch.mjs 与 pipeline/charts.mjs
 // 出发走一遍相对 import,断言闭包 ⊆ 这份清单 —— 漏了测试会红,而不是等函数
 // 跑起来才报 "Cannot find module"。
-export const PIPELINE_FILES = ['fetch.mjs', 'config.mjs', 'utils.mjs', 'charts.mjs', 'sectors.mjs'];
+export const PIPELINE_FILES = [
+  'fetch.mjs', 'config.mjs', 'utils.mjs', 'charts.mjs', 'sectors.mjs', 'market.mjs',
+  // 采集模式(告警)在云函数里也要跑规则:alert-rules → sentiment → classifier,
+  // 以及推送给 ServerChan 的 notify。少一个线上就是 Cannot find module。
+  'companies.mjs', 'sentiment.mjs', 'rating-rules.mjs', 'classifier.mjs',
+  'alert-rules.mjs', 'notify.mjs',
+];
 
 // 由 PIPELINE_FILES 静态推导出的完整打包清单(相对 cloud/ 的路径)。
 export function bundleManifest(here) {
@@ -174,6 +180,34 @@ export const TIMER_SPECS = (process.env.TC_TIMER_CRONS || '09:00,12:30,20:00')
     return { time: `${pad(h)}:${pad(m)}`, name: `daily-${pad(h)}${pad(m)}`, cron: `0 ${m} ${h} * * * *` };
   });
 
+// ── 采集触发器(collect 模式)────────────────────────────
+// 交易时段每半小时抓一次、推重点事件,不 dispatch 构建(见 cloud/index.js 的
+// timerMode)。SCF 的 cron 是 7 段,这里直接收**裸 cron**,与环境变量里的
+// HH:MM 用法分开:两者混在一个字段里解析会把 `0,30` 里的逗号当成时段分隔符。
+// 用 4 条触发器覆盖:09:30 / 10:00–11:30 / 13:00–14:30 / 15:00,
+// 刻意避开 09:00、12:30 两个 full 时段(用 `30 9` 而不是 `0,30 9`)。
+// 每条触发器每天触发多次,4 条 + 3 条 full = 7 个,留出 SCF 的触发器配额。
+// 若平台仍因配额拒绝,退化为一条 `0 0,30 9-15 * * * *`,由 timerMode 跳过
+// 非整点/非交易时段的误触发(collect 本身不烧 AI,多跑几次只是多抓几次)。
+export const COLLECT_TIMER_SPECS = parseCollectSpecs(
+  process.env.TC_COLLECT_TIMER_CRONS
+  || '0 30 9 * * * *;0 0,30 10-11 * * * *;0 0,30 13-14 * * * *;0 0 15 * * * *',
+);
+
+export function parseCollectSpecs(raw) {
+  const chunks = String(raw || '')
+    .split(/[;\n]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return chunks.map((cron, i) => {
+    const f = cron.split(/\s+/);
+    if (f.length !== 7 || !f.every(Boolean)) {
+      throw new Error(`TC_COLLECT_TIMER_CRONS 里的 cron 必须是 7 段(秒 分 时 日 月 星期 年): ${cron}`);
+    }
+    return { time: cron, name: `collect-${String(i + 1).padStart(2, '0')}`, cron };
+  });
+}
+
 // 定时触发器的 TriggerDesc 读写信封不一样 —— 这是个坑,2026-10-16 实测:
 //   读(ListTriggers)  → '{"cron":"0 0 9 * * * *"}'   带 JSON 信封
 //   写(Create/Update) → '0 0 9 * * * *'              裸 cron,套信封反而报
@@ -188,7 +222,7 @@ export function cronOf(desc) {
 // 建/改定时触发器。**失败不让整个部署失败**:函数本身已经用上了,触发器没建上
 // 只是「不会自动出报」,这时最该做的是把控制台的操作步骤打清楚,而不是丢一个
 // 部署失败让人以为函数也没上去。
-async function ensureTimerTriggers(scf, fnName, log = console.log) {
+async function ensureTimerTriggers(scf, fnName, specs = TIMER_SPECS, log = console.log) {
   const list = (await scf('ListTriggers', { FunctionName: fnName })).Response || {};
   if (list.Error) {
     log(`  ⚠ 读不到现有触发器(${list.Error.Code}),跳过:请到控制台手动建。`);
@@ -199,7 +233,7 @@ async function ensureTimerTriggers(scf, fnName, log = console.log) {
   const created = [];
   const updated = [];
   const existing = [];
-  for (const spec of TIMER_SPECS) {
+  for (const spec of specs) {
     const cur = byName.get(spec.name);
     if (cur && cronOf(cur.TriggerDesc) === spec.cron) { existing.push(spec.name); continue; }
     try {
@@ -273,6 +307,11 @@ export async function deploy() {
     { Key: 'GITHUB_PAT', Value: process.env.GITHUB_PAT },
     { Key: 'SHARED_SECRET', Value: process.env.SHARED_SECRET },
   ];
+  // 盘中告警的 ServerChan key。没配不算部署失败(日报照出,只是没告警),
+  // 但必须在结尾把控制台配置步骤写全 —— 这个环境变量在腾讯云控制台里,
+  // 部署脚本只能提示,不能替用户填。
+  const hasSendkey = !!process.env.SERVERCHAN_SENDKEY;
+  if (hasSendkey) envVars.push({ Key: 'SERVERCHAN_SENDKEY', Value: process.env.SERVERCHAN_SENDKEY });
 
   const manifest = bundleManifest(here);
   const entries = manifest.map((m) => ({ name: m.name, data: fs.readFileSync(m.file) }));
@@ -341,7 +380,8 @@ export async function deploy() {
   const url = await readFunctionUrl(scf, FUNC_NAME);
 
   console.log('[4/4] 配置定时触发器 ...');
-  const timer = await ensureTimerTriggers(scf, FUNC_NAME);
+  const allSpecs = [...TIMER_SPECS, ...COLLECT_TIMER_SPECS];
+  const timer = await ensureTimerTriggers(scf, FUNC_NAME, allSpecs);
 
   console.log('\n=== 部署完成 ===');
   console.log('账号     :', OWNER, '/', REPO);
@@ -352,16 +392,20 @@ export async function deploy() {
     console.log('    而那需要 SCF_QcsRole,且函数 URL 会变 —— 见 cloud/README.md「运行时名」一节。');
   }
   if (timer.failed) {
-    console.log('定时器   : ⚠ 没配全,自动出报这条链现在是断的');
+    console.log('定时器   : ⚠ 没配全,自动出报/盘中采集这条链现在是断的');
     console.log('  去控制台手动建,三步:');
     console.log('  ① 云函数 → daily-stock-refresh → 「触发管理」→ 新建触发器');
     console.log('  ② 触发方式选「定时触发」,时间选北京时间,分别填:');
-    for (const s of TIMER_SPECS) console.log(`       ${s.time}   触发器名 ${s.name}`);
+    for (const s of TIMER_SPECS) console.log(`       ${s.time}   触发器名 ${s.name}（full：出日报）`);
+    for (const s of COLLECT_TIMER_SPECS) console.log(`       自定义 cron：${s.cron}   触发器名 ${s.name}（collect：盘中采集+告警）`);
+    console.log('       ⚠ collect-* 的名字前缀不能改 —— 云函数按名字区分 full/collect。');
     console.log('  ③ 建完在同一个页面看「上次触发时间」,确认新触发器真的会响(时区本身已核实过)');
   } else {
     console.log('定时器   :', TIMER_SPECS.map((s) => `${s.time}(北京)`).join(' / '),
       `· 新建 ${timer.created.length} 改 ${timer.updated.length} 已存在 ${timer.existing.length}`);
+    console.log('  采集     :', COLLECT_TIMER_SPECS.map((s) => s.cron).join(' | '));
     console.log('  时区已核实为北京时间(取证方法见 deploy.mjs 顶部注释),不必再回控制台确认。');
+    console.log('  full/collect 由触发器名前缀区分:daily-* → 出日报,collect-* → 只采集告警。');
   }
   if (url) {
     console.log('函数 URL :', url);
@@ -374,6 +418,19 @@ export async function deploy() {
     console.log('  云函数 → daily-stock-refresh → 「函数 URL」标签页');
     console.log('  若那里显示「未启用」,先启用并选**免认证** —— 浏览器带不了腾讯云签名,');
     console.log('  选「需认证」按钮必然失败。');
+  }
+  if (!hasSendkey) {
+    console.log('\n盘中告警 : ⚠ 未配置 SERVERCHAN_SENDKEY —— 采集会照跑、缓存照写,但不会推微信');
+    console.log('  配置方法(部署脚本无法代填,环境变量在腾讯云控制台):');
+    console.log('  ① 云函数 → daily-stock-refresh → 「函数配置」→ 编辑 → 环境变量 → 新增一行');
+    console.log('     键名填 SERVERCHAN_SENDKEY,值填你的 Server酱 SendKey');
+    console.log('     (SendKey 在 sct.ftqq.com 登录后的「SendKey」页,以 sctp 开头的走新域名)');
+    console.log('  ② 保存后等状态回到「正常」;不需要重新部署代码');
+    console.log('  ③ 验证:等下一个 collect 触发,或到「触发管理」对 collect-01 点「立即触发」,');
+    console.log('     然后在 Server酱后台看有没有收到「🚨【重要】/📌【关注】」开头的消息');
+    console.log('  没配也不影响日报:full 模式与 UI 上的刷新按钮完全不依赖它。');
+  } else {
+    console.log('\n盘中告警 : SERVERCHAN_SENDKEY 已随部署写入环境变量');
   }
   return { owner: OWNER, runtime: actualRuntime, url, timer };
 }

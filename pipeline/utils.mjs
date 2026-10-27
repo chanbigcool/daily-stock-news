@@ -118,6 +118,23 @@ export function beijingNowString(date = new Date()) {
   return `${bj.getUTCFullYear()}-${pad2(bj.getUTCMonth() + 1)}-${pad2(bj.getUTCDate())} ${pad2(bj.getUTCHours())}:${pad2(bj.getUTCMinutes())}:${pad2(bj.getUTCSeconds())}`;
 }
 
+// 报告窗口起点(绝对时间戳)。
+// 按「北京日 00:00」切会漏掉隔夜消息:20:00 之后发布的新闻,次晨 09:00 构建时
+// 已经跨日,而源站只回滚几小时,再抓一次也抓不回来。所以 12:00 之前的构建把
+// 窗口起点回退到**前一日 20:00**;12:00 之后仍是当日 00:00 —— 午后构建若也
+// 回看前晚,会把前日白天的新闻混进当日日报。
+//
+// 返回 Date;日期非法时回退到由 date 决定的当日 00:00。
+export function reportWindowStart(date = new Date()) {
+  const bj = toBeijing(date);
+  if (!bj) return new Date(NaN);
+  const y = bj.getUTCFullYear(), mo = bj.getUTCMonth(), d = bj.getUTCDate();
+  const startBj = bj.getUTCHours() < 12
+    ? Date.UTC(y, mo, d - 1, 20, 0, 0)
+    : Date.UTC(y, mo, d, 0, 0, 0);
+  return new Date(startBj - BJ_OFFSET_MS);
+}
+
 // 解析 "YYYY-MM-DD HH:mm:ss" 字符串(源以北京钟面发布)为绝对时间戳。
 // new Date(str) 会按宿主时区解释——在 CI(UTC)上会整体错 +8h,本地(北京)碰巧对。
 // 把 wall-clock 当作 Asia/Shanghai(固定 UTC+8)换算,任何环境都对。

@@ -201,6 +201,8 @@ TC_SECRET_ID=AKID... TC_SECRET_KEY=... GITHUB_PAT=github_pat_... SHARED_SECRET=.
 | `stats` | `fetchAllNews` | 含各源成功数；Actions 的健康判定读它 |
 | `etfData` | `fetchETFData` | 12 只 ETF 当前行情 |
 | `etfHistory` | `fetchETFHistoryKLine` | `KLINE_DAYS` 日 K 线（`pipeline/charts.mjs` 导出，2026-10-16 起 30→250，供质量回测的样本量）；**抓失败时为 `null`**，Actions 回退到仓库里的累积历史 |
+| `market` | `fetchIndexQuotes` + `fetchMarketBreadth` | `{ quotes: [{name,price,changePct,...}], breadth: {up,down,flat,total,ratio} }`；两项各自失败时分别是 `[]` / `null`，页面只是不显示大盘指数带 |
+| `indexHistory` | `fetchIndexHistory` | 7 个指数 `KLINE_DAYS` 日 K 线（`{dates, closes}`），用于市场状态五档与回测先验；抓失败时为 `null` |
 | `notes` | `scrapeAll` | 云端发生的降级（如 K 线失败）；会打进取数日志，不静默 |
 | `elapsedMs` `beijingDay` `beijingTime` | `scrapeAll` | 只是日志与溯源 |
 

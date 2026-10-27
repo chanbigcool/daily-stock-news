@@ -14,15 +14,18 @@ const OUTPUT_DIR = join(PROJECT_ROOT, 'output');
 const HISTORY_DIR = join(PROJECT_ROOT, 'history');
 
 import { CONFIG, ETFS } from '../pipeline/config.mjs';
-import { formatTime, getTodayStr, getTodayDisplay, beijingDateKey, beijingNowString } from '../pipeline/utils.mjs';
+import { formatTime, getTodayStr, getTodayDisplay, beijingNowString, reportWindowStart } from '../pipeline/utils.mjs';
 import { fetchAllNews, fetchETFData } from '../pipeline/fetch.mjs';
 import { dedupAndClean, dedupKey } from '../pipeline/clean.mjs';
 import { analyzeWithClaude, buildSectorMatrix, deriveExplanation, normalizeMarketSummary } from '../pipeline/analyze.mjs';
+import { attachForecast } from '../pipeline/predict.mjs';
 import { scoreNewsItem } from '../pipeline/sentiment.mjs';
 import { evaluateHealth, formatSourceSummary } from '../pipeline/health.mjs';
 import { SECTORS, CATEGORY_CLS, IMPACT_RANK, impactCompare } from '../pipeline/sectors.mjs';
-import { loadETFHistory, saveETFHistory, accumulateETF, buildETFChartData, buildSentimentData, buildImpactHeatmap, buildDirectionChart, buildTimeWindowData, fetchETFHistoryKLine } from '../pipeline/charts.mjs';
+import { loadETFHistory, saveETFHistory, accumulateETF, buildETFChartData, buildSentimentData, buildImpactHeatmap, buildDirectionChart, buildTimeWindowData, fetchETFHistoryKLine, saveIndexHistory } from '../pipeline/charts.mjs';
+import { fetchIndexQuotes, fetchMarketBreadth, fetchIndexHistory, computeMarketState, appendMarketDay } from '../pipeline/market.mjs';
 import { loadFetchPayload } from '../pipeline/ingest.mjs';
+import { pushServerChan as serverChanPush } from '../pipeline/notify.mjs';
 
 // ── HTML 渲染 ──────────────────────────────────────────
 
@@ -66,7 +69,22 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
   const bullCount = news.filter(n => (n.direction || '').includes('利好')).length;
   const bearCount = news.filter(n => (n.direction || '').includes('利空')).length;
   const sectorNames = SECTORS.slice();
-  const hasForward = matrix.some(s => s.forwardDirection);
+  // 影子模式(L4):闸门未过时 forecast 只落存档供 quality 回看,页面继续展示旧的
+  // forwardDirection。模型达标后在 config.mjs 把 MODEL_ACTIVE 打开即可切口径。
+  const showForecast = result.modelActive === true;
+  const hasForward = matrix.some(s => showForecast ? (s.forecast || s.forwardDirection) : s.forwardDirection);
+
+  // 次日概率的 tooltip:概率、置信度、drivers(先验/利空/利好 + 只展示的趋势)。
+  // 没有 forecast 的旧存档回落到 forwardDirection,页面保持原样。
+  const forecastTip = (f) => [f.direction + ' ' + Math.round(f.p * 100) + '%（置信度' + f.confidence + '）',
+    ...(Array.isArray(f.drivers) ? f.drivers.map(d => `${d.label} ${d.value}`) : [])].join(' · ');
+  const forecastCell = (s) => {
+    const f = showForecast ? s.forecast : null;
+    const dir = f ? f.direction : s.forwardDirection;
+    const text = f ? `${f.direction} ${Math.round(f.p * 100)}%` : (s.forwardDirection || '—');
+    const tip = f ? ` title="次日概率：${escHtml(forecastTip(f))}"` : '';
+    return `<td class="${dir ? dirText(dir) : ''}"${tip}>${escHtml(text)}</td>`;
+  };
 
   const sectorCount = (name) => news.filter(n => n.category === name).length;
   const highInSector = (name) => news.filter(n => n.category === name && (n.impact === '高' || n.impact === '极高')).length;
@@ -83,7 +101,9 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
     const sm = sectorRow(cat);
     const badges = hasForward
       ? `<span class="badge ${dirCls(sm.direction)}" title="今日复盘：板块方向以当日 ETF 实际涨跌校准">复盘 ${escHtml(sm.direction || '—')}</span>`
-        + `<span class="badge ${sm.forwardDirection ? dirCls(sm.forwardDirection) : 'badge-neutral'}" title="次日倾向：只由新闻内容研判，未经行情校准">次日 ${escHtml(sm.forwardDirection || '—')}</span>`
+        + (showForecast && sm.forecast
+          ? `<span class="badge ${dirCls(sm.forecast.direction)}" title="次日概率：${escHtml(forecastTip(sm.forecast))}">次日 ${escHtml(sm.forecast.direction)} ${Math.round(sm.forecast.p * 100)}%</span>`
+          : `<span class="badge ${sm.forwardDirection ? dirCls(sm.forwardDirection) : 'badge-neutral'}" title="次日倾向：只由新闻内容研判，未经行情校准">次日 ${escHtml(sm.forwardDirection || '—')}</span>`)
       : (sm.direction ? `<span class="badge ${dirCls(sm.direction)}">${escHtml(sm.direction)}</span>` : '');
     const rows = arr.map((e) => {
       const code = e.code ? `<span class="qcode num">${escHtml(e.code)}</span>` : '<span class="qcode"></span>';
@@ -105,14 +125,40 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
     </div>`;
   }).join('');
 
+  // ── 左栏:大盘指数带 ───────────────────────────────
+  // 只有当天抓到了指数才渲染;缺数据时整块不出现,不留空壳。
+  // 徽标文案(普跌 · 下行)与 tooltip 的驱动项都由 pipeline/market.mjs 算好,
+  // 这里只负责排版 —— 判定口径只能有一处。
+  const mkt = result.market;
+  const idxQuotes = mkt && Array.isArray(mkt.quotes) ? mkt.quotes.filter(q => typeof q.changePct === 'number') : [];
+  const regimeMode = !mkt ? '' : (mkt.step <= 1 ? 'down' : mkt.step >= 3 ? 'up' : 'flat');
+  const mktDrivers = mkt && Array.isArray(mkt.drivers) ? mkt.drivers : [];
+  // 徽标 tooltip 带上全部驱动项;底部只留趋势项 —— 涨跌家数已经在右上角单独显示。
+  const driverTip = mktDrivers.map(d => `${d.label} ${d.value}`).join(' · ');
+  const footTip = mktDrivers.filter(d => d.key !== 'breadth').map(d => `${d.label} ${d.value}`).join(' · ');
+  const marketHTML = idxQuotes.length === 0 ? '' : `<div class="mkt">
+    <div class="mkt-top">
+      <span class="mkt-regime ${regimeMode}" title="${escHtml(driverTip)}">${escHtml(mkt.label || mkt.regime || '—')}</span>
+      <span class="mkt-note">${mkt.breadth
+        ? `${mkt.breadth.up}涨 / ${mkt.breadth.down}跌`
+        : '涨跌家数缺失'}</span>
+    </div>
+    <div class="mkt-grid">${idxQuotes.map(q => `<div class="mkt-idx" title="${escHtml(q.name)} ${q.price}">
+        <span class="mkt-name">${escHtml(q.name)}</span>
+        <b class="num ${flowCls(q.changePct)}">${pct(q.changePct)}</b>
+      </div>`).join('')}</div>
+    ${footTip ? `<div class="mkt-foot">${escHtml(footTip)}</div>` : ''}
+  </div>`;
+
   const quotesHTML = `<aside class="quotes">
+    ${marketHTML ? `<div class="ph"><h2>大盘</h2><span class="note">当日收盘</span></div>${marketHTML}` : ''}
     <div class="ph"><h2>板块行情</h2><span class="note">当日收盘</span></div>
     ${quoteSectors}
     <div class="qstats">
       <div><span>收录</span><b class="num">${news.length}</b></div>
       <div><span>高影响</span><b class="num">${highCount}</b></div>
-      <div><span>利好</span><b class="num bull">${bullCount}</b></div>
-      <div><span>利空</span><b class="num bear">${bearCount}</b></div>
+      <div title="条目方向 = 这条新闻对基本面/政策的影响，不是涨跌预测；次日涨跌预测看板块矩阵的「次日倾向」"><span>利好</span><b class="num bull">${bullCount}</b></div>
+      <div title="条目方向 = 这条新闻对基本面/政策的影响，不是涨跌预测；次日涨跌预测看板块矩阵的「次日倾向」"><span>利空</span><b class="num bear">${bearCount}</b></div>
     </div>
     <div class="qfoot">涨跌幅为当日收盘口径；板块均值为组内 ETF 的简单平均。点击板块名可只看该板块新闻。</div>
   </aside>`;
@@ -447,16 +493,14 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
 
   // ── 板块矩阵 ─────────────────────────────────────
   const matrixRows = matrix.map((s) => {
-    const fwdCell = hasForward
-      ? `<td class="${s.forwardDirection ? dirText(s.forwardDirection) : ''}">${escHtml(s.forwardDirection || '—')}</td>`
-      : '';
+    const fwdCell = hasForward ? forecastCell(s) : '';
     return `<tr><td class="mx-name">${escHtml(s.name)}</td><td class="${shockCls(s.shock)}">${escHtml(s.shock || '')}</td>`
       + `<td class="${dirText(s.direction)}">${escHtml(s.direction || '')}</td>${fwdCell}`
       + `<td class="num">${s.news_count != null ? s.news_count : ''}</td><td class="logic">${escHtml(s.summary || s.logic || '')}</td><td class="num tickers">${escHtml(s.tickers || '—')}</td></tr>`;
   }).join('\n');
   const matrixHTML = matrix.length ? `<section id="matrix" class="matrix">
     <div class="ph"><h2>板块矩阵</h2><span class="note">方向与冲击取自新闻研判，ETF 均值为当日收盘</span></div>
-    ${hasForward ? `<div class="dir-legend"><b>今日复盘</b>=板块方向以当日 ETF 实际涨跌校准（回答「今天为什么涨跌」）；<b>次日倾向</b>=只由新闻内容研判、未经行情校准（回答「明天可能怎样」）。</div>` : ''}
+    ${hasForward ? `<div class="dir-legend"><b>今日复盘</b>=板块方向以当日 ETF 实际涨跌校准（回答「今天为什么涨跌」）；<b>次日倾向</b>=${showForecast ? '校准模型给出的次日上涨概率（&gt;50% 判利好，≤50% 判利空），先验只在大盘走弱时压低概率，板块趋势仅展示不计分' : '只由新闻内容研判，未经行情校准'}。</div>` : ''}
     <div class="matrix-scroll">
       <table>
         <thead><tr><th>板块</th><th>冲击</th>${hasForward ? '<th>今日复盘</th><th>次日倾向</th>' : '<th>方向</th>'}<th>新闻</th><th>传导逻辑</th><th>关联标的</th></tr></thead>
@@ -567,6 +611,18 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
   .qstats b.bull{color:var(--red);}
   .qstats b.bear{color:var(--green);}
   .qfoot{margin-top:10px;font-size:11px;line-height:1.7;color:var(--faint);}
+  /* 左栏:大盘指数带。徽标颜色跟涨跌色相反:下行=绿、上行=红,与行情同源 */
+  .mkt{padding:11px 0 12px;border-bottom:1px solid var(--rule);}
+  .mkt-top{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+  .mkt-regime{font-size:12px;font-weight:700;line-height:1;padding:4px 8px;color:#fff;background:var(--muted);white-space:nowrap;}
+  .mkt-regime.down{background:var(--green);}
+  .mkt-regime.up{background:var(--red);}
+  .mkt-note{margin-left:auto;font-size:11px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mkt-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;}
+  .mkt-idx{display:flex;align-items:baseline;justify-content:space-between;gap:6px;padding:3px 0;font-size:12px;}
+  .mkt-name{color:var(--ink2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+  .mkt-idx b{font-weight:700;flex:none;}
+  .mkt-foot{margin-top:9px;font-size:11px;line-height:1.65;color:var(--faint);}
 
   /* 徽标 */
   .badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;}
@@ -1365,28 +1421,12 @@ async function sendNotification(result, etfData, dateStr) {
 }
 
 // Server酱推送(日报正文与健康告警共用)。未配置 SendKey 时静默跳过。
-// Server酱3 的 key 以 sctp 开头,走独立域名;旧 key 走 sctapi。
+// 地址规则与 HTTP 由 pipeline/notify.mjs 实现,云函数的盘中告警走同一份。
 async function pushServerChan(title, desp) {
   if (!CONFIG.serverChanSendkey) return;
-  const apiUrl = CONFIG.serverChanSendkey.startsWith('sctp')
-    ? 'https://' + CONFIG.serverChanSendkey + '.push.ft07.com/send'
-    : 'https://sctapi.ftqq.com/' + CONFIG.serverChanSendkey + '.send';
-  try {
-    const resp = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json;charset=utf-8' },
-      body: JSON.stringify({ title, desp }),
-      timeout: 15000,
-    });
-    if (resp.ok) {
-      const data = await resp.json();
-      console.log('  ✅ 推送成功 (' + (data?.data?.pushid || 'ok') + ')');
-    } else {
-      console.warn('  ⚠ 推送返回 ' + resp.status);
-    }
-  } catch (err) {
-    console.warn('  ⚠ 推送失败: ' + err.message);
-  }
+  const r = await serverChanPush(CONFIG.serverChanSendkey, title, desp);
+  if (r.ok) console.log('  ✅ 推送成功 (' + (r.pushid || 'ok') + ')');
+  else console.warn('  ⚠ 推送失败: ' + (r.status ? 'HTTP ' + r.status : r.error));
 }
 
 // 抓取降级/异常时的独立告警推送 —— 与日报正文分开,标题带 ⚠️ 便于在微信里
@@ -1536,6 +1576,9 @@ function saveHistoryArchive(dateStr, todayDisplay, result, etfData, chartData) {
       eventMembers: n.eventMembers,
     })),
     sectorMatrix: result.sectorMatrix || [],
+    // 影子模式标记:sectorMatrix[].forecast 始终落盘(quality 回看页要用),
+    // 但页面是否展示概率由这个标记决定 —— 与 prediction 数据本身分开存.
+    modelActive: result.modelActive === true,
     keyPoints: result.keyPoints || [],
     marketSummary: result.marketSummary || '',
     isAi: result.isAi,
@@ -1555,6 +1598,9 @@ function saveHistoryArchive(dateStr, todayDisplay, result, etfData, chartData) {
       sourceCount: n.sourceCount,
     })),
     etfData: etfData,
+    // 当日大盘状态快照(档位/分数/指数点位/涨跌家数)。旧档案没有这个字段,
+    // 重渲染时按「无大盘数据」处理即可。
+    market: result.market || null,
     chartData: chartData,
   };
 
@@ -1672,7 +1718,7 @@ async function main() {
   //    · CI 无 payload —— **直接失败**。回退去抓就等于把「在 Actions 里定时抓第三方
   //      站点」这个形态又摆回来,而那正是旧账号被封的依据;宁可 run 变红。
   const FETCH_PAYLOAD = process.env.FETCH_PAYLOAD || '';
-  let newsItems, fetchStats, etfData, payloadHistory = null;
+  let newsItems, fetchStats, etfData, payloadHistory = null, payloadMarket = null, payloadIndexHistory = null;
   if (FETCH_PAYLOAD) {
     console.log(`  📦 使用云端抓取结果: ${FETCH_PAYLOAD}`);
     const p = loadFetchPayload(FETCH_PAYLOAD, { expectRunId: process.env.RUN_ID || '' });
@@ -1680,6 +1726,8 @@ async function main() {
     fetchStats = p.stats;
     etfData = p.etfData;
     payloadHistory = p.etfHistory;
+    payloadMarket = p.market;
+    payloadIndexHistory = p.indexHistory;
     console.log(`     抓于 ${p.meta.beijingTime || p.meta.generatedAt}(${p.meta.elapsedMs ?? '?'}ms,`
       + ` ${(p.meta.payloadBytes / 1024).toFixed(0)}KB) · ${newsItems.length} 条原始新闻`);
     if (p.meta.notes.length) for (const n of p.meta.notes) console.log(`     ⚠ 云函数笔记: ${n}`);
@@ -1721,16 +1769,88 @@ async function main() {
     rawArchived: mergedItems.filter(isArchived).length,
   };
   const deduped = dedupAndClean(mergedItems, funnel);
-  const kept = deduped.filter(item => beijingDateKey(item.pubDate) === dateStr);
+  // 报告窗口:12:00 前从前一日 20:00 起算,之后从当日 00:00 起算 —— 隔夜消息
+  // (20:00–24:00 发布、次晨才构建)不再因为跨日被丢掉。见 utils.reportWindowStart。
+  const windowStart = reportWindowStart();
+  const kept = deduped.filter(item => {
+    const t = new Date(item.pubDate).getTime();
+    return Number.isFinite(t) && t >= windowStart.getTime();
+  });
   const dropped = deduped.length - kept.length;
-  if (dropped > 0) console.log(`  🗓️  丢弃非当日(北京时间 ${dateStr})新闻: ${dropped} 条`);
+  if (dropped > 0) console.log(`  🗓️  丢弃窗口外新闻: ${dropped} 条(窗口起点 ${beijingNowString(windowStart)})`);
   funnel.dayFilter = kept.length;
   funnel.keptApi = kept.filter(isApi).length;
   funnel.keptArchived = kept.filter(isArchived).length;
-  console.log(`\n✅ 最终 ${kept.length} 条待分析新闻（${dateStr} 当日）\n`);
+  console.log(`\n✅ 最终 ${kept.length} 条待分析新闻（窗口 ${beijingNowString(windowStart)} 起）\n`);
+
+  // 2.4 ETF 历史回填 —— 必须早于分析:次日概率的「板块相对强弱」要用到它。
+  console.log('\n📈 回填 ETF 历史数据 (新浪K线)...');
+  let history;
+  if (payloadHistory) {
+    console.log(`  📦 使用云端抓取的 K 线: ${payloadHistory.dates.length} 个交易日`);
+    history = payloadHistory;
+  } else if (CONFIG.isCi) {
+    // 云端这轮 K 线没拿回来(抓取在云函数里失败,原因写在 payload 的 notes 里)。
+    // CI 里不能自己去补抓 —— 那正是要搬走的形态;退回仓库里的累积历史,
+    // 图会短一截但构建照常。
+    console.warn('  ⚠ 云端未带回 K 线,使用仓库里的累积历史');
+    history = loadETFHistory(OUTPUT_DIR);
+  } else {
+    try {
+      history = await fetchETFHistoryKLine();
+    } catch (err) {
+      console.warn(`  K线回填失败，使用本地历史: ${err.message}`);
+      history = loadETFHistory(OUTPUT_DIR);
+    }
+  }
+  history = accumulateETF(history, etfData);
+
+  // 2.5 大盘:指数点位 + 涨跌家数 + 市场状态五档。必须早于分析 —— AI prompt
+  // 要看得到市场状态,次日概率也要用同一份状态。数据缺失只让指数带消失,
+  // 绝不让构建失败 —— 日报的主产出是新闻。
+  // CI 里不现场抓(云函数已经抓过,抓取失败的账记在 payload notes);
+  // 本机开发照旧现场抓。
+  console.log('\n📊 大盘...');
+  let marketQuotes = payloadMarket && Array.isArray(payloadMarket.quotes) ? payloadMarket.quotes : [];
+  let marketBreadth = payloadMarket ? payloadMarket.breadth : null;
+  let indexHistory = payloadIndexHistory;
+  if (!CONFIG.isCi) {
+    if (!marketQuotes.length) {
+      try { marketQuotes = await fetchIndexQuotes(); } catch (err) { console.warn(`  指数行情失败: ${err.message}`); }
+    }
+    if (!marketBreadth) {
+      try { marketBreadth = await fetchMarketBreadth(); } catch (err) { console.warn(`  涨跌家数失败: ${err.message}`); }
+    }
+    if (!indexHistory) {
+      try { indexHistory = await fetchIndexHistory(); } catch (err) { console.warn(`  指数K线失败: ${err.message}`); }
+    }
+  }
+  if (indexHistory) saveIndexHistory(OUTPUT_DIR, indexHistory);
+
+  // 每日快照落 history/(会被提交)而不是 output/(gitignore):涨跌家数没有历史接口,
+  // 这条序列丢了就再也补不回来。滞回也靠它取「上一交易日档位」。
+  const marketHistoryPath = join(HISTORY_DIR, 'market_history.json');
+  let marketHistory = { days: [] };
+  try {
+    if (existsSync(marketHistoryPath)) marketHistory = JSON.parse(readFileSync(marketHistoryPath, 'utf-8'));
+  } catch { /* 坏文件按空历史重来,不影响当天 */ }
+  const prevDay = (Array.isArray(marketHistory.days) ? marketHistory.days : [])
+    .filter(d => d && d.date !== dateStr).slice(-1)[0];
+  const marketState = computeMarketState(marketQuotes, marketBreadth, indexHistory, {
+    prevRegime: prevDay ? prevDay.regime : null,
+  });
+  const marketCtx = marketQuotes.length > 0
+    ? { ...marketState, quotes: marketQuotes, breadth: marketBreadth, asOf: dateStr }
+    : null;
+  if (!marketCtx) console.warn('  ⚠ 没有指数数据,本日日报不显示大盘指数带');
 
   // 3. Analyze
-  const result = await analyzeWithClaude(kept, etfData);
+  const result = await analyzeWithClaude(kept, etfData, {
+    market: marketCtx,
+    indexHistory,
+    etfHistory: history,
+    date: dateStr,
+  });
 
   // 3-健康. 抓取健康判定:把「源 → 条数」变成可判定的等级,供页面横幅、微信
   // 告警、quality 回看页、CI 判红共用。挂在 result 上,渲染与存档都取得到
@@ -1842,7 +1962,14 @@ async function main() {
   if (backfilled.length > 0) {
     console.log(`  🔧 板块兜底补齐: ${backfilled.join(', ')}`);
     // 兜底后重建板块矩阵,保证 news_count/方向/summary 与卡片一致
-    result.sectorMatrix = buildSectorMatrix(result.analyzed, etfData);
+    result.sectorMatrix = buildSectorMatrix(result.analyzed, etfData, {
+      market: marketCtx, indexHistory, etfHistory: history, date: dateStr,
+    });
+    // buildSectorMatrix 产出的行不含 forecast,重建后必须补挂 —— 否则这条兜底路径
+    // 会让当天的校准预测静默丢失(quality 回看页与 db 都看不到)。
+    attachForecast(result.sectorMatrix, {
+      market: marketCtx, indexHistory, etfHistory: history, date: dateStr, analyzed: result.analyzed,
+    });
   }
 
   // 4. Sort by date (newest first), then by impact
@@ -1854,30 +1981,25 @@ async function main() {
 
   // 5. Render HTML
   const todayDisplay = getTodayDisplay();
+  // 影子模式开关随存档落盘:重渲染历史页时按当时的决定展示,不会因为今天改了
+  // MODEL_ACTIVE 就把昨天的页面也换口径。
+  result.modelActive = CONFIG.modelActive === true;
   // Stamp the build time so the "最后更新" line shows when this report was made.
   result.generatedAt = result.generatedAt || new Date().toISOString();
 
-  // Load & accumulate ETF price history (K 线由云函数带回;本地才现场抓)
-  console.log('\n📈 回填 ETF 历史数据 (新浪K线)...');
-  let history;
-  if (payloadHistory) {
-    console.log(`  📦 使用云端抓取的 K 线: ${payloadHistory.dates.length} 个交易日`);
-    history = payloadHistory;
-  } else if (CONFIG.isCi) {
-    // 云端这轮 K 线没拿回来(抓取在云函数里失败,原因写在 payload 的 notes 里)。
-    // CI 里不能自己去补抓 —— 那正是要搬走的形态;退回仓库里的累积历史,
-    // 图会短一截但构建照常。
-    console.warn('  ⚠ 云端未带回 K 线,使用仓库里的累积历史');
-    history = loadETFHistory(OUTPUT_DIR);
+  // 4.5 大盘落盘(抓取与判定已在 2.5 完成,这里只挂到 result 并写每日快照)
+  if (marketCtx) {
+    result.market = marketCtx;
+    marketHistory = appendMarketDay(marketHistory, { date: dateStr, state: marketState, quotes: marketQuotes });
+    if (!existsSync(HISTORY_DIR)) mkdirSync(HISTORY_DIR, { recursive: true });
+    writeFileSync(marketHistoryPath, JSON.stringify(marketHistory, null, 2), 'utf-8');
+    console.log(`  ${marketState.label}(${marketState.score >= 0 ? '+' : ''}${marketState.score})`
+      + ` · ${marketQuotes.length} 个指数`
+      + ` · 涨跌家数 ${marketBreadth ? `${marketBreadth.up}涨/${marketBreadth.down}跌` : '缺失'}`
+      + ` · 快照累计 ${marketHistory.days.length} 天`);
   } else {
-    try {
-      history = await fetchETFHistoryKLine();
-    } catch (err) {
-      console.warn(`  K线回填失败，使用本地历史: ${err.message}`);
-      history = loadETFHistory(OUTPUT_DIR);
-    }
+    result.market = null;
   }
-  history = accumulateETF(history, etfData);
 
   // Build chart datasets
   const chartData = {

@@ -70,3 +70,46 @@ test('isTimerEvent:非对象/缺字段 → false(不抛错,交给后面的 404 �
   assert.equal(mod.isTimerEvent({ Type: 'Apigw' }), false);
   assert.equal(mod.isTimerEvent({ Type: '' }), false);
 });
+
+// ── 定时任务的两种模式(full / collect)────────────────────
+// 判定错成 full → 半小时一次 AI 构建,一天烧十几次;判定错成 collect → 当天不出报。
+// 两侧都贵,所以名字优先、钟点兜底这两条都要钉住。
+
+// 北京钟面 → 绝对时间戳。用固定 UTC+8 算术,与运行环境时区无关。
+const bjMs = (h, m, d = 16) => Date.UTC(2026, 9, d, h, m) - 8 * 3600 * 1000;
+
+test('timerMode:触发器名字优先(daily- → full,collect- → collect)', () => {
+  // 名字与钟点冲突时以名字为准 —— 平台延迟几十秒不能让 09:00 那次落到 collect。
+  assert.equal(mod.timerMode({ TriggerName: 'daily-0900', Type: 'Timer' }, bjMs(15, 0)), 'full');
+  assert.equal(mod.timerMode({ TriggerName: 'collect-03', Type: 'Timer' }, bjMs(9, 0)), 'collect');
+  assert.equal(mod.timerMode({ triggerName: 'collect-01' }, bjMs(20, 0)), 'collect');
+});
+
+test('timerMode:名字认不出时按北京时刻 ±5 分钟兜底', () => {
+  const anon = { Type: 'Timer' };
+  for (const [h, m] of [[9, 0], [12, 30], [20, 0]]) {
+    assert.equal(mod.timerMode(anon, bjMs(h, m)), 'full', `${h}:${m} 应为 full`);
+  }
+  assert.equal(mod.timerMode(anon, bjMs(9, 3)), 'full', '±5 分钟内算 full(平台会延迟)');
+  assert.equal(mod.timerMode(anon, bjMs(9, 5)), 'full');
+  assert.equal(mod.timerMode(anon, bjMs(9, 6)), 'collect', '超过 5 分钟就不是 09:00 那次');
+  assert.equal(mod.timerMode(anon, bjMs(10, 0)), 'collect');
+  assert.equal(mod.timerMode(anon, bjMs(20, 30)), 'collect');
+});
+
+test('timerMode:fullTimes 与窗口可被 CONFIG 覆盖', () => {
+  const anon = { Type: 'Timer' };
+  const cfg = { fullTimes: ['10:15'], fullWindowMinutes: 2 };
+  assert.equal(mod.timerMode(anon, bjMs(10, 15), cfg), 'full');
+  assert.equal(mod.timerMode(anon, bjMs(10, 17), cfg), 'full');
+  assert.equal(mod.timerMode(anon, bjMs(10, 18), cfg), 'collect');
+  assert.equal(mod.timerMode(anon, bjMs(9, 0), cfg), 'collect', '默认时段被覆盖后 09:00 不再出报');
+});
+
+test('timerMode:北京时间换算与宿主时区无关', () => {
+  // 同一个绝对时刻,用 UTC 钟面推出北京时段。若误用宿主本地时间,
+  // 在 UTC 机器上 01:00 UTC 会被当成凌晨 → collect,而实际是北京 09:00。
+  assert.equal(mod.timerMode({}, Date.UTC(2026, 9, 16, 1, 0)), 'full', 'UTC 01:00 = 北京 09:00');
+  assert.equal(mod.timerMode({}, Date.UTC(2026, 9, 16, 12, 0)), 'full', 'UTC 12:00 = 北京 20:00');
+  assert.equal(mod.timerMode({}, Date.UTC(2026, 9, 16, 4, 0)), 'collect', 'UTC 04:00 = 北京 12:00,离 12:30 还有 30 分钟');
+});

@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { SECTORS, SECTOR_COLORS } from './sectors.mjs';
 import { beijingDateKey, fetchWithRetry } from './utils.mjs';
-import { CONFIG } from './config.mjs';
+import { CONFIG, INDEXES } from './config.mjs';
 
 // ── ETF 历史窗口 ────────────────────────────────────────
 // 历史保留长度由**指标回测**决定,不由图表决定:回看页的「研判准确率」要拿板块方向
@@ -271,3 +271,60 @@ export async function fetchETFHistoryKLine(days = KLINE_DAYS) {
 }
 
 export { SECTOR_ETF, SECTOR_COLORS, SECTOR_PALETTE };
+
+// ── 大盘指数历史 ────────────────────────────────────────
+// 与 ETF 历史同源(新浪 K 线 JSONP)、同口径(收盘价、按交易日对齐)。
+// 用途是回测的**市场先验特征**:沪深300 的 r5/r20/回撤 + 7 指数当日广度。
+// 与 etf_history.json 分开落盘(index_history.json):前者是板块标签,后者是
+// 市场状态特征,生命周期与失败模式都不同 —— 指数抓取失败不该让板块曲线丢点。
+// 代码表在 config.mjs 的 INDEXES,这里只取 K 线要用的那列,避免两处各维护一份。
+export const INDEX_SYMBOLS = Object.fromEntries(INDEXES.map(i => [i.name, i.kline]));
+
+export function loadIndexHistory(outputDir) {
+  const path = join(outputDir, 'index_history.json');
+  if (!existsSync(path)) return { dates: [], closes: {} };
+  try {
+    return JSON.parse(readFileSync(path, 'utf-8'));
+  } catch {
+    return { dates: [], closes: {} };
+  }
+}
+
+export function saveIndexHistory(outputDir, history) {
+  if (!existsSync(outputDir)) mkdirSync(outputDir, { recursive: true });
+  writeFileSync(join(outputDir, 'index_history.json'), JSON.stringify(history, null, 2), 'utf-8');
+}
+
+export async function fetchIndexHistoryKLine(days = KLINE_DAYS) {
+  const byDate = {};
+  const allDates = new Set();
+  for (const [name, symbol] of Object.entries(INDEX_SYMBOLS)) {
+    try {
+      const resp = await fetchWithRetry(`https://quotes.sina.cn/cn/api/jsonp_v2.php/var%20_data=/CN_MarketDataService.getKLineData?symbol=${symbol}&scale=240&ma=no&datalen=${days}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://finance.sina.com.cn/' },
+        signal: AbortSignal.timeout(CONFIG.apiTimeoutMs),
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const text = await resp.text();
+      const m = text.match(/=\s*\(?(\[[\s\S]*\])\s*\)?\s*;/);
+      if (!m) throw new Error('parse fail');
+      const rows = JSON.parse(m[1]);
+      for (const r of rows) {
+        allDates.add(r.day);
+        if (!byDate[name]) byDate[name] = {};
+        byDate[name][r.day] = parseFloat(r.close);
+      }
+      console.log(`  [指数K线] ${name}(${symbol}) → ${rows.length} 天`);
+    } catch (err) {
+      console.warn(`  [指数K线] ${name}(${symbol}) ⚠ ${err.message}`);
+      if (!byDate[name]) byDate[name] = {};
+    }
+  }
+  const dates = [...allDates].sort();
+  const closes = {};
+  for (const name of Object.keys(INDEX_SYMBOLS)) {
+    closes[name] = dates.map(d => (byDate[name] && byDate[name][d] !== undefined) ? byDate[name][d] : null);
+  }
+  console.log(`  [指数K线] 回填 ${dates.length} 个交易日指数历史`);
+  return { dates, closes };
+}

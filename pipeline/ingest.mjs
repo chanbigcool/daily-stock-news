@@ -75,6 +75,10 @@ export function loadFetchPayload(filePath, { expectRunId = '' } = {}) {
     stats: raw.stats || { api: { total: 0, okSources: 0, failSources: 0, items: 0 }, sources: [] },
     etfData: Array.isArray(raw.etfData) ? raw.etfData : [],
     etfHistory: raw.etfHistory && Array.isArray(raw.etfHistory.dates) ? raw.etfHistory : null,
+    market: raw.market && typeof raw.market === 'object'
+      ? { quotes: Array.isArray(raw.market.quotes) ? raw.market.quotes : [], breadth: raw.market.breadth || null }
+      : null,
+    indexHistory: raw.indexHistory && Array.isArray(raw.indexHistory.dates) ? raw.indexHistory : null,
     meta: {
       runId: got,
       generatedAt: raw.generatedAt || '',

@@ -72,6 +72,25 @@ export const CONFIG = {
     dayStartGraceHours: 6,
   },
 
+  // ── 盘中采集与告警(L3)────────────────────────────────
+  // 云函数定时触发落在这些时刻 ±5 分钟内 → full(抓取 + dispatch 构建);
+  // 其余触发 → collect(只抓取 + 告警,不 dispatch)。deploy.mjs 的默认
+  // TIMER_SPECS 必须落在这里面,否则定时器会永远跑 collect、天天不出报。
+  fullTimes: ['09:00', '12:30', '20:00'],
+  fullWindowMinutes: 5,
+  // 规则告警(零 AI 成本)。高:基本面硬信号 base ≥ highMinBase;中:其余基本面信号。
+  // 去重三道闸:同事件 6 小时、同源每日 6 条、同板块 30 分钟静默。
+  alert: {
+    highMinBase: 30,
+    dedupeHours: 6,
+    perSourceDailyCap: 6,
+    sectorSilenceMinutes: 30,
+  },
+
+  // 影子模式开关(L4):默认 false —— 页面展示旧 forwardDirection,新模型的
+  // 校准概率只落存档/quality 回看页。连续 20 个交易日达标后手工改成 true。
+  modelActive: process.env.MODEL_ACTIVE === 'true',
+
   serverChanSendkey: process.env.SERVERCHAN_SENDKEY || '',
 };
 
@@ -180,3 +199,33 @@ export const GENRE_EXCLUDE = [
   // 以指数名领衔的行情综述
   /创业板指|深成指|沪指|恒指|纳指|道指|标普/i,
 ];
+
+// ── 大盘指数 ────────────────────────────────────────────
+// 七个指数覆盖四层市值(上证/深成=全市场,沪深300=大盘,中证500/1000=中小盘,
+// 创业板=成长,北证50=北交所)。`sina` 是新浪汇总行情代码(`s_` 前缀,GBK 编码),
+// `kline` 是日 K 接口用的代码。两者都是新浪口径,不用东财 push2 —— 实测本机
+// 与云函数出口对 push2.eastmoney.com 都会 TLS 断连。
+export const INDEXES = [
+  { name: '上证', sina: 's_sh000001', kline: 'sh000001' },
+  { name: '深成', sina: 's_sz399001', kline: 'sz399001' },
+  { name: '创业板', sina: 's_sz399006', kline: 'sz399006' },
+  { name: '沪深300', sina: 's_sh000300', kline: 'sh000300' },
+  { name: '中证500', sina: 's_sh000905', kline: 'sh000905' },
+  { name: '中证1000', sina: 's_sh000852', kline: 'sh000852' },
+  { name: '北证50', sina: 's_bj899050', kline: 'bj899050' },
+];
+
+// 市场状态五档的分界(score → 档位)。分数由 5 个特征各投 -1/0/+1 相加得到,
+// 见 pipeline/market.mjs。两档之间留 0.4 的滞回带,避免指数在阈值上抖动时
+// 状态一天一变。
+export const MARKET_REGIME = {
+  names: ['下行', '偏弱', '震荡', '偏强', '强势上行'],
+  // 档位下界;索引即档位名索引
+  mins: [-Infinity, -2.0, -0.75, 0.75, 2.0],
+  hysteresis: 0.4,
+  // 单一特征进档阈值
+  r5: 0.015,        // 5 日涨跌幅 ±1.5%
+  r20: 0.04,        // 20 日涨跌幅 ±4%
+  drawdown60: -0.08, // 距 60 日最高点回撤超过 8% 记 -1
+  breadthIndex: 0.6, // 7 指数中下跌占比 ≥60%(≥5 跌)记 -1,≤40%(≤2 跌)记 +1
+};

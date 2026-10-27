@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join, basename } from 'node:path';
-import { zipSingle, zipFiles, bundleManifest, PIPELINE_FILES, TIMER_SPECS, cronOf } from '../cloud/deploy.mjs';
+import { zipSingle, zipFiles, bundleManifest, PIPELINE_FILES, TIMER_SPECS, COLLECT_TIMER_SPECS, cronOf, parseCollectSpecs } from '../cloud/deploy.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = readFileSync(join(ROOT, 'cloud', 'index.js'));
@@ -101,8 +101,12 @@ test('zipFiles:带路径的条目补出目录记录,且每个本地头按偏移�
 test('bundleManifest:覆盖 pipeline 的相对 import 闭包(加了 import 忘改清单会红)', () => {
   // 顺着 './x.mjs' 静态 import 与 import() 动态 import 走一遍,得到真正会被 require
   // 到的本地模块集合 —— 这就是「打包清单必须包含」的最小集。
+  // 起点取 cloud/index.js 里 load('x.mjs') 的那几个模块:它们才是云函数真正加载的入口。
+  const loaded = [...SRC.toString('utf8').matchAll(/load\(\s*'([^']+\.mjs)'\s*\)/g)].map((m) => m[1]);
+  assert.ok(loaded.length > 0, 'index.js 应通过 load() 动态加载 pipeline 模块');
+
   const closure = new Set();
-  const queue = ['pipeline/fetch.mjs', 'pipeline/charts.mjs', 'pipeline/utils.mjs'];
+  const queue = loaded.map((f) => `pipeline/${f}`);
   while (queue.length) {
     const rel = queue.pop();
     if (closure.has(rel)) continue;
@@ -117,8 +121,6 @@ test('bundleManifest:覆盖 pipeline 的相对 import 闭包(加了 import 忘�
     'PIPELINE_FILES 必须正好等于 pipeline 的本地依赖闭包(多一个白打包,少一个线上 Cannot find module)');
 
   // cloud/index.js 用的是 path.join + 动态 import,上面的正则看不到,单独点名。
-  const loaded = [...SRC.toString('utf8').matchAll(/load\(\s*'([^']+\.mjs)'\s*\)/g)].map((m) => m[1]);
-  assert.ok(loaded.length > 0, 'index.js 应通过 load() 动态加载 pipeline 模块');
   for (const f of loaded) assert.ok(PIPELINE_FILES.includes(f), `index.js 加载的 ${f} 不在打包清单里`);
 });
 
@@ -201,4 +203,38 @@ test('cronOf:读回来的 JSON 信封能拆成裸 cron,裸 cron 原样返回', (
   for (const spec of TIMER_SPECS) {
     assert.equal(cronOf(JSON.stringify({ cron: spec.cron })), spec.cron);
   }
+});
+
+// ── 采集触发器(collect)────────────────────────────────────
+// full/collect 的分流靠**触发器名前缀**(daily- / collect-),所以两套触发器的
+// 命名与时刻都不能互相踩:collect 若占了 09:00,那一刻会同时触发 full 与
+// collect 两条链路;collect 若被叫成 daily-xxx,则每次采集都会 dispatch 一次
+// AI 构建(一天十几次,直接烧钱)。
+
+test('COLLECT_TIMER_SPECS:默认 4 条裸 cron,名字带 collect- 前缀', () => {
+  assert.equal(COLLECT_TIMER_SPECS.length, 4);
+  assert.deepEqual(COLLECT_TIMER_SPECS.map((s) => s.name),
+    ['collect-01', 'collect-02', 'collect-03', 'collect-04']);
+  for (const s of COLLECT_TIMER_SPECS) {
+    assert.equal(s.cron.split(/\s+/).length, 7, `${s.name} 应是 7 段 cron`);
+    assert.match(s.cron, /^\d+ [\d,*\/-]+ [\d,*\/-]+ /, `${s.name} 的秒段应为 0`);
+  }
+});
+
+test('COLLECT_TIMER_SPECS:不与 full 时段重叠(09:00/12:30/20:00 只出日报)', () => {
+  const full = new Set(TIMER_SPECS.map((s) => s.cron));
+  for (const s of COLLECT_TIMER_SPECS) {
+    assert.ok(!full.has(s.cron), `采集 cron「${s.cron}」与 full 触发器完全重复`);
+    // 9 点这一条必须是 30 分,不能写成 0,30 —— 否则与 daily-0900 同时开跑
+    assert.doesNotMatch(s.cron, /^(0 \d+,.* 9 )/, `采集 cron「${s.cron}」不应包含 09:00`);
+  }
+});
+
+test('parseCollectSpecs:裸 cron 直传,5 段/畸形表达式在加载时就抛', () => {
+  assert.deepEqual(parseCollectSpecs('0 30 9 * * * *'), [{ time: '0 30 9 * * * *', name: 'collect-01', cron: '0 30 9 * * * *' }]);
+  assert.deepEqual(parseCollectSpecs('0 30 9 * * * *;\n0 0 15 * * * *').map((s) => s.name), ['collect-01', 'collect-02']);
+  assert.deepEqual(parseCollectSpecs(''), []);
+  // 5 段(Linux crontab 写法)会被 SCF 判非法,必须在本地就拦住
+  assert.throws(() => parseCollectSpecs('30 9 * * *'), /7 段/);
+  assert.throws(() => parseCollectSpecs('0 30 9 * * * * junk'), /7 段/);
 });

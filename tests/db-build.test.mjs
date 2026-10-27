@@ -14,8 +14,17 @@ function fixturePayload(date, analyzed, extra = {}) {
     date,
     analyzed,
     sectorMatrix: [
-      { name: '半导体', shock: '强', tickers: '中芯国际、北方华创', summary: '板块摘要', direction: '利好' },
-      { name: '黄金', shock: '中', summary: '黄金摘要', direction: '中性' },
+      {
+        name: '半导体', shock: '强', tickers: '中芯国际、北方华创', summary: '板块摘要', direction: '利好',
+        forecast: {
+          p: 0.62, direction: '利好', confidence: '中', version: 'l2-test',
+          drivers: [{ key: 'prior', label: '大盘', value: '普涨 · 上行', delta: 0.12 }],
+        },
+      },
+      {
+        name: '黄金', shock: '中', summary: '黄金摘要', direction: '中性',
+        forecast: { p: 0.45, direction: '利空', confidence: '低', version: 'l2-test', drivers: [] },
+      },
     ],
     etfData: [
       { category: '半导体', change: -1.25 },
@@ -99,12 +108,18 @@ test('flattenPayload:companies 频次与首末日期', () => {
   assert.ok(c1[0].count >= c1[c1.length - 1].count);
 });
 
-let dir, histDir, dbPath;
+let dir, histDir, dbPath, etfPath;
 before(() => {
   dir = mkdtempSync(join(tmpdir(), 'db-'));
   histDir = join(dir, 'history');
   dbPath = join(dir, 'db.sqlite');
+  etfPath = join(dir, 'etf_history.json');
   mkdirSync(histDir, { recursive: true });
+  // 只给到 08-14 收盘:08-13 的预测能结算,08-14 的预测还没有次日答案
+  writeFileSync(etfPath, JSON.stringify({
+    dates: ['2026-08-13', '2026-08-14'],
+    prices: { 半导体: [1.0, 1.1], 黄金: [1.0, 0.99] },
+  }));
   writeFileSync(join(histDir, '日报_20260813.json'), JSON.stringify(fixturePayload('20260813', [
     { eventId: 'e1', category: '半导体', direction: '利好', impact: '高', confidence_score: 0.8, title_cn: '甲' },
     { eventId: 'e2', category: '半导体', direction: '利空', impact: '中', affected_companies: ['公司甲'] },
@@ -120,8 +135,32 @@ after(() => {
   try { rmSync(dir, { recursive: true, force: true }); } catch {}
 });
 
+test('flattenPayload:forecasts 只收有有限 p 的板块,方向与驱动归一化', () => {
+  const p = fixturePayload('20260813', []);
+  // 没有 forecast 的板块(旧存档)不得凭空产生 0.5 的行
+  p.sectorMatrix.push({ name: '光模块', direction: '利好' });
+  p.sectorMatrix.push({ name: '创新药', forecast: { p: NaN } });
+  // 未给 direction 时按 p>0.5 补
+  p.sectorMatrix.push({ name: '券商', forecast: { p: 0.4 } });
+  const { forecasts } = flattenPayload(p);
+  assert.equal(forecasts.length, 3);
+  const semi = forecasts.find(f => f.cat === '半导体');
+  assert.equal(semi.date, '20260813');
+  assert.equal(semi.p, 0.62);
+  assert.equal(semi.direction, '利好');
+  assert.equal(semi.confidence, '中');
+  assert.equal(semi.model_version, 'l2-test');
+  assert.equal(semi.drivers, '[{"key":"prior","label":"大盘","value":"普涨 · 上行","delta":0.12}]');
+  assert.equal(semi.resolved_date, null);
+  assert.equal(semi.actual_chg, null);
+  assert.equal(semi.hit, null);
+  const broker = forecasts.find(f => f.cat === '券商');
+  assert.equal(broker.direction, '利空', 'p=0.4 未标方向时应判利空');
+  assert.equal(broker.confidence, '');
+});
+
 test('buildDatabase:端到端生成真 SQLite 并可查询', async () => {
-  _setPaths(histDir, dbPath);
+  _setPaths(histDir, dbPath, etfPath);
   const r = await buildDatabase();
   assert.equal(r.days, 2);
   assert.equal(r.newsCount, 4); // 3 + 1,坏档跳过
@@ -147,6 +186,28 @@ test('buildDatabase:端到端生成真 SQLite 并可查询', async () => {
     const meta = Object.fromEntries(db.prepare('SELECT key, value FROM meta').all().map(r => [r.key, r.value]));
     assert.equal(meta.days, '2');
     assert.equal(meta.newsCount, '4');
+    assert.equal(meta.version, '3');
+    assert.equal(meta.forecastCount, '4');
+    // forecast:每天两条(半导体/黄金),08-13 已结算、08-14 尚无次日
+    const fcs = db.prepare('SELECT date, cat, p, direction, model_version, resolved_date, actual_chg, hit FROM forecast ORDER BY date, cat').all();
+    assert.equal(fcs.length, 4);
+    const semi13 = fcs.find(f => f.date === '20260813' && f.cat === '半导体');
+    assert.equal(semi13.p, 0.62);
+    assert.equal(semi13.model_version, 'l2-test');
+    assert.equal(semi13.resolved_date, '2026-08-14');
+    assert.equal(semi13.actual_chg, 10); // 1.0 → 1.1
+    assert.equal(semi13.hit, 1);        // 判利好且上涨
+    const gold13 = fcs.find(f => f.date === '20260813' && f.cat === '黄金');
+    assert.equal(gold13.resolved_date, '2026-08-14');
+    assert.equal(gold13.actual_chg, -1);
+    assert.equal(gold13.hit, 1);        // 判利空且下跌
+    for (const f of fcs.filter(x => x.date === '20260814')) {
+      assert.equal(f.resolved_date, null, `${f.cat} 没有次日数据时不能装作已结算`);
+      assert.equal(f.actual_chg, null);
+      assert.equal(f.hit, null);
+    }
+    assert.equal(r.forecastCount, 4);
+    assert.equal(r.resolvedForecastCount, 2);
     // daily 聚合跨档一致性
     const sum = db.prepare('SELECT SUM(count) s FROM daily').get().s;
     assert.equal(sum, 4);
@@ -184,5 +245,7 @@ test('buildDatabase:空 history 不抛且生成空库', async () => {
   const r = await buildDatabase(emptyDir, join(dir, 'empty.sqlite'));
   assert.equal(r.days, 0);
   assert.equal(r.newsCount, 0);
+  assert.equal(r.forecastCount, 0);
+  assert.equal(r.resolvedForecastCount, 0);
   assert.ok(existsSync(join(dir, 'empty.sqlite')));
 });

@@ -126,6 +126,32 @@ test('loadFetchPayload:etfHistory 形状不对 → 给 null 而不是半成品',
   assert.equal(missing.etfHistory, null);
 });
 
+test('loadFetchPayload:market / indexHistory 缺失→null;坏形状→空结构,不抛错', () => {
+  // 大盘数据是 2026-10-27 新加的字段,旧 payload 没有它 —— 必须当「没有大盘数据」处理,
+  // 不能因为多一个可选字段就把整次构建判死。
+  const bare = loadFetchPayload(writePayload(mkPayload()), { expectRunId: 'run-abc' });
+  assert.equal(bare.market, null);
+  assert.equal(bare.indexHistory, null);
+
+  const full = loadFetchPayload(writePayload(mkPayload({
+    market: {
+      quotes: [{ name: '上证', price: 3648.3, changePct: -1.33 }],
+      breadth: { up: 606, down: 4921, flat: 49, total: 5576, ratio: 0.109 },
+    },
+    indexHistory: { dates: ['2026-10-27'], closes: { 上证: [3648.3] } },
+  })), { expectRunId: 'run-abc' });
+  assert.equal(full.market.quotes.length, 1);
+  assert.equal(full.market.breadth.up, 606);
+  assert.equal(full.indexHistory.dates.length, 1);
+
+  const half = loadFetchPayload(writePayload(mkPayload({
+    market: { quotes: 'nope' },
+    indexHistory: { closes: {} },
+  })), { expectRunId: 'run-abc' });
+  assert.deepEqual(half.market, { quotes: [], breadth: null });
+  assert.equal(half.indexHistory, null);
+});
+
 test('loadFetchPayload:文件不存在 / JSON 非法 → 抛错,信息里带路径或原因', () => {
   assert.throws(() => loadFetchPayload(join(dir, 'no-such-file.json')), /读不到云端抓取结果/);
   assert.throws(() => loadFetchPayload(writePayload('{不是 json')), /不是合法 JSON/);

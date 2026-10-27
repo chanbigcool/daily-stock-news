@@ -12,18 +12,22 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const HISTORY_DIR = join(ROOT, 'history');
 const DB_PATH = join(HISTORY_DIR, 'db.sqlite');
+const ETF_HISTORY_PATH = join(ROOT, 'output', 'etf_history.json');
 
-// 供单测注入:history/ 与输出路径可被测试替身覆盖(仿 quality-report._setPaths)
+// 供单测注入:history/、输出路径与 ETF 历史可被测试替身覆盖(仿 quality-report._setPaths)
 let _historyDir = HISTORY_DIR;
 let _dbPath = DB_PATH;
-export function _setPaths(historyDir, dbPath) {
-  _historyDir = historyDir;
-  _dbPath = dbPath;
+let _etfPath = ETF_HISTORY_PATH;
+export function _setPaths(historyDir, dbPath, etfPath) {
+  _historyDir = historyDir || HISTORY_DIR;
+  _dbPath = dbPath || DB_PATH;
+  _etfPath = etfPath || ETF_HISTORY_PATH;
 }
 
 // v2:news.score 更名为 news.confidence(列名与内容对齐,见 flattenNews 的说明)。
+// v3:新增 forecast 表(校准后预测 + 事后结算),见下方 resolveForecast。
 // 库是整体重建的(见下方 rmSync),没有迁移负担,版本号只用于标记表结构。
-const DB_VERSION = '2';
+const DB_VERSION = '3';
 const FILE_RE = /^日报_\d{8}\.json$/;
 
 // 单条 analyzed → news 行(15 列,降维去 description/reasoning/evidence 等体积大头)
@@ -111,12 +115,36 @@ export function flattenPayload(payload) {
     if (etf && typeof etf.change === 'number') r.etfChg = Math.round(etf.change * 100) / 100;
   }
 
+  // 校准后预测:一条 (date, cat) 一行。旧存档没有 forecast → 不产生行,
+  // 表格里也就不会出现凭空捏造的 0.5。结算字段先留空,由 buildDatabase 用
+  // ETF 历史回填(见 resolveForecast)—— 预测与「后来怎么样了」分两步写,
+  // 这样当天就能入库、事后可以追责。
+  const forecasts = [];
+  for (const s of Array.isArray(payload.sectorMatrix) ? payload.sectorMatrix : []) {
+    const f = s && s.forecast;
+    if (!f || typeof f.p !== 'number' || !Number.isFinite(f.p)) continue;
+    forecasts.push({
+      date,
+      cat: s.name || '',
+      p: Math.round(f.p * 10000) / 10000,
+      direction: f.direction === '利好' || f.direction === '利空'
+        ? f.direction
+        : (f.p > 0.5 ? '利好' : '利空'),
+      confidence: f.confidence || '',
+      drivers: JSON.stringify(Array.isArray(f.drivers) ? f.drivers : []),
+      model_version: f.version || '',
+      resolved_date: null,
+      actual_chg: null,
+      hit: null,
+    });
+  }
+
   const dailySorted = [...daily.values()].sort((a, b) => b.date.localeCompare(a.date) || a.cat.localeCompare(b.cat));
   const companyRows = [...companies.values()]
     .map(c => ({ name: c.name, ticker: c.ticker, cats: [...c.cats].join('|'), count: c.count, firstDate: c.firstDate, lastDate: c.lastDate }))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 
-  return { news, daily: dailySorted, companies: companyRows };
+  return { news, daily: dailySorted, companies: companyRows, forecasts };
 }
 
 // ── SQLite 导入 ────────────────────────────────────────
@@ -139,10 +167,43 @@ CREATE TABLE IF NOT EXISTS daily(
 CREATE TABLE IF NOT EXISTS companies(
   name TEXT PRIMARY KEY, ticker TEXT, cats TEXT,
   count INTEGER, firstDate TEXT, lastDate TEXT);
+CREATE TABLE IF NOT EXISTS forecast(
+  date TEXT NOT NULL, cat TEXT NOT NULL,
+  p REAL, direction TEXT, confidence TEXT, drivers TEXT, model_version TEXT,
+  resolved_date TEXT, actual_chg REAL, hit INTEGER,
+  PRIMARY KEY(date, cat));
+CREATE INDEX IF NOT EXISTS idx_forecast_cat ON forecast(cat);
+CREATE INDEX IF NOT EXISTS idx_forecast_resolved ON forecast(resolved_date);
 CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);
 `;
 
-export async function buildDatabase(histDir = _historyDir, dbPath = _dbPath) {
+function loadEtfHistory(path) {
+  try {
+    const raw = JSON.parse(readFileSync(path, 'utf8'));
+    return { dates: Array.isArray(raw.dates) ? raw.dates : [], prices: raw.prices || {} };
+  } catch { return { dates: [], prices: {} }; }
+}
+
+// 预测在存档日之后才有答案:用 ETF 历史的「当日收盘 → 次日收盘」结算。
+// 没有次日数据(当天刚收盘、或该板块无价格)就留空,等以后重建时回填 ——
+// 未结算不等于预测错了,这两件事不能混。
+function resolveForecast(rows, hist) {
+  for (const r of rows) {
+    const key = String(r.date).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
+    const price = hist.prices?.[r.cat];
+    const idx = hist.dates.indexOf(key);
+    if (!Array.isArray(price) || idx < 0 || idx + 1 >= hist.dates.length) continue;
+    const cur = price[idx], next = price[idx + 1];
+    if (typeof cur !== 'number' || typeof next !== 'number' || cur <= 0) continue;
+    const chg = (next - cur) / cur * 100;
+    r.resolved_date = hist.dates[idx + 1];
+    r.actual_chg = Math.round(chg * 100) / 100;
+    r.hit = (r.direction === '利好' ? chg > 0 : chg < 0) ? 1 : 0;
+  }
+  return rows;
+}
+
+export async function buildDatabase(histDir = _historyDir, dbPath = _dbPath, etfPath = _etfPath) {
   let DatabaseSync;
   try { ({ DatabaseSync } = await import('node:sqlite')); }
   catch { throw new Error('node:sqlite 不可用，需要 Node ≥ 22.13'); }
@@ -151,6 +212,7 @@ export async function buildDatabase(histDir = _historyDir, dbPath = _dbPath) {
   const allNews = [];
   const dailyMap = new Map();
   const companyMap = new Map();
+  const forecastMap = new Map();
   let days = 0;
   let badFiles = 0;
 
@@ -159,12 +221,13 @@ export async function buildDatabase(histDir = _historyDir, dbPath = _dbPath) {
     try { d = JSON.parse(readFileSync(join(histDir, f), 'utf8')); }
     catch { badFiles++; continue; }
     days++;
-    const { news, daily, companies } = flattenPayload(d);
+    const { news, daily, companies, forecasts } = flattenPayload(d);
     allNews.push(...news);
     for (const r of daily) {
       const key = `${r.date}|${r.cat}`;
       if (!dailyMap.has(key)) dailyMap.set(key, r);
     }
+    for (const fc of forecasts) forecastMap.set(`${fc.date}|${fc.cat}`, fc);
     for (const c of companies) {
       const p = companyMap.get(c.name);
       if (!p) { companyMap.set(c.name, { ...c }); continue; }
@@ -178,6 +241,10 @@ export async function buildDatabase(histDir = _historyDir, dbPath = _dbPath) {
 
   const dailyRows = [...dailyMap.values()].sort((a, b) => b.date.localeCompare(a.date) || a.cat.localeCompare(b.cat));
   const companyRows = [...companyMap.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  const forecastRows = resolveForecast(
+    [...forecastMap.values()].sort((a, b) => b.date.localeCompare(a.date) || a.cat.localeCompare(b.cat)),
+    loadEtfHistory(etfPath),
+  );
 
   // 空 eventId 赋予唯一键，避免 INSERT OR REPLACE 覆盖
   allNews.sort((a, b) => b.date.localeCompare(a.date) || a.id.localeCompare(b.id));
@@ -196,12 +263,18 @@ export async function buildDatabase(histDir = _historyDir, dbPath = _dbPath) {
     for (const r of dailyRows) insDaily.run(r.date, r.cat, r.count, r.bull, r.bear, r.mix, r.neu, r.vhigh, r.high, r.mid, r.low, r.etfChg, r.shock, r.tickers, r.summary);
     const insComp = db.prepare('INSERT OR REPLACE INTO companies VALUES (?,?,?,?,?,?)');
     for (const c of companyRows) insComp.run(c.name, c.ticker, c.cats, c.count, c.firstDate, c.lastDate);
+    const insForecast = db.prepare('INSERT OR REPLACE INTO forecast VALUES (?,?,?,?,?,?,?,?,?,?)');
+    for (const f of forecastRows) {
+      insForecast.run(f.date, f.cat, f.p, f.direction, f.confidence, f.drivers,
+        f.model_version, f.resolved_date, f.actual_chg, f.hit);
+    }
     const insMeta = db.prepare('INSERT OR REPLACE INTO meta(key,value) VALUES (?,?)');
     insMeta.run('version', DB_VERSION);
     insMeta.run('generatedAt', new Date().toISOString());
     insMeta.run('days', String(days));
     insMeta.run('newsCount', String(allNews.length));
     insMeta.run('companiesCount', String(companyRows.length));
+    insMeta.run('forecastCount', String(forecastRows.length));
     db.exec('COMMIT');
   } catch (err) {
     try { db.exec('ROLLBACK'); } catch {}
@@ -211,8 +284,14 @@ export async function buildDatabase(histDir = _historyDir, dbPath = _dbPath) {
   }
 
   const bytes = existsSync(dbPath) ? statSync(dbPath).size : 0;
-  console.log(`  💾 数据库: ${dbPath} (${(bytes / 1024).toFixed(0)} KB, ${days} 天, ${allNews.length} 条新闻${badFiles ? `, ${badFiles} 个坏档跳过` : ''})`);
-  return { days, newsCount: allNews.length, companiesCount: companyRows.length, bytes };
+  const resolved = forecastRows.filter(f => f.resolved_date).length;
+  console.log(`  💾 数据库: ${dbPath} (${(bytes / 1024).toFixed(0)} KB, ${days} 天, ${allNews.length} 条新闻`
+    + `${forecastRows.length ? `, 预测 ${forecastRows.length} 条(已结算 ${resolved})` : ''}`
+    + `${badFiles ? `, ${badFiles} 个坏档跳过` : ''})`);
+  return {
+    days, newsCount: allNews.length, companiesCount: companyRows.length,
+    forecastCount: forecastRows.length, resolvedForecastCount: resolved, bytes,
+  };
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

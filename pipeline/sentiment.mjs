@@ -83,9 +83,9 @@ export function sectorShock(items) {
 }
 
 // 匹配所有适用信号,返回命中明细与正/负/冲击分。
-// excludeCats: 要跳过的 sig.cat 列表 —— 目前只用于前瞻回测剔除「行情」类
-// (见 hasForwardSignal)。其余调用方不传,行为与从前一致。
-function collectSignals(n, excludeCats = null) {
+// excludeKinds: 要跳过的 sig.kind 列表 —— 目前只用于前瞻回测剔除「行情复述」
+// (price_recap)与「观点」(opinion),见 hasForwardSignal。其余调用方不传,行为与从前一致。
+export function collectSignals(n, excludeKinds = null) {
   const title = n.title || '';
   const desc = n.description || '';
   const sector = n.guessedSector || '';
@@ -95,7 +95,7 @@ function collectSignals(n, excludeCats = null) {
   let scoreNeg = 0;
 
   for (const sig of SIGNALS) {
-    if (excludeCats && excludeCats.includes(sig.cat)) continue;
+    if (excludeKinds && excludeKinds.includes(sig.kind)) continue;
     if (sig.sectors && !sig.sectors.includes(sector)) continue;
     let titleHit = false, descHit = false, hitKw = '';
     for (const k of sig.kw) {
@@ -117,7 +117,7 @@ function collectSignals(n, excludeCats = null) {
     const pts = Math.round(sig.base * w * degreeMultiplier(matched));
     if (sig.dir === '利好') scorePos += sig.base;
     else if (sig.dir === '利空') scoreNeg += sig.base;
-    hit.push({ cat: sig.cat, dir: sig.dir, pts, note: sig.note, kw: hitKw });
+    hit.push({ cat: sig.cat, kind: sig.kind, dir: sig.dir, base: sig.base, pts, note: sig.note, kw: hitKw });
   }
 
   // 冲击分 = 最强信号的满分 + 其余信号的递减贡献,再封顶。
@@ -207,12 +207,12 @@ export function scoreNewsItem(n) {
   };
 }
 
-// 除「行情」信号外,这条新闻是否还有实质信号。
-// 「行情」组(大涨/涨停/走强→利好,跳水/暴跌→利空)命中的是**复述当日涨跌**的
-// 新闻,不是对未来的判断。把它算进「新闻方向 → 次日涨跌」的回测,等于拿已知的
-// 答案去猜明天,只会稀释前瞻指标。纯行情复述(除行情外无任何信号)在回测时整条剔除。
+// 除「行情复述」与「观点」外,这条新闻是否还有实质信号(可前瞻)。
+// price_recap(行情/价格)命中的是**复述当日涨跌**的新闻,opinion(机构/传闻)是
+// 别人对未来的看法——两者都不是事件本身,拿它们算「新闻方向 → 次日涨跌」等于用
+// 已知答案猜下一题,只会稀释前瞻指标。policy/macro/fundamental 才算前瞻信号。
 export function hasForwardSignal(n) {
-  return collectSignals(n, ['行情']).hit.length > 0;
+  return collectSignals(n, ['price_recap', 'opinion']).hit.length > 0;
 }
 
 // 评级落点校验(防御):保证枚举合法,非法值回退默认

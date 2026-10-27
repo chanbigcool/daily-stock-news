@@ -10,6 +10,7 @@ import {
   aggregateDirection, applyEtfCalibration, hasForwardSignal,
   sanitizeExplanation, explanationToRating,
 } from './sentiment.mjs';
+import { attachForecast } from './predict.mjs';
 
 // ── Claude API analysis ──────────────────────────────────
 
@@ -320,6 +321,31 @@ function marketContext(etfData) {
   return `当日各板块 ETF 实际涨跌:\n${parts.join('\n')}`;
 }
 
+// 大盘背景:指数涨跌 + 全市场涨跌家数 + 状态五档。只让模型「看见市场」,
+// 不要求它输出次日预测 —— 预测由 predict.mjs 的校准模型独立完成。
+// 数值必须与 groundingSources 里的白名单一致,否则导语会被 hasUngroundedPercent 丢弃。
+function marketBrief(market) {
+  if (!market) return '';
+  const quotes = Array.isArray(market.quotes) ? market.quotes.filter(q => Number.isFinite(q.changePct)) : [];
+  const lines = [];
+  if (quotes.length) {
+    lines.push('主要指数:' + quotes.map(q => `${q.name} ${q.changePct >= 0 ? '+' : ''}${q.changePct.toFixed(2)}%`).join('、'));
+  }
+  if (market.breadth && Number.isFinite(market.breadth.up)) {
+    lines.push(`全市场:${market.breadth.up} 家上涨 / ${market.breadth.down} 家下跌 / ${market.breadth.flat} 家平盘`);
+  }
+  if (market.label) lines.push(`市场状态:${market.label}`);
+  return lines.length ? `当日大盘:\n${lines.join('\n')}` : '';
+}
+
+// 导语里可以引用的指数数值(百分比以绝对值入池,与 hasUngroundedPercent 的比较口径一致)。
+function marketGrounding(market) {
+  if (!market || !Array.isArray(market.quotes)) return [];
+  return market.quotes.flatMap(q => (Number.isFinite(q.changePct)
+    ? [Math.abs(q.changePct).toFixed(1), Math.abs(q.changePct).toFixed(2)]
+    : []));
+}
+
 // 导语口径:各分片各给一句「本板块当日产业动态」,拼接时曾直接 join('；'),
 // 于是出现「…积极支撑。；半导体…」这种标点叠用;同一板块被拆成两片时,
 // 还会留下两句互相矛盾的同板块总结。这里统一收口:
@@ -444,7 +470,7 @@ export function interleaveBySector(shards) {
 // 单板块 AI 研判:小 prompt(保留四板块行情对照),输出按片内 __id 合并回条目。
 // label 用于日志区分(大分片二次拆分后为"半导体#1"等);prompt 内【sector】仍用板块名。
 // 返回 { analyzed, keyPoints, marketSummary };任何失败返回 null 由调用方重试。
-async function tryAnalyzeSectorOnce(sector, sectorItems, etfData, label = sector) {
+async function tryAnalyzeSectorOnce(sector, sectorItems, etfData, label = sector, market = null) {
   console.log(`  [${label}] 分片调用 Claude API...`);
 
   // 每条先跑关键词预评分作为基线(带片内稳定 id 供 AI 回填)
@@ -465,17 +491,19 @@ async function tryAnalyzeSectorOnce(sector, sectorItems, etfData, label = sector
     `[${n.__id}]【${n.guessedSector || '未分类'}】标题: ${n.title}\n    描述: ${n.description}\n    关键词预判: ${n.keyword.direction}/${n.keyword.impact}\n    日期: ${n.pubDate.toISOString()}\n    来源: ${n.source}`
   ).join('\n\n');
 
-  // 导语里出现的任何百分比都得在这里找到出处:新闻原文,或本板块 ETF 的实际涨跌。
+  // 导语里出现的任何百分比都得在这里找到出处:新闻原文,或本板块 ETF、大盘指数的实际涨跌。
   const groundingSources = [
     ...sectorItems.flatMap(n => [n.title, n.description]),
     ...(Array.isArray(etfData) ? etfData
       .filter(e => e.category === sector && Number.isFinite(e.change))
       .flatMap(e => [Math.abs(e.change).toFixed(1), Math.abs(e.change).toFixed(2)]) : []),
+    ...marketGrounding(market),
   ];
 
   const prompt = `你是资深金融分析师，专注半导体、光模块、创新药、黄金四大赛道。以下 ${rated.length} 条【${sector}】新闻已按板块预分类，每条标题前的【】标签为板块提示。每条附了本地关键词引擎的预判（方向/影响），供你参考，但以你的专业判断为准。
 
 ${marketContext(etfData)}
+${marketBrief(market)}
 
 核心任务：对每条新闻逐一给出研判，条目数必须与输入完全一致（逐条全量研判，不要合并、不要删减）。规则：
 1. 行情描述类新闻(内容即板块/个股涨跌,如"板块大跌""个股涨停")应反映当日行情方向：板块 ETF 平均跌超3%时此类判"利空"、涨超3%时判"利好"。公司基本面/事件类新闻(业绩/FDA/订单/制裁/临床等)以其自身内容为准，不被板块行情覆盖 —— 不得因板块大跌就把基本面利好判成利空，避免整板块批量同向。
@@ -683,7 +711,7 @@ export function aiBudgetMs() {
 // 尝试次数 = delays.length + 1。2026-10-16 修正:此前循环写的是 attempts =
 // delays.length,于是最后一个等待(20s)永远走不到,限流时实际只等过 2s+8s ——
 // 而免费档的 429 恰恰是按几十秒的尺度消退的,丢掉的正是最该保留的那一档。
-async function runShard(shard, etfData, deadline) {
+async function runShard(shard, etfData, deadline, market = null) {
   const name = shard.label || shard.sector;
   const start = Date.now();
   let last = { status: 0, retryAfterMs: 0 };
@@ -696,7 +724,7 @@ async function runShard(shard, etfData, deadline) {
       console.log(`  ⏱ AI 预算到期，跳过 ${name} 的后续尝试`);
       return null;
     }
-    const res = await tryAnalyzeSectorOnce(shard.sector, shard.items, etfData, name);
+    const res = await tryAnalyzeSectorOnce(shard.sector, shard.items, etfData, name, market);
     if (res.ok) {
       console.log(`  ✅ ${name} 分片完成 (${((Date.now() - start) / 1000).toFixed(1)}s, ${res.analyzed.length} 条)`);
       return res;
@@ -824,10 +852,13 @@ function dedupTranslated(items) {
   return out;
 }
 
-export async function analyzeWithClaude(newsItems, etfData) {
+// ctx(可选):{ market, indexHistory, etfHistory, date } —— 只用于「大盘上下文」
+// 与次日概率(forecast);缺失时一切行为与从前一致。
+export async function analyzeWithClaude(newsItems, etfData, ctx = null) {
+  const market = ctx?.market || null;
   if (!CONFIG.apiKey) {
     console.log('\n⚠ ANTHROPIC_API_KEY 未设置，使用本地关键词引擎\n');
-    return analyzeWithKeywords(newsItems, etfData);
+    return analyzeWithKeywords(newsItems, etfData, ctx);
   }
 
   // 本地 proxy 快速失败:proxy 没在运行,跳过 3×180s 重试 + 90s 翻译空等,
@@ -836,7 +867,7 @@ export async function analyzeWithClaude(newsItems, etfData) {
   if (CONFIG.apiBase.startsWith('http://127.0.0.1') || CONFIG.apiBase.startsWith('http://localhost')) {
     if (await proxyReachable() === false) {
       console.log('\n⚠ 本地 proxy (127.0.0.1:15721) 未运行，跳过 AI 分析，使用本地关键词引擎\n');
-      return analyzeWithKeywords(newsItems, etfData);
+      return analyzeWithKeywords(newsItems, etfData, ctx);
     }
   }
 
@@ -850,7 +881,7 @@ export async function analyzeWithClaude(newsItems, etfData) {
   const shards = chunkShards(groupBySector(targets));
   if (shards.length === 0) {
     console.log('\n  ⚠ 无四板块新闻，跳过 AI 分析，使用本地关键词引擎');
-    return analyzeWithKeywords(translated, etfData);
+    return analyzeWithKeywords(translated, etfData, ctx);
   }
 
   console.log(`\n🤖 调用 Claude API 分片串行研判 (${shards.length} 片: ${shards.map(s => `${s.label} ${s.items.length}条`).join('、')})...`);
@@ -864,7 +895,7 @@ export async function analyzeWithClaude(newsItems, etfData) {
   const deadline = Date.now() + aiBudgetMs();
   const results = new Array(shards.length);
   for (const i of interleaveBySector(shards)) {
-    results[i] = await runShard(shards[i], etfData, deadline);
+    results[i] = await runShard(shards[i], etfData, deadline, market);
   }
 
   const merged = mergeShardResults(shards, results);
@@ -879,7 +910,7 @@ export async function analyzeWithClaude(newsItems, etfData) {
 
   return {
     analyzed: merged.analyzed,
-    sectorMatrix: buildSectorMatrix(merged.analyzed, etfData),
+    sectorMatrix: buildSectorMatrix(merged.analyzed, etfData, ctx),
     keyPoints: merged.keyPoints,
     marketSummary: merged.marketSummary,
     isAi: merged.isAi,
@@ -903,7 +934,9 @@ const SECTOR_DEFAULT_TICKERS = {
 // 3. ETF 硬校准(applyEtfCalibration → direction,板块方向最终以当日 ETF 涨跌为准)
 // 4. 冲击 sectorShock + summary/tickers
 // 返回排序后的矩阵数组。
-export function buildSectorMatrix(analyzed, etfData) {
+// ctx(可选):大盘与历史数据,用于给每行挂 forecast(校准概率)。不传则只有
+// forwardDirection —— 旧存档重渲染与单测保持原样。
+export function buildSectorMatrix(analyzed, etfData, ctx = null) {
   const reRated = analyzed;
   const secMap = {
     '半导体': { name: '半导体', shock: '中', direction: '中性', news_count: 0, summary: '', tickers: '' },
@@ -936,6 +969,9 @@ export function buildSectorMatrix(analyzed, etfData) {
 
   // ETF 硬校准:板块方向最终以当日 ETF 实际涨跌为准(±3% 阈值,±1% 内不干预)
   applyEtfCalibration(secMap, etfData);
+
+  // 次日概率:与旧 forwardDirection 并列,后者保留作影子对照。
+  if (ctx) attachForecast(Object.values(secMap), { ...ctx, analyzed });
 
   // Fill matrix summary + tickers from each sector's highest-impact news
   for (const cat of Object.keys(secMap)) {
@@ -1000,14 +1036,17 @@ export function keywordItemShape(n) {
   };
 }
 
-export async function analyzeWithKeywords(newsItems, etfData) {
+export async function analyzeWithKeywords(newsItems, etfData, ctx = null) {
   // Translate non-Chinese titles so the report stays fully in simplified Chinese
   const translated = await translateItems(newsItems);
 
   const analyzed = translated.map(keywordItemShape).filter(n => SECTORS.includes(n.category));
 
   // 板块方向:加权投票聚合 + ETF 硬校准(板块看行情)
-  const matrix = buildSectorMatrix(analyzed, etfData);
+  const matrix = buildSectorMatrix(analyzed, etfData, ctx);
+  // 关键词兜底链路同样要落校准预测:AI 挂掉的那些天若缺 forecast,回看页的
+  // 样本会按「引擎可用性」系统性缺失,而不是随机缺失。
+  if (ctx) attachForecast(matrix, { ...ctx, analyzed });
 
   // 逐条方向按内容判断(新闻看内容),不强制跟随板块行情
   const reRated = analyzed;
