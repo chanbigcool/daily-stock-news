@@ -806,13 +806,16 @@ test('buildSectorMatrix:不传 ctx → 不出 forecast,旧存档重渲染保持�
   assert.ok(m.every(s => s.forecast === undefined));
 });
 
-test('buildSectorMatrix:指数历史缺失 → forecast 退化 p=0.5,不阻断矩阵', () => {
+test('buildSectorMatrix:指数历史缺失 → 先验记 0,证据为空时 p=0.5,forecast 照挂', () => {
   const m = buildSectorMatrix([rated('中芯国际业绩超预期', '', '半导体', '利好', '高')], [], { market: null });
   const semi = m.find(s => s.name === '半导体');
   assert.ok(semi.forecast, '缺数据也应挂一个降级 forecast,而不是没有');
+  // 「高」利好只进 posLo,不计入 posHi → 证据为空,先验又缺 → p 落在 0.5
   assert.equal(semi.forecast.p, 0.5);
   assert.equal(semi.forecast.direction, '利空');
   assert.equal(semi.forecast.confidence, '低');
+  assert.equal(semi.forecast.z, null);
+  assert.equal(semi.forecast.drivers.find(d => d.key === 'prior').value, '无数据');
 });
 
 test('AI 路径也受体裁封顶:模型无视 prompt 给汇总稿「极高」,代码兜底压到「低」', () => {

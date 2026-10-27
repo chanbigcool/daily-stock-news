@@ -237,7 +237,7 @@ export function confidenceOf(p, { priorOk = true, newsN = null } = {}) {
 const pctText = (v) => (Number.isFinite(v) ? `${v >= 0 ? '+' : '−'}${Math.abs(v * 100).toFixed(1)}%` : '—');
 
 // 完整预测:证据 + 先验 + 只展示的趋势。
-// 指数数据缺失 → p=0.5、置信度降档,绝不阻断日报构建。
+// 指数数据缺失只让先验项记 0,证据照算;数据再缺也不阻断日报构建。
 export function predictSector({
   sector, items, market = null, indexHistory = null, etfHistory = null, date = '',
   source = 'published',
@@ -246,11 +246,9 @@ export function predictSector({
   const z = zForSector({ sector, indexHistory, etfHistory, date });
   const trend = sectorTrend({ sector, etfHistory, date });
   const priorOk = z !== null && (indexHistory?.dates?.length || 0) >= 120;
-  // 指数数据缺失时按计划退化为 p=0.5(判利空)并降置信度 —— 不拿半截特征
-  // 假装有先验,也不让缺失数据把日报构建卡住。
-  const { p, priorP, priorLogit, capped } = z === null
-    ? { p: 0.5, priorP: 0.5, priorLogit: 0, capped: false }
-    : predict(ev, z);
+  // 指数数据缺失只让**先验项**记 0,predict 内部对非有限 z 已这么处理;
+  // 新闻证据照常计入,否则缺一天大盘数据就把当天所有证据一起扔掉。
+  const { p, priorP, priorLogit, capped } = predict(ev, z);
   const newsN = ev.nPos + ev.nNeg;
 
   const drivers = [

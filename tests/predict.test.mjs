@@ -107,17 +107,21 @@ test('zForSector:历史充足时给出有限 z,日期缺失时返回 null', () =
   assert.equal(zForSector({ sector: '半导体', ...p, date: '不存在' }), null);
 });
 
-test('predictSector:无指数数据退化为 p=0.5、判利空、置信度降档', () => {
-  const f = predictSector({
-    sector: '半导体',
-    items: items(['A公司业绩超预期', '利好', '极高']),
-    etfHistory: { dates: ['d0'], prices: { 半导体: [1] } },
-    date: 'd0',
-  });
-  assert.equal(f.p, 0.5);
-  assert.equal(f.direction, '利空');
-  assert.equal(f.confidence, '低');
-  assert.equal(f.z, null);
+test('predictSector:无指数数据时先验记 0,新闻证据照算(不再一律 0.5)', () => {
+  const base = { sector: '半导体', etfHistory: { dates: ['d0'], prices: { 半导体: [1] } }, date: 'd0' };
+  const up = predictSector({ ...base, items: items(['A公司业绩超预期', '利好', '极高']) });
+  assert.equal(up.z, null);
+  // 极高利好 1 档 = IMPACT_VALUE 4 × 0.03 → sigmoid(0.12)
+  assert.ok(Math.abs(up.p - 0.5299) < 1e-3, `p=${up.p}`);
+  assert.equal(up.direction, '利好');
+  assert.equal(up.confidence, '低', '无先验时置信度降一档');
+  assert.equal(up.drivers.find(d => d.key === 'prior').value, '无数据');
+
+  const down = predictSector({ ...base, items: items(['B公司遭监管处罚', '利空', '高']) });
+  // 利空 3 档 × 0.10 → sigmoid(-0.30)
+  assert.ok(Math.abs(down.p - 0.4256) < 1e-3, `p=${down.p}`);
+  assert.equal(down.direction, '利空');
+  assert.equal(down.confidence, '低');
 });
 
 test('predictSector:下跌先验 + 实质利空 → 判利空,drivers 含趋势但不计分', () => {
