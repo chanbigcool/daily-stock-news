@@ -8,8 +8,6 @@
 
 **[在线日报](https://chanbigcool.github.io/daily-stock-news/)** · **[数据查询](https://chanbigcool.github.io/daily-stock-news/db.html)**
 
-![日报预览](docs/preview.png)
-
 ## 功能
 
 - **多源聚合** — 并发抓取财联社、金十数据、东方财富、新浪财经、同花顺快讯、华尔街见闻 6 个快讯源，并接入 12 只板块 ETF 实时行情。
