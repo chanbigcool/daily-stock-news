@@ -3360,21 +3360,21 @@
     {
       "date": "20261029",
       "displayDate": "2026-10-29",
-      "isAi": true,
-      "aiCoverage": 100,
-      "newsCount": 82,
+      "isAi": false,
+      "aiCoverage": 0,
+      "newsCount": 118,
       "missingSectors": [],
       "covered": true,
       "impact": {
-        "vhigh": 0,
-        "high": 11
+        "vhigh": 5,
+        "high": 7
       },
-      "signalHitRate": 1,
+      "signalHitRate": 42,
       "directions": {
-        "利好": 0,
+        "利好": 1,
         "利空": 3,
         "分化": 0,
-        "中性": 1
+        "中性": 0
       },
       "health": {
         "level": "ok",
@@ -3387,13 +3387,13 @@
           "shock": "强"
         },
         {
-          "name": "创新药",
-          "direction": "中性",
+          "name": "黄金",
+          "direction": "利空",
           "shock": "强"
         },
         {
-          "name": "黄金",
-          "direction": "利空",
+          "name": "创新药",
+          "direction": "利好",
           "shock": "强"
         },
         {
@@ -3409,15 +3409,15 @@
   "coverageRate": 89,
   "avgImpactHigh": 12,
   "matchedDays": 52,
-  "etfHistoryDays": 251,
+  "etfHistoryDays": 250,
   "research": {
     "total": 166,
     "stated": 151,
-    "correct": 73,
+    "correct": 74,
     "abstained": 15,
     "abstainRate": 9,
     "statedShare": 0.9096385542168675,
-    "accuracy": 48,
+    "accuracy": 49,
     "lowSample": false,
     "reliable": true,
     "bySector": {
@@ -3457,17 +3457,17 @@
       "黄金": {
         "total": 47,
         "stated": 39,
-        "correct": 24,
+        "correct": 25,
         "abstained": 8,
         "abstainRate": 17,
         "statedShare": 0.8297872340425532,
-        "accuracy": 62,
+        "accuracy": 64,
         "lowSample": false,
         "reliable": true
       }
     },
-    "spearmanBinary": 0.025995732608827506,
-    "spearmanWeighted": -0.014935465239293701,
+    "spearmanBinary": 0.03002955318605936,
+    "spearmanWeighted": -0.01428734958281519,
     "baselines": {
       "inSample": {
         "alwaysUp": 44,
@@ -3476,7 +3476,7 @@
         "bullishBias": 87
       },
       "unconditional": {
-        "obs": 1000,
+        "obs": 996,
         "alwaysUp": 48,
         "alwaysDown": 52,
         "majority": 52
@@ -3485,8 +3485,8 @@
   },
   "recap": {
     "fired": 100,
-    "hit": 96,
-    "rate": 96,
+    "hit": 95,
+    "rate": 95,
     "since": "2026-08-19",
     "bySector": {
       "半导体": {
@@ -3501,8 +3501,8 @@
       },
       "创新药": {
         "fired": 25,
-        "hit": 24,
-        "rate": 96
+        "hit": 23,
+        "rate": 92
       },
       "黄金": {
         "fired": 17,
@@ -3513,15 +3513,15 @@
   },
   "forecast": {
     "n": 8,
-    "correct": 1,
-    "accuracy": 13,
+    "correct": 2,
+    "accuracy": 25,
     "nDays": 2,
-    "brier": 0.2749,
+    "brier": 0.2443,
     "brierBaseline": 0.25,
-    "brierSkill": -0.1,
-    "upRate": 63,
-    "majority": 63,
-    "edge": -50,
+    "brierSkill": 0.023,
+    "upRate": 50,
+    "majority": 50,
+    "edge": -25,
     "lowSample": true,
     "minSample": 30,
     "bins": [
@@ -3529,7 +3529,7 @@
         "label": "≤40%",
         "n": 1,
         "avgP": 38,
-        "upRate": 100
+        "upRate": 0
       },
       {
         "label": "40–48%",
@@ -3574,8 +3574,8 @@
       },
       "黄金": {
         "n": 2,
-        "correct": 0,
-        "accuracy": 0
+        "correct": 1,
+        "accuracy": 50
       }
     },
     "byMarket": {
@@ -3586,8 +3586,8 @@
       },
       "偏弱": {
         "n": 4,
-        "correct": 1,
-        "accuracy": 25
+        "correct": 2,
+        "accuracy": 50
       }
     }
   },
