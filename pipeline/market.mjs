@@ -12,11 +12,11 @@
 // 口径提醒:涨跌家数**没有历史**,只能从上线当天起逐日落盘(market_history.json),
 // 因此它只参与展示,不进市场状态的分数 —— 否则回测里会出现一条凭空多出来的特征。
 
-import { INDEXES, MARKET_REGIME, CONFIG } from './config.mjs';
+import { INDEXES, OVERSEAS_INDEXES, MARKET_REGIME, CONFIG } from './config.mjs';
 import { fetchWithRetry } from './utils.mjs';
 import { fetchIndexHistoryKLine } from './charts.mjs';
 
-export { INDEXES, MARKET_REGIME };
+export { INDEXES, OVERSEAS_INDEXES, MARKET_REGIME };
 
 const SINA_HEADERS = {
   'User-Agent': 'Mozilla/5.0',
@@ -68,6 +68,50 @@ export async function fetchIndexQuotes() {
     });
   }
   return out;
+}
+
+// ── 境外指数(日韩,只展示)──────────────────────────────
+// 必须与 A 股指数分开取、分开放:computeMarketState 会拿 quotes 算 7 指数广度
+// 并投票,把日韩混进去等于给状态五档加了一条没有回测的特征。
+// 两种格式见 config.mjs 的 OVERSEAS_INDEXES 注释;znb_ 的日期/时间是有用的
+// ——韩股 14:30 收盘后取到的就是收盘值,页面上可以直接标出来。
+export function parseOverseasQuotes(text) {
+  const bySina = new Map();
+  const re = /var hq_str_(\w+)="([^"]*)"/g;
+  let m;
+  while ((m = re.exec(text)) !== null) bySina.set(m[1], m[2]);
+
+  const out = [];
+  for (const idx of OVERSEAS_INDEXES) {
+    const raw = bySina.get(idx.sina);
+    if (!raw) continue;
+    const f = raw.split(',');
+    const price = parseFloat(f[1]);
+    const changePct = parseFloat(f[3]);
+    // 停牌/休市时新浪给 0 或空串,不能当成「0.00% 平盘」展示。
+    if (!(price > 0) || !Number.isFinite(changePct)) continue;
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(f[6] || '') ? f[6] : '';
+    const time = /^\d{2}:\d{2}/.test(f[7] || '') ? f[7].slice(0, 5) : '';
+    out.push({
+      name: idx.name,
+      price: Math.round(price * 100) / 100,
+      change: Number.isFinite(parseFloat(f[2])) ? Math.round(parseFloat(f[2]) * 100) / 100 : null,
+      changePct,
+      asOf: date ? `${date} ${time}`.trim() : null,
+    });
+  }
+  return out;
+}
+
+// 拿不到就返回空数组,绝不抛错 —— 日韩行情挂了不能连累大盘块。
+export async function fetchOverseasQuotes() {
+  const codes = OVERSEAS_INDEXES.map(i => i.sina).join(',');
+  const resp = await fetchWithRetry(`https://hq.sinajs.cn/list=${codes}`, {
+    headers: SINA_HEADERS,
+    signal: AbortSignal.timeout(CONFIG.apiTimeoutMs),
+  });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  return parseOverseasQuotes(await decode(resp));
 }
 
 // ── 全市场涨跌家数 ──────────────────────────────────────
@@ -304,7 +348,7 @@ export function computeMarketState(quotes = [], breadth = null, indexHistory = n
 // 涨跌家数没有历史接口,只能一天一条往下攒。攒满 60 天之前它不进模型。
 export const MARKET_HISTORY_MAX_DAYS = 400;
 
-export function appendMarketDay(history, { date, state, quotes }) {
+export function appendMarketDay(history, { date, state, quotes, overseas = null }) {
   const h = history && Array.isArray(history.days) ? history : { days: [] };
   const row = {
     date,
@@ -316,6 +360,10 @@ export function appendMarketDay(history, { date, state, quotes }) {
     r20: state.r20,
     drawdown60: state.drawdown60,
     indices: quotes.map(q => ({ name: q.name, price: q.price, changePct: q.changePct })),
+    // 日韩只做记录,任何打分都不读这里。
+    overseas: Array.isArray(overseas) && overseas.length
+      ? overseas.map(q => ({ name: q.name, price: q.price, changePct: q.changePct }))
+      : undefined,
   };
   const existing = h.days.findIndex(d => d.date === date);
   if (existing >= 0) h.days[existing] = row;

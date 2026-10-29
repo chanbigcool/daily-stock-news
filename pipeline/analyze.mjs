@@ -334,14 +334,24 @@ function marketBrief(market) {
   if (market.breadth && Number.isFinite(market.breadth.up)) {
     lines.push(`全市场:${market.breadth.up} 家上涨 / ${market.breadth.down} 家下跌 / ${market.breadth.flat} 家平盘`);
   }
+  // 日韩当天先于 A 股收盘,给模型一点外部参照;它们不参与任何打分。
+  const abroad = Array.isArray(market.overseas) ? market.overseas.filter(q => Number.isFinite(q.changePct)) : [];
+  if (abroad.length) {
+    lines.push('日韩:' + abroad.map(q => `${q.name} ${q.changePct >= 0 ? '+' : ''}${q.changePct.toFixed(2)}%`).join('、'));
+  }
   if (market.label) lines.push(`市场状态:${market.label}`);
   return lines.length ? `当日大盘:\n${lines.join('\n')}` : '';
 }
 
 // 导语里可以引用的指数数值(百分比以绝对值入池,与 hasUngroundedPercent 的比较口径一致)。
+// 日韩也要入池 —— 它们出现在 marketBrief 里,模型引用时不能被当成臆造数字丢掉整段导语。
 function marketGrounding(market) {
-  if (!market || !Array.isArray(market.quotes)) return [];
-  return market.quotes.flatMap(q => (Number.isFinite(q.changePct)
+  if (!market) return [];
+  const all = [
+    ...(Array.isArray(market.quotes) ? market.quotes : []),
+    ...(Array.isArray(market.overseas) ? market.overseas : []),
+  ];
+  return all.flatMap(q => (Number.isFinite(q.changePct)
     ? [Math.abs(q.changePct).toFixed(1), Math.abs(q.changePct).toFixed(2)]
     : []));
 }

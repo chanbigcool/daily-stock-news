@@ -73,7 +73,7 @@ async function loadPipeline() {
 async function scrapeAll() {
   const {
     fetchAllNews, fetchETFData, fetchETFHistoryKLine, fetchIndexHistory,
-    fetchIndexQuotes, fetchMarketBreadth, getTodayStr, beijingNowString, KLINE_DAYS,
+    fetchIndexQuotes, fetchMarketBreadth, fetchOverseasQuotes, getTodayStr, beijingNowString, KLINE_DAYS,
   } = await loadPipeline();
   const t0 = Date.now();
   const notes = [];
@@ -92,13 +92,16 @@ async function scrapeAll() {
 
   // 大盘:指数点位 + 涨跌家数 + 指数日 K。三样都失败也不能阻断刷新 ——
   // 缺了大盘时页面退化成「不显示指数带」,日报本身照发。
-  const market = { quotes: [], breadth: null };
+  const market = { quotes: [], breadth: null, overseas: [] };
   let indexHistory = null;
-  const [q, b] = await Promise.allSettled([fetchIndexQuotes(), fetchMarketBreadth()]);
+  const [q, b, o] = await Promise.allSettled([fetchIndexQuotes(), fetchMarketBreadth(), fetchOverseasQuotes()]);
   if (q.status === 'fulfilled') market.quotes = q.value;
   else { notes.push(`指数行情失败: ${q.reason && q.reason.message}`); console.warn('[refresh] 指数行情失败:', q.reason && q.reason.message); }
   if (b.status === 'fulfilled') market.breadth = b.value;
   else { notes.push(`涨跌家数失败: ${b.reason && b.reason.message}`); console.warn('[refresh] 涨跌家数失败:', b.reason && b.reason.message); }
+  // 日韩只展示,失败也不记 notes —— 它挂掉不影响任何产出,不值得每天报一次。
+  if (o.status === 'fulfilled') market.overseas = o.value;
+  else console.warn('[refresh] 日韩行情失败:', o.reason && o.reason.message);
   try {
     indexHistory = await fetchIndexHistory(KLINE_DAYS);
   } catch (err) {
@@ -111,7 +114,8 @@ async function scrapeAll() {
   console.log(`[refresh] 抓取完成 ${elapsedMs}ms: 新闻 ${news.items.length} 条,`
     + ` 源 ${s.api ? `${s.api.okSources}/${s.api.total}` : '?'},`
     + ` ETF ${etfData.length} 只, K线 ${etfHistory ? etfHistory.dates.length : 0} 天,`
-    + ` 指数 ${market.quotes.length} 个, 涨跌家数 ${market.breadth ? `${market.breadth.up}/${market.breadth.down}` : '缺失'}`);
+    + ` 指数 ${market.quotes.length} 个, 涨跌家数 ${market.breadth ? `${market.breadth.up}/${market.breadth.down}` : '缺失'},`
+    + ` 日韩 ${market.overseas.length} 个`);
 
   return {
     items: news.items,

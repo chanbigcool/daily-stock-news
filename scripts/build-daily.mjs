@@ -23,7 +23,7 @@ import { scoreNewsItem } from '../pipeline/sentiment.mjs';
 import { evaluateHealth, formatSourceSummary } from '../pipeline/health.mjs';
 import { SECTORS, CATEGORY_CLS, IMPACT_RANK, impactCompare } from '../pipeline/sectors.mjs';
 import { loadETFHistory, saveETFHistory, accumulateETF, buildETFChartData, buildSentimentData, buildImpactHeatmap, buildDirectionChart, buildTimeWindowData, fetchETFHistoryKLine, saveIndexHistory } from '../pipeline/charts.mjs';
-import { fetchIndexQuotes, fetchMarketBreadth, fetchIndexHistory, computeMarketState, appendMarketDay } from '../pipeline/market.mjs';
+import { fetchIndexQuotes, fetchMarketBreadth, fetchIndexHistory, fetchOverseasQuotes, computeMarketState, appendMarketDay } from '../pipeline/market.mjs';
 import { loadFetchPayload } from '../pipeline/ingest.mjs';
 import { pushServerChan as serverChanPush } from '../pipeline/notify.mjs';
 
@@ -133,6 +133,20 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
   const idxQuotes = mkt && Array.isArray(mkt.quotes) ? mkt.quotes.filter(q => typeof q.changePct === 'number') : [];
   const regimeMode = !mkt ? '' : (mkt.step <= 1 ? 'down' : mkt.step >= 3 ? 'up' : 'flat');
   const mktDrivers = mkt && Array.isArray(mkt.drivers) ? mkt.drivers : [];
+  // 日韩:单独一块、单独口径。它们当天先于 A 股收盘,是开盘前最后一段外部信息;
+  // 不参与上面的状态判定,所以视觉上也与 A 股指数隔开。
+  const abroadQuotes = mkt && Array.isArray(mkt.overseas) ? mkt.overseas.filter(q => typeof q.changePct === 'number') : [];
+  const abroadAsOf = abroadQuotes.map(q => q.asOf).filter(Boolean).sort().pop() || '';
+  // 日经的接口不给时间戳,只能在工具提示里给点位;块标题退到「最新」,
+  // 免得把一个没有时间的信息标成某个具体时刻。
+  const abroadNote = abroadAsOf ? `截至 ${escHtml(abroadAsOf.slice(5, 16))}` : '最新';
+  const abroadHTML = abroadQuotes.length === 0 ? '' : `<div class="mkt-abroad">
+      <div class="mkt-abroad-h"><span>日韩</span><span class="mkt-abroad-t">${abroadNote}</span></div>
+      <div class="mkt-grid">${abroadQuotes.map(q => `<div class="mkt-idx" title="${escHtml(q.name)} ${q.price}${q.asOf ? ' · ' + escHtml(q.asOf) : ''}">
+        <span class="mkt-name">${escHtml(q.name)}</span>
+        <b class="num ${flowCls(q.changePct)}">${pct(q.changePct)}</b>
+      </div>`).join('')}</div>
+    </div>`;
   // 徽标 tooltip 带上全部驱动项;底部只留趋势项 —— 涨跌家数已经在右上角单独显示。
   const driverTip = mktDrivers.map(d => `${d.label} ${d.value}`).join(' · ');
   const footTip = mktDrivers.filter(d => d.key !== 'breadth').map(d => `${d.label} ${d.value}`).join(' · ');
@@ -147,6 +161,7 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
         <span class="mkt-name">${escHtml(q.name)}</span>
         <b class="num ${flowCls(q.changePct)}">${pct(q.changePct)}</b>
       </div>`).join('')}</div>
+    ${abroadHTML}
     ${footTip ? `<div class="mkt-foot">${escHtml(footTip)}</div>` : ''}
   </div>`;
 
@@ -543,7 +558,7 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
   button{font-family:inherit;}
   a:focus-visible,button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--red);outline-offset:2px;}
   @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}*{transition:none!important;animation:none!important;}}
-  .wrap{width:100%;max-width:1200px;margin:0 auto;padding:0 24px;}
+  .wrap{width:100%;max-width:1280px;margin:0 auto;padding:0 28px;}
 
   /* 顶部工具条 + 主导航 */
   .topbar{border-bottom:1px solid var(--rule2);font-size:13px;color:#6a6a6a;}
@@ -580,10 +595,10 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
   .market-summary{display:flex;gap:16px;margin:22px 0 0;padding:16px 18px 17px 16px;border-left:3px solid var(--red);background:var(--tint);}
   .ms-label{flex:none;font-size:11.5px;font-weight:700;color:var(--ink);letter-spacing:.08em;padding-top:4px;white-space:nowrap;}
   .market-summary p{font-size:15px;line-height:1.75;color:var(--ink);max-width:76ch;text-wrap:pretty;}
-  .market-summary b{font-weight:700;font-family:var(--num);}
+  .market-summary b{font-weight:700;font-variant-numeric:tabular-nums;}
 
-  /* 三栏 */
-  .cols{display:grid;grid-template-columns:280px minmax(0,1fr) 260px;gap:24px;align-items:start;padding-top:22px;}
+  /* 三栏。中栏留给正文,左右两栏按「能放下 2 列指数 + 5 字板块名」定宽 */
+  .cols{display:grid;grid-template-columns:288px minmax(0,1fr) 264px;gap:26px;align-items:start;padding-top:22px;}
   .feed,.quotes,.rail{min-width:0;}
   .ph{display:flex;align-items:center;gap:8px;height:48px;border-top:2px solid var(--ink);}
   .ph h2{margin:0;font-size:16px;font-weight:700;line-height:1;}
@@ -607,6 +622,7 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
   .qetf .qchg{font-weight:700;}
   .qstats{margin-top:14px;}
   .qstats div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--rule2);font-size:12px;color:var(--muted);}
+  .qstats div:last-child{border-bottom:0;}
   .qstats b{font-weight:700;color:var(--ink);}
   .qstats b.bull{color:var(--red);}
   .qstats b.bear{color:var(--green);}
@@ -619,10 +635,16 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
   .mkt-regime.up{background:var(--red);}
   .mkt-note{margin-left:auto;font-size:11px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .mkt-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;}
-  .mkt-idx{display:flex;align-items:baseline;justify-content:space-between;gap:6px;padding:3px 0;font-size:12px;}
+  .mkt-idx{display:flex;align-items:baseline;justify-content:space-between;gap:6px;padding:3px 0;font-size:12px;transition:background-color .12s ease;}
+  .mkt-idx:hover{background:var(--hover);}
   .mkt-name{color:var(--ink2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
   .mkt-idx b{font-weight:700;flex:none;}
   .mkt-foot{margin-top:9px;font-size:11px;line-height:1.65;color:var(--faint);}
+  /* 日韩:与 A 股指数用一条细线隔开,自带「截至」时间戳(收盘后就是收盘值) */
+  .mkt-abroad{margin-top:10px;padding-top:9px;border-top:1px solid var(--rule2);}
+  .mkt-abroad-h{display:flex;align-items:baseline;gap:8px;margin-bottom:2px;font-size:11px;color:var(--muted);}
+  .mkt-abroad-t{margin-left:auto;font-size:10.5px;color:var(--faint);white-space:nowrap;}
+  .mkt-abroad .mkt-idx{padding:2px 0;}
 
   /* 徽标 */
   .badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;}
@@ -636,12 +658,12 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
 
   /* 中栏 */
   .lead{padding:6px 0 18px;border-bottom:1px solid var(--rule);}
-  .lead h2{margin:0;font-size:27px;line-height:1.42;font-weight:700;letter-spacing:-.3px;color:var(--ink);}
+  .lead h2{margin:0;font-size:27px;line-height:1.42;font-weight:700;letter-spacing:-.3px;color:var(--ink);text-wrap:balance;}
   .flag{display:inline-block;background:var(--red);color:#fff;font-size:15px;font-weight:400;font-style:normal;line-height:1;padding:4px 5px;margin-right:8px;vertical-align:3px;letter-spacing:.02em;}
   .lead .meta{margin:9px 0 8px;font-size:12px;color:var(--muted);}
   .lead p{margin:0;font-size:15px;line-height:1.75;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
   .top-item{padding:14px 0 13px;border-bottom:1px solid var(--rule);}
-  .top-item h3{margin:0 0 6px;font-size:22px;line-height:1.4;font-weight:700;letter-spacing:-.2px;color:var(--ink);}
+  .top-item h3{margin:0 0 6px;font-size:22px;line-height:1.4;font-weight:700;letter-spacing:-.2px;color:var(--ink);text-wrap:pretty;}
   .top-item .meta{font-size:12px;color:var(--muted);}
   .feed-empty{padding:28px 0;font-size:13px;color:var(--muted);}
 
@@ -772,6 +794,7 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
   .matrix table{width:100%;border-collapse:collapse;margin-top:12px;min-width:720px;}
   .matrix th{font-size:12px;font-weight:600;color:var(--link);text-align:left;padding:10px 12px;background:var(--hover);border-bottom:1px solid var(--rule);white-space:nowrap;}
   .matrix td{padding:13px 12px;border-bottom:1px solid var(--rule);vertical-align:top;font-size:13px;color:var(--ink2);}
+  .matrix tbody tr:hover td{background:var(--hover);}
   .matrix .mx-name{font-size:15px;font-weight:700;color:var(--ink);white-space:nowrap;}
   .matrix .tickers{font-size:12px;color:var(--link);line-height:1.7;}
   .matrix .logic{line-height:1.7;}
@@ -786,6 +809,19 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
   /* 页脚 */
   .foot{margin:36px 0 56px;padding-top:14px;border-top:1px solid var(--rule);font-size:11px;line-height:1.9;color:var(--faint);}
   .foot b{color:var(--muted);font-weight:600;}
+
+  /* 锚点落点要让开吸顶的新闻流工具条 */
+  #news,#stream,#data,#matrix{scroll-margin-top:56px;}
+
+  /* 桌面宽屏:画布再放一档,左右栏各加宽,中栏行宽保持舒适 */
+  @media (min-width:1400px){
+    .wrap{max-width:1360px;padding:0 32px;}
+    .cols{grid-template-columns:312px minmax(0,1fr) 292px;gap:36px;}
+    .lead h2{font-size:30px;}
+    .top-item h3{font-size:23px;}
+    .grp-cols{column-gap:60px;}
+    .scol+.scol::before{left:-30px;}
+  }
 
   @media (max-width:1080px){
     .cols{grid-template-columns:250px minmax(0,1fr) 240px;gap:18px;}
@@ -1813,6 +1849,8 @@ async function main() {
   console.log('\n📊 大盘...');
   let marketQuotes = payloadMarket && Array.isArray(payloadMarket.quotes) ? payloadMarket.quotes : [];
   let marketBreadth = payloadMarket ? payloadMarket.breadth : null;
+  // 日韩只展示:不进 quotes、不进 computeMarketState。
+  let overseasQuotes = payloadMarket && Array.isArray(payloadMarket.overseas) ? payloadMarket.overseas : [];
   let indexHistory = payloadIndexHistory;
   if (!CONFIG.isCi) {
     if (!marketQuotes.length) {
@@ -1820,6 +1858,9 @@ async function main() {
     }
     if (!marketBreadth) {
       try { marketBreadth = await fetchMarketBreadth(); } catch (err) { console.warn(`  涨跌家数失败: ${err.message}`); }
+    }
+    if (!overseasQuotes.length) {
+      try { overseasQuotes = await fetchOverseasQuotes(); } catch (err) { console.warn(`  日韩行情失败: ${err.message}`); }
     }
     if (!indexHistory) {
       try { indexHistory = await fetchIndexHistory(); } catch (err) { console.warn(`  指数K线失败: ${err.message}`); }
@@ -1840,7 +1881,7 @@ async function main() {
     prevRegime: prevDay ? prevDay.regime : null,
   });
   const marketCtx = marketQuotes.length > 0
-    ? { ...marketState, quotes: marketQuotes, breadth: marketBreadth, asOf: dateStr }
+    ? { ...marketState, quotes: marketQuotes, overseas: overseasQuotes, breadth: marketBreadth, asOf: dateStr }
     : null;
   if (!marketCtx) console.warn('  ⚠ 没有指数数据,本日日报不显示大盘指数带');
 
@@ -1990,12 +2031,13 @@ async function main() {
   // 4.5 大盘落盘(抓取与判定已在 2.5 完成,这里只挂到 result 并写每日快照)
   if (marketCtx) {
     result.market = marketCtx;
-    marketHistory = appendMarketDay(marketHistory, { date: dateStr, state: marketState, quotes: marketQuotes });
+    marketHistory = appendMarketDay(marketHistory, { date: dateStr, state: marketState, quotes: marketQuotes, overseas: overseasQuotes });
     if (!existsSync(HISTORY_DIR)) mkdirSync(HISTORY_DIR, { recursive: true });
     writeFileSync(marketHistoryPath, JSON.stringify(marketHistory, null, 2), 'utf-8');
     console.log(`  ${marketState.label}(${marketState.score >= 0 ? '+' : ''}${marketState.score})`
       + ` · ${marketQuotes.length} 个指数`
       + ` · 涨跌家数 ${marketBreadth ? `${marketBreadth.up}涨/${marketBreadth.down}跌` : '缺失'}`
+      + ` · 日韩 ${overseasQuotes.length} 个`
       + ` · 快照累计 ${marketHistory.days.length} 天`);
   } else {
     result.market = null;

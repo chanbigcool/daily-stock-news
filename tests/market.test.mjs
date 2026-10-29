@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  computeMarketState, regimeStep, countAbove,
+  computeMarketState, regimeStep, countAbove, parseOverseasQuotes,
   appendMarketDay, lastRegime, MARKET_REGIME,
 } from '../pipeline/market.mjs';
 
@@ -160,4 +160,39 @@ test('appendMarketDay:同日覆盖、按日期排序、超长截断', () => {
   assert.equal(h.days[1].regime, '偏弱');
   assert.equal(lastRegime(h), '偏弱');
   assert.equal(h.days[1].indices.length, 2);
+});
+
+// ── 日韩(只展示)──────────────────────────────────────
+
+test('parseOverseasQuotes:日经与韩国两种新浪格式都能解析', () => {
+  const text = 'var hq_str_int_nikkei="日经指数,44946.64,-408.35,-0.90";\n'
+    + 'var hq_str_znb_KOSPI="首尔综合指数,5937.6600,-74.78,-1.24,2:27 AM,1759127220,2026-10-29,14:30:40,6017.2200,6012.4400,6100.1100,5817.9200,0";\n';
+  const out = parseOverseasQuotes(text);
+  assert.deepEqual(out.map(q => q.name), ['日经225', '韩国综合'], '缺失的韩国创业板应被跳过,不能补零');
+  assert.equal(out[0].price, 44946.64);
+  assert.equal(out[0].changePct, -0.9);
+  assert.equal(out[0].asOf, null, 'int_ 格式没有时间戳');
+  assert.equal(out[1].changePct, -1.24);
+  assert.equal(out[1].asOf, '2026-10-29 14:30', 'znb_ 的日期/时间要保留,收盘后即收盘值');
+});
+
+test('parseOverseasQuotes:空串、0 点位、字段不足一律跳过', () => {
+  assert.deepEqual(parseOverseasQuotes('var hq_str_int_nikkei="";'), []);
+  assert.deepEqual(parseOverseasQuotes('var hq_str_znb_KOSPI="首尔综合指数,0,0,0";'), []);
+  assert.deepEqual(parseOverseasQuotes('var hq_str_znb_KOSDAQ="韩国创业板指数";'), []);
+});
+
+test('appendMarketDay:日韩单独入档,不混进 indices', () => {
+  const q = quotesOf([-1, -2]);
+  const st = computeMarketState(q, null, null);
+  const h = appendMarketDay({ days: [] }, {
+    date: '2026-10-29', state: st, quotes: q,
+    overseas: [{ name: '日经225', price: 44946.64, changePct: -0.9, asOf: null }],
+  });
+  const row = h.days[0];
+  assert.equal(row.indices.length, 2);
+  assert.deepEqual(row.overseas, [{ name: '日经225', price: 44946.64, changePct: -0.9 }]);
+
+  const none = appendMarketDay({ days: [] }, { date: '2026-10-29', state: st, quotes: q });
+  assert.equal(none.days[0].overseas, undefined, '没有日韩数据时不写空数组');
 });

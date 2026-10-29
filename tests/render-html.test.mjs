@@ -182,6 +182,42 @@ test('无 forwardDirection(旧存档)→ 保持单列「方向」,不出释义�
   assert.match(html, /class="badge badge-neutral">中性<\/span>/);
 });
 
+// ── 日韩指数:只展示,且在视觉上与 A 股 7 指数分开 ───────────
+// 它们不参与状态五档打分(见 pipeline/market.mjs),所以既不能混进 mkt-grid,
+// 也不能在没有数据时留空壳。
+
+const mkt = (over = {}) => ({
+  label: '普跌 · 下行', step: 0, regime: '下行',
+  quotes: [
+    { name: '上证', price: 3200, changePct: -1.1 },
+    { name: '深成', price: 10000, changePct: -1.4 },
+  ],
+  breadth: { up: 500, down: 4600, flat: 100, total: 5200, ratio: 0.096 },
+  drivers: [{ key: 'r5', label: '沪深300 5日', value: '−1.00%', delta: -1 }],
+  ...over,
+});
+
+test('大盘块:日韩指数单独成块,带自己的截至时间', () => {
+  const html = render({
+    market: mkt({
+      overseas: [
+        { name: '日经225', price: 44946.64, changePct: -0.9, asOf: null },
+        { name: '韩国综合', price: 5937.66, changePct: -1.24, asOf: '2026-10-29 14:30' },
+      ],
+    }),
+  });
+  assert.match(html, /<div class="mkt-abroad">/);
+  assert.match(html, /日经225<\/span>\s*<b class="num bear">−0\.90%<\/b>/);
+  assert.match(html, /韩国综合<\/span>\s*<b class="num bear">−1\.24%<\/b>/);
+  assert.match(html, /截至 10-29 14:30/, '有收盘时间就标出来,避免把上一交易日收盘当今天');
+});
+
+test('大盘块:没有日韩数据时不出空壳', () => {
+  // 只看标记,不看 CSS —— 样式表里始终有 .mkt-abroad 的规则。
+  assert.doesNotMatch(render({ market: mkt() }), /<div class="mkt-abroad">/);
+  assert.doesNotMatch(render({ market: mkt({ overseas: [] }) }), /<div class="mkt-abroad">/);
+});
+
 test('有 forwardDirection 但某板块为空 → 该格显「—」而不是充一个中性', () => {
   // 缺值时编一个「中性」等于谎报「研判为不表态」,与「没有这个数据」是两回事
   const html = renderHTML(
