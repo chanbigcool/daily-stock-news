@@ -3406,21 +3406,21 @@
     {
       "date": "20261030",
       "displayDate": "2026-10-30",
-      "isAi": true,
-      "aiCoverage": 100,
-      "newsCount": 46,
+      "isAi": false,
+      "aiCoverage": 0,
+      "newsCount": 70,
       "missingSectors": [],
       "covered": true,
       "impact": {
         "vhigh": 0,
         "high": 9
       },
-      "signalHitRate": 7,
+      "signalHitRate": 47,
       "directions": {
-        "利好": 3,
+        "利好": 1,
         "利空": 1,
         "分化": 0,
-        "中性": 0
+        "中性": 2
       },
       "health": {
         "level": "ok",
@@ -3433,18 +3433,18 @@
           "shock": "强"
         },
         {
+          "name": "黄金",
+          "direction": "利空",
+          "shock": "强"
+        },
+        {
           "name": "光模块",
-          "direction": "利好",
+          "direction": "中性",
           "shock": "强"
         },
         {
           "name": "创新药",
-          "direction": "利好",
-          "shock": "强"
-        },
-        {
-          "name": "黄金",
-          "direction": "利空",
+          "direction": "中性",
           "shock": "中"
         }
       ]
@@ -3459,11 +3459,11 @@
   "research": {
     "total": 170,
     "stated": 155,
-    "correct": 74,
+    "correct": 76,
     "abstained": 15,
     "abstainRate": 9,
     "statedShare": 0.9117647058823529,
-    "accuracy": 48,
+    "accuracy": 49,
     "lowSample": false,
     "reliable": true,
     "bySector": {
@@ -3492,28 +3492,28 @@
       "创新药": {
         "total": 37,
         "stated": 33,
-        "correct": 15,
+        "correct": 16,
         "abstained": 4,
         "abstainRate": 11,
         "statedShare": 0.8918918918918919,
-        "accuracy": 45,
+        "accuracy": 48,
         "lowSample": false,
         "reliable": true
       },
       "黄金": {
         "total": 48,
         "stated": 40,
-        "correct": 25,
+        "correct": 26,
         "abstained": 8,
         "abstainRate": 17,
         "statedShare": 0.8333333333333334,
-        "accuracy": 63,
+        "accuracy": 65,
         "lowSample": false,
         "reliable": true
       }
     },
-    "spearmanBinary": 0.026332869121701637,
-    "spearmanWeighted": -0.014036318900964144,
+    "spearmanBinary": 0.03412654603296103,
+    "spearmanWeighted": -0.0258053618449379,
     "baselines": {
       "inSample": {
         "alwaysUp": 43,
@@ -3524,30 +3524,30 @@
       "unconditional": {
         "obs": 1000,
         "alwaysUp": 48,
-        "alwaysDown": 53,
-        "majority": 53
+        "alwaysDown": 52,
+        "majority": 52
       }
     }
   },
   "recap": {
-    "fired": 101,
-    "hit": 95,
-    "rate": 94,
+    "fired": 102,
+    "hit": 97,
+    "rate": 95,
     "since": "2026-08-19",
     "bySector": {
       "半导体": {
-        "fired": 30,
+        "fired": 29,
         "hit": 27,
-        "rate": 90
+        "rate": 93
       },
       "光模块": {
-        "fired": 29,
-        "hit": 28,
+        "fired": 30,
+        "hit": 29,
         "rate": 97
       },
       "创新药": {
-        "fired": 25,
-        "hit": 23,
+        "fired": 26,
+        "hit": 24,
         "rate": 92
       },
       "黄金": {
@@ -3559,15 +3559,15 @@
   },
   "forecast": {
     "n": 12,
-    "correct": 3,
-    "accuracy": 25,
+    "correct": 5,
+    "accuracy": 42,
     "nDays": 3,
-    "brier": 0.2302,
+    "brier": 0.2385,
     "brierBaseline": 0.25,
-    "brierSkill": 0.079,
-    "upRate": 33,
-    "majority": 67,
-    "edge": -42,
+    "brierSkill": 0.046,
+    "upRate": 42,
+    "majority": 58,
+    "edge": -16,
     "lowSample": true,
     "minSample": 30,
     "bins": [
@@ -3581,7 +3581,7 @@
         "label": "40–48%",
         "n": 1,
         "avgP": 45,
-        "upRate": 0
+        "upRate": 100
       },
       {
         "label": "48–52%",
@@ -3610,8 +3610,8 @@
       },
       "光模块": {
         "n": 3,
-        "correct": 1,
-        "accuracy": 33
+        "correct": 2,
+        "accuracy": 67
       },
       "创新药": {
         "n": 3,
@@ -3620,8 +3620,8 @@
       },
       "黄金": {
         "n": 3,
-        "correct": 1,
-        "accuracy": 33
+        "correct": 2,
+        "accuracy": 67
       }
     },
     "byMarket": {
@@ -3637,8 +3637,8 @@
       },
       "下行": {
         "n": 4,
-        "correct": 1,
-        "accuracy": 25
+        "correct": 3,
+        "accuracy": 75
       }
     }
   },

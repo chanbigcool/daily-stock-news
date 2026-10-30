@@ -29,13 +29,13 @@ th{color:#94a3b8;font-weight:600;background:#172033}
 其中 53 天有 ETF 行情可比对(ETF 历史 251 天)</div>
 
 <div class="cards">
-  <div class="card"><div class="num" style="color:#ef4444">48%</div><div class="label">研判准确率 · 表态 155 次</div></div>
-  <div class="card"><div class="num muted">53%</div><div class="label">对照基线 · 无条件多数类</div></div>
+  <div class="card"><div class="num" style="color:#ef4444">49%</div><div class="label">研判准确率 · 表态 155 次</div></div>
+  <div class="card"><div class="num muted">52%</div><div class="label">对照基线 · 无条件多数类</div></div>
   <div class="card"><div class="num">9%</div><div class="label">回避率 · 中性+分化占比</div></div>
-  <div class="card"><div class="num" style="color:#4ade80">94%</div><div class="label">回述一致率 · 校准触发 101 次</div></div>
+  <div class="card"><div class="num" style="color:#4ade80">95%</div><div class="label">回述一致率 · 校准触发 102 次</div></div>
 </div>
 
-<div class="verdict">研判准确率 <b style="color:#ef4444">48%</b>(表态 155 次 / 回避 9%),对照「无条件多数类」基线 53%:<b class="bad">低于基线 5 个百分点</b>。加权方向分秩相关 -0.014(≈无相关)。</div>
+<div class="verdict">研判准确率 <b style="color:#ef4444">49%</b>(表态 155 次 / 回避 9%),对照「无条件多数类」基线 52%:<b class="bad">低于基线 3 个百分点</b>。加权方向分秩相关 -0.026(≈无相关)。</div>
 
 <div class="section-title">研判准确率 分板块(纯新闻方向 → 次日 ETF)</div>
 <table>
@@ -54,14 +54,14 @@ th{color:#94a3b8;font-weight:600;background:#172033}
     </tr>
 <tr>
       <td><span style="color:#0d9488">■</span> 创新药</td>
-      <td><b>45%</b></td>
-      <td class="muted">15/33</td>
+      <td><b>48%</b></td>
+      <td class="muted">16/33</td>
       <td class="muted">11%</td>
     </tr>
 <tr>
       <td><span style="color:#d97706">■</span> 黄金</td>
-      <td><b>63%</b></td>
-      <td class="muted">25/40</td>
+      <td><b>65%</b></td>
+      <td class="muted">26/40</td>
       <td class="muted">17%</td>
     </tr>
   </table>
@@ -73,18 +73,18 @@ th{color:#94a3b8;font-weight:600;background:#172033}
     <tr><th>板块</th><th>校准吻合率</th><th>吻合/触发</th></tr>
     <tr>
       <td><span style="color:#7c3aed">■</span> 半导体</td>
-      <td><b>90%</b></td>
-      <td class="muted">27/30</td>
+      <td><b>93%</b></td>
+      <td class="muted">27/29</td>
     </tr>
 <tr>
       <td><span style="color:#0891b2">■</span> 光模块</td>
       <td><b>97%</b></td>
-      <td class="muted">28/29</td>
+      <td class="muted">29/30</td>
     </tr>
 <tr>
       <td><span style="color:#0d9488">■</span> 创新药</td>
       <td><b>92%</b></td>
-      <td class="muted">23/25</td>
+      <td class="muted">24/26</td>
     </tr>
 <tr>
       <td><span style="color:#d97706">■</span> 黄金</td>
@@ -98,9 +98,9 @@ th{color:#94a3b8;font-weight:600;background:#172033}
 
 <div class="section-title">校准后预测 · 影子对照(概率 → 次日 ETF)</div>
 <div class="verdict" style="border-left-color:#ef4444"><b class="warn">样本 12 &lt; 30,数字暂不作数</b> ·
-准确率 <b style="color:#ef4444">25%</b>(对 3),对比「事后多数类」67%:
-<b class="bad">低于 42 个百分点</b>。
-Brier <b style="color:#4ade80">0.2302</b>(常数 0.5 基线 0.25,skill 0.079),
+准确率 <b style="color:#ef4444">42%</b>(对 5),对比「事后多数类」58%:
+<b class="bad">低于 16 个百分点</b>。
+Brier <b style="color:#4ade80">0.2385</b>(常数 0.5 基线 0.25,skill 0.046),
 概率自带的校准信息 为正。
 注意模型每天对四个板块都表态(不回避),所以这里没有「回避率」这个退路。</div>
 
@@ -116,7 +116,7 @@ Brier <b style="color:#4ade80">0.2302</b>(常数 0.5 基线 0.25,skill 0.079),
       <td>40–48%</td>
       <td>1</td>
       <td>45%</td>
-      <td>0%</td>
+      <td>100%</td>
     </tr>
 <tr>
       <td>48–52%</td>
@@ -151,8 +151,8 @@ Brier <b style="color:#4ade80">0.2302</b>(常数 0.5 基线 0.25,skill 0.079),
 <tr>
       <td><span style="color:#0891b2">■</span> 光模块</td>
       <td>3</td>
-      <td><b>33%</b></td>
-      <td class="muted">1/3</td>
+      <td><b>67%</b></td>
+      <td class="muted">2/3</td>
     </tr>
 <tr>
       <td><span style="color:#0d9488">■</span> 创新药</td>
@@ -163,8 +163,8 @@ Brier <b style="color:#4ade80">0.2302</b>(常数 0.5 基线 0.25,skill 0.079),
 <tr>
       <td><span style="color:#d97706">■</span> 黄金</td>
       <td>3</td>
-      <td><b>33%</b></td>
-      <td class="muted">1/3</td>
+      <td><b>67%</b></td>
+      <td class="muted">2/3</td>
     </tr>
   </table>
 
@@ -186,8 +186,8 @@ Brier <b style="color:#4ade80">0.2302</b>(常数 0.5 基线 0.25,skill 0.079),
 <tr>
       <td>下行</td>
       <td>4</td>
-      <td><b>25%</b></td>
-      <td class="muted">1/4</td>
+      <td><b>75%</b></td>
+      <td class="muted">3/4</td>
     </tr>
 </table>
 <div class="note">状态取自预测当时的先验 driver(如「普跌 · 下行」)。单边阀的作用应体现在下跌市:那里看多的概率不该被抬高。</div>
@@ -881,18 +881,18 @@ Brier <b style="color:#4ade80">0.2302</b>(常数 0.5 基线 0.25,skill 0.079),
     </tr>
 <tr>
       <td>2026-10-30</td>
-      <td><span class="ok">AI 100%</span></td>
-      <td>46</td>
+      <td><span class="badge-kw">关键词</span></td>
+      <td>70</td>
       <td><span class="ok">四板块齐</span></td>
       <td><b>高9</b></td>
-      <td>7%</td>
+      <td>47%</td>
       <td><span class="ok">正常</span></td>
     </tr>
 </table>
 <div class="note">
   信号命中率 = 简讯中命中评分引擎信号(非「未命中明显信号」)的比例。源健康取自当日构建的抓取判定(悬停可看具体问题);2026-09-13 之前的存档无此字段。
   引擎列的百分比为 AI 实际研判覆盖率(2026-10-16 起记录);更早的存档只有「AI 是否曾成功」的布尔标记,不能反映降级。
-  秩相关两种口径:二值方向 ±1 → 0.026,加权方向分 net/total → -0.014(后者才用上幅度信息)。
+  秩相关两种口径:二值方向 ±1 → 0.034,加权方向分 net/total → -0.026(后者才用上幅度信息)。
   事后多数类基线 57%(永远看涨 43%),模型看多倾向 86%。
   无条件基线基于 ETF 全历史 1000 个板块日:次日上涨 48%。
 </div>
