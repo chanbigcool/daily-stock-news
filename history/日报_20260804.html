@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>科技板块日报 · 2026-08-04</title>
+<style>
+  :root {
+    --bg:#f0f2f5; --card-bg:#fff; --border:#e2e4e9; --text:#1a1d28;
+    --text-dim:#5f6570; --text-muted:#9ca0af; --accent:#2563eb;
+    --semi:#7c3aed; --optics:#0891b2; --ai:#059669;
+    --radius:12px; --shadow:0 1px 3px rgba(0,0,0,.04);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased;}
+  .container{max-width:900px;margin:0 auto;padding:16px 12px 40px;}
+
+  /* Header */
+  .header{text-align:center;padding:28px 16px 16px;margin-bottom:16px;}
+  .header h1{font-size:1.5rem;font-weight:800;color:#0f172a;letter-spacing:-0.02em;}
+  .header .subtitle{font-size:.78rem;color:var(--text-dim);margin-top:2px;}
+  .header .badge-row{margin-top:8px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
+  .chip{padding:2px 10px;border-radius:14px;font-size:.68rem;font-weight:600;border:1px solid var(--border);background:var(--card-bg);}
+  .chip-ai{color:#2563eb;border-color:#bfdbfe;background:#eff6ff;}
+  .disclaimer{font-size:.68rem;color:#b91c1c;margin-top:10px;display:inline-block;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:6px 12px;}
+
+  /* Stats mini */
+  .stats-mini{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:16px;}
+  .st{background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:.7rem;color:var(--text-dim);}
+  .st b{color:var(--text);font-size:.82rem;margin:0 1px;}
+
+  /* Sector summary row */
+  .sector-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;}
+  @media(max-width:600px){.sector-row{grid-template-columns:1fr;}}
+  .sc{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;text-align:center;}
+  .sc-name{font-weight:700;font-size:.82rem;margin-bottom:4px;}
+  .sc-stat{font-size:.7rem;color:var(--text-dim);}
+  .sc-stat strong{font-size:.9rem;}
+
+  /* Section divider */
+  .sec-title{display:flex;align-items:center;gap:8px;font-size:.82rem;font-weight:700;color:#0f172a;margin:20px 0 10px;}
+  .sec-title::before{content:'';width:3px;height:16px;background:var(--accent);border-radius:2px;}
+
+  /* News cards */
+  .news-grid{display:grid;gap:6px;}
+  .news-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;cursor:pointer;transition:box-shadow .15s,border-color .15s;display:flex;gap:10px;}
+  .news-card:hover{box-shadow:var(--shadow);border-color:#c8cbd4;}
+  .news-card.expanded{box-shadow:0 2px 8px rgba(0,0,0,.06);}
+  .card-left{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:44px;}
+  .card-cat{font-size:.6rem;font-weight:700;padding:3px 6px;border-radius:6px;text-align:center;white-space:nowrap;color:#fff;}
+  .cat-semi{background:var(--semi);}
+  .cat-optics{background:var(--optics);}
+  .cat-ai{background:var(--ai);}
+  .cat-other{background:#6b7280;}
+  .fresh-badge{font-size:.55rem;font-weight:800;color:#fff;background:#ef4444;border-radius:3px;padding:1px 4px;}
+
+  .card-right{flex:1;min-width:0;}
+  .card-title{font-size:.85rem;font-weight:700;color:#0f172a;line-height:1.3;margin-bottom:2px;}
+  .card-original-title{font-size:.67rem;color:var(--text-muted);margin-bottom:2px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .card-summary{font-size:.75rem;color:var(--text-dim);margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .card-meta{display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:.66rem;color:var(--text-muted);}
+  .card-meta a{color:var(--accent);text-decoration:none;}
+  .badge{display:inline-flex;align-items:center;gap:2px;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:700;}
+  .badge-bull{background:#dcfce7;color:#15803d;}
+  .badge-bear{background:#fee2e2;color:#b91c1c;}
+  .badge-neutral{background:#fff7ed;color:#c2410c;}
+  .badge-mixed{background:#fef3c7;color:#92400e;}
+  .impact-tag{font-size:.62rem;font-weight:700;padding:1px 6px;border-radius:3px;}
+  .impact-vhigh{background:#fee2e2;color:#b91c1c;}
+  .impact-high{background:#fff7ed;color:#c2410c;}
+  .impact-mid{background:#fef9c3;color:#a16207;}
+  .impact-low{background:#f0fdf4;color:#15803d;}
+  .ticker-inline{color:#7c3aed;font-weight:600;font-size:.63rem;}
+
+  /* Expand detail */
+  .card-detail{display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:.72rem;color:var(--text);line-height:1.65;}
+  .news-card.expanded .card-detail{display:block;}
+  .detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:6px;}
+  @media(max-width:480px){.detail-grid{grid-template-columns:repeat(2,1fr);}}
+  .dl{display:block;font-size:.6rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.03em;}
+  .verify-note{font-size:.66rem;color:#b45309;font-style:italic;padding:5px 8px;background:#fffbeb;border-radius:6px;}
+
+  /* Matrix table */
+  .table-wrap{overflow-x:auto;margin-bottom:16px;border-radius:var(--radius);border:1px solid var(--border);}
+  table{width:100%;border-collapse:collapse;font-size:.7rem;background:var(--card-bg);}
+  th{background:#f8f9fb;color:var(--text-dim);padding:7px 10px;text-align:left;font-weight:600;white-space:nowrap;border-bottom:2px solid var(--border);font-size:.65rem;text-transform:uppercase;}
+  td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  .shock-strong{color:#dc2626;font-weight:700;}
+  .shock-mid{color:#ea580c;font-weight:600;}
+  .shock-weak{color:#16a34a;}
+
+  /* Key points */
+  .key-points{display:grid;gap:5px;margin-bottom:16px;}
+  .kp-card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;font-size:.76rem;line-height:1.5;border-left:3px solid var(--accent);}
+
+  .market-summary{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;font-size:.78rem;line-height:1.6;margin-bottom:16px;}
+
+  /* Footer */
+  .footer{text-align:center;padding:14px;font-size:.66rem;color:var(--text-muted);border-top:1px solid var(--border);margin-top:20px;line-height:1.7;}
+  .footer strong{color:#b91c1c;}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>📡 科技板块日报</h1>
+  <div class="subtitle">2026-08-04 · 15 条精选 · 半导体 / 光模块 / AI应用</div>
+  <div class="badge-row">
+    <span class="chip chip-ai">AI 分析</span>
+    <span class="chip chip-ai">中文翻译</span>
+    <span class="chip">每交易日更新</span>
+  </div>
+  <div class="disclaimer">免责声明：基于公开信息自动整理，不构成投资建议。股市有风险，投资需谨慎。</div>
+</div>
+
+<div class="stats-mini">
+  <div class="st">📈利好 <b style="color:#15803d">4</b></div>
+  <div class="st">📉利空 <b style="color:#dc2626">9</b></div>
+  <div class="st">⚡极高 <b style="color:#dc2626">3</b></div>
+  <div class="st">🔥高影响 <b style="color:#ea580c">9</b></div>
+  <div class="st">📊板块 <b>3</b></div>
+</div>
+
+
+<div class="sec-title">板块速览</div>
+<div class="sector-row">
+
+  <div class="sc">
+    <div class="sc-name">半导体</div>
+    <div class="sc-stat">
+      <span class="badge badge-mixed">分化</span>
+      <span class="impact-tag impact-vhigh">强冲击</span>
+      <br><strong>9</strong> 条新闻
+    </div>
+  </div>
+
+  <div class="sc">
+    <div class="sc-name">光模块</div>
+    <div class="sc-stat">
+      <span class="badge badge-mixed">分化</span>
+      <span class="impact-tag impact-vhigh">强冲击</span>
+      <br><strong>6</strong> 条新闻
+    </div>
+  </div>
+
+  <div class="sc">
+    <div class="sc-name">AI应用</div>
+    <div class="sc-stat">
+      <span class="badge badge-bull">中性偏利好</span>
+      <span class="impact-tag impact-mid">中冲击</span>
+      <br><strong>2</strong> 条新闻
+    </div>
+  </div>
+
+</div>
+
+
+<div class="market-summary">💡 今日半导体、光模块、AI应用三大板块受全球市场剧烈冲击，韩国芯片股崩盘式暴跌后暴力反弹，反映出半导体高集中度与杠杆风险；光模块CPO概念遭重挫但核心龙头出现修复，内部割裂；AI应用层面，谷歌AI基础设施扩张与微软资本开支放缓角力，长期需求无虞但短期节奏生变，市场波动加剧，建议关注波动中的确定性方向如先进封装和AI服务器。</div>
+
+<div class="sec-title">新闻列表（按时间从近到远）</div>
+<div class="news-grid">
+<div class="news-card" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-optics">光模块</div>
+
+</div>
+<div class="card-right">
+<div class="card-title">一月亏光336万元 A股“追光者”7月惊魂</div>
+<div class="card-original-title">原文: 一月亏光336万元 A股“追光者”7月惊魂 - xw.qq.com</div>
+<div class="card-summary">投资者追高光模块板块一个月巨亏336万，揭示此前光模块暴跌的高风险。</div>
+<div class="card-meta">
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-mid">中</span>
+<span>xw.qq.com · 2天前</span>
+<span class="ticker-inline">📌 中际旭创、天孚通信</span>
+ <a href="https://news.google.com/rss/articles/CBMiV0FVX3lxTE4xQVVHRGJJaDlTWHo3QjdRWXNGbmtjM3ZndkZDanR4NHFDS2lVVWR2RmhqNHFQWTFvVUVKakJvT1Bhemo5RmFfMEU2Y1hGZ0lOSmRfeHgwbw?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">原文 →</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>中</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+<div class="verify-note">📝 前期暴跌的缩影，打击追高信心。</div>
+</div>
+</div></div>
+<div class="news-card" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-optics">光模块</div>
+
+</div>
+<div class="card-right">
+<div class="card-title">微软延长服务器折旧年限至25年，下调资本开支指引</div>
+<div class="card-original-title">原文: #折旧年限延至25年，微软资本开支指引下调 很多人第一眼解读... | OKX Orbit - OKX</div>
+<div class="card-summary">微软将服务器折旧年限大幅延至25年，并下调资本支出指引，引发市场对云厂商开支放缓的担忧。</div>
+<div class="card-meta">
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-high">高</span>
+<span>OKX · 2天前</span>
+<span class="ticker-inline">📌 中际旭创、天孚通信、新易盛</span>
+ <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE1QYU9OZnlLeEtBVzRTZVZ1UVJkZm9QOTdiMWNlMlVYd0FzZXk2QmpLNjY1ejlNc0xQOVUwVmxrWXJQY1d1MlBpY2V6aTR4cUxMNEI4dzdUVUZvMmZKS0haRA?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">原文 →</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+<div class="verify-note">📝 资本开支下调直接冲击光模块需求预期。</div>
+</div>
+</div></div>
+<div class="news-card" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-optics">光模块</div>
+
+</div>
+<div class="card-right">
+<div class="card-title">光模块、存储芯片暴力反弹！“易中天”飙涨，兆易创新一字涨停</div>
+<div class="card-original-title">原文: 光模块、存储芯片暴力反弹！“易中天”飙涨，兆易创新一字涨停！科技ETF冲击涨停，高“光”159363猛攻超10% - 新浪网</div>
+<div class="card-summary">光模块和存储芯片板块报复性反弹，中际旭创、天孚通信、新易盛等核心股大涨，兆易创新封涨停。</div>
+<div class="card-meta">
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-high">高</span>
+<span>新浪网 · 3天前</span>
+<span class="ticker-inline">📌 中际旭创、天孚通信、新易盛、兆易创新</span>
+ <a href="https://news.google.com/rss/articles/CBMiwAFBVV95cUxQaUUtbXZSVHhZeG9mYXZSRzFnVE1WOGFCa0h4dVlPSjBlZmdNZXRDcTdjN3psRXQ5cGVSSXNzZWIxUW5ERnNaMVdhOVFYZ3FFSUpteWY2OTFUOHJ3bXBldl9IckI1eTNKaER2b0ZDekxIREJSUXZEU2JScnQ5WHBCNEhGQkdkWkZQMW5ISTF6dTJMMkhPWW51bDczaVRIY05Wa1BjeWxKSU52VjBzbG5CWG83X0xqb3kwaFVFU081UXY?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">原文 →</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+<div class="verify-note">📝 情绪修复性暴力反弹，资金回补明显。</div>
+</div>
+</div></div>
+<div class="news-card" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-ai">AI应用</div>
+
+</div>
+<div class="card-right">
+<div class="card-title">谷歌为AI数据中心债务兜底，换取两成股权  AI算力军备竞赛延续</div>
+<div class="card-original-title">原文: #谷歌为AI数据中心债务兜底，换取两成股权 AI算力军备竞赛迎... | OKX Orbit - OKX</div>
+<div class="card-summary">谷歌通过债务担保方式扩张AI数据中心，换取项目两成股权，显示AI基础设施需求旺盛。</div>
+<div class="card-meta">
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-high">高</span>
+<span>OKX · 3天前</span>
+<span class="ticker-inline">📌 工业富联、中际旭创</span>
+ <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE1CV212QXhaUmV5VDdiSGN2NjlJRHBxLS1GbnNiQkR6SWU4Y3lkRTF1aG1XdGMxU2VHMVRkVXVDUEpYYWxrbTg1UGswc0k5SElfa3FLWnBweGhlcGR3UElHSQ?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">原文 →</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+<div class="verify-note">📝 AI算力军备竞赛持续，利好上游硬件和基础设施。</div>
+</div>
+</div></div>
+<div class="news-card" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-semi">半导体</div>
+
+</div>
+<div class="card-right">
+<div class="card-title">大空头Michael Burry做空英伟达、美光及半导体ETF，投资人紧盯后续</div>
+<div class="card-original-title">原文: Michael Burry Just Turned His Guns on Nvidia, Micron and SOXX — ETF Investors Are Watching the Fallout - Benzinga</div>
+<div class="card-summary">“大空头”Burry建立针对英伟达、美光和半导体ETF的空头头寸，打压全球芯片股情绪。</div>
+<div class="card-meta">
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-high">高</span>
+<span>Benzinga · 3天前</span>
+<span class="ticker-inline">📌 寒武纪、兆易创新、半导体ETF</span>
+ <a href="https://news.google.com/rss/articles/CBMiugFBVV95cUxQNlRfb0RQY1pxeU5HSjdoWjlLb0pUc3M1aV83c1hSN3lhbFQyVDdBakJRaG1URWRUYl82bkJsZm5zY0k2akRfX2F6ZEtsaS16X011TG91RkNpN0VMdVpaOEJBcFJOUFBybGlzbUN6RWl0R0R1WHlod2ZkNUhZd29ERU1YZWxPMUZoalZDUXlfLXFQaFRlb1huS1ZqZ1BXYXg3WGVJckFTZzJody1nMHVYUXRlX0tkUGd6Z1E?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">原文 →</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+<div class="verify-note">📝 大空头做空标志性半导体标的，情绪面打击显著。</div>
+</div>
+</div></div>
+<div class="news-card" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-semi">半导体</div>
+
+</div>
+<div class="card-right">
+<div class="card-title">台积电被曝研发先进芯片封装技术，挑战英特尔主导地位</div>
+<div class="card-original-title">原文: TSMC Is Reportedly Developing Advanced Chip Packaging Tech to Challenge Intel's Dominance - TradingView</div>
+<div class="card-summary">台积电开发先进封装技术，意图挑战英特尔在高端封装领域的领导地位，先进封装竞争加剧。</div>
+<div class="card-meta">
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-high">高</span>
+<span>TradingView · 3天前</span>
+<span class="ticker-inline">📌 长电科技、通富微电、华天科技</span>
+ <a href="https://news.google.com/rss/articles/CBMi4gFBVV95cUxPWWVNcTFfRFpWamtnSE05ZEo1dnRQRFBDaUdhSEkwTnp3ejA0dWdXYUlhbG5LbUJsbnI3ZG1fUTE0VG9kaXhSVDZXODJYMVdNbVJPX1NJNlVkaUFhTmZ4ZUhrVnVHMnNWTmVQalYwY1o3OFF0X0RVczJBLWJhOWlONm1xdWlJOHdCdHptSTExa09YVXE0NC0wX2xPQS1yOFYwTUl5dGJUU3BqaUpzNERER1pZSDYzU2xhaXRkM2VMYWtzM1h3WFNvbUp2U1E2aEFxTnp6OVFNRHhkTm5uNWd5WDR3?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">原文 →</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+<div class="verify-note">📝 先进封装竞赛升级，利好国内封测龙头。</div>
+</div>
+</div></div>
+<div class="news-card" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-semi">半导体</div>
+
+</div>
+<div class="card-right">
+<div class="card-title">韩国股市今日为何暴涨？KOSPI飙升超16%，SK海力士暴涨25.79%</div>
+<div class="card-original-title">原文: Korea Stock Market (KRX) Today (July 31): Why is the Korean Stock Market Up Today? KOSPI Skyrockets Over 16%, KOSDAQ Sur</div>
+<div class="card-summary">韩国股市报复性反弹，KOSPI暴涨逾16%，SK海力士单日涨超25%，恐慌情绪迅速修复。</div>
+<div class="card-meta">
+<span class="badge badge-bull">利好</span>
+<span class="impact-tag impact-vhigh">极高</span>
+<span>sundayguardianlive.com · 4天前</span>
+<span class="ticker-inline">📌 兆易创新、中芯国际</span>
+ <a href="https://news.google.com/rss/articles/CBMisgJBVV95cUxQdkJRMjF1dDJqTjBNNWhIYjl3aTFicHVxSkhFYjBlUnU0Mk1KTW03eE9vRGZvOWctbk1CN09xcXRDUThVaWVoZW1hV0Fxb25WT0x3YnBKcTEzbmVVVnIxWU1BelVvbUZocTFWQVh3dHdNMm9zbVRuUGFBQjVrakhGMnJvZlhBdjUwR0tqTHhUM0FXZEZlUnQyRWx6SGJWTjN3ampwRjZaS2VreUdTWms1aXQ4ZW1CLUZyeWpmRGFrd0FQa2VfSnhFRHZjSEM4emEwUEpWbjVZR09BVG1rVy13aUJLMEhqaEJTTjNHOXJDN1VUcjRhSTc4VDdPOVpqWkFSOVFlNHNJMUQ5eDFmX3NfMGMxX004ZC11bFhjNHdOTnM5QUVTVlowZ0tkTXBkZjZRQkHSAbcCQVVfeXFMUE1uNFZHRTE4Y0thaTZublBaZFBQYjFsd3hNZVpraG12ZkhiVm5PRTdXZ0hvSUtaZUtaUjl0cjNQYmkwcl8yaVF4Y2g2cE5kVFp3Z3hncEYxZVAxaXpzODdHVTBWNXdVN3JyQ04zN1JoLWI1RGxKWndENnZCTXBjTjg2N3Y2dFZSZ1RhQ2s2RE5kTmFZMV9qdWN3SVhydW5JUExhUnZZVlphN1N4XzFUV3hoSHRJNVhwNzFxYzA2NWlLb04zQzU1UlVNM0F6SGV4UWR5TDd5MDVJeDllME5TMGMtVU5hM0FHWEJaenA0ZnkwSHJ2aTVmRmg0cmhXOHhIOXFHQlFfc1ZMbC13OTYtYzI3d0NWdllMVVRRbmJRVTFZS0tiRXRaYlVRNkVwTGx4cjBmRjNvRk0?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">原文 →</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利好</div>
+<div><span class="dl">程度</span>极高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+<div class="verify-note">📝 超跌暴力反弹，情绪逆转或带动A股半导体修复。</div>
+</div>
+</div></div>
+<div class="news-card" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-ai">AI应用</div>
+
+</div>
+<div class="card-right">
+<div class="card-title">英特尔罕见的AI优势面临新威胁</div>
+<div class="card-original-title">原文: Intel's Rare AI Advantage Faces a New Threat - TradingView</div>
+<div class="card-summary">英特尔在AI芯片领域的独特优势遭遇新兴挑战，市场担忧其AI市场份额受侵蚀。</div>
+<div class="card-meta">
+<span class="badge badge-mixed">分化</span>
+<span class="impact-tag impact-mid">中</span>
+<span>TradingView · 4天前</span>
+<span class="ticker-inline">📌 寒武纪、海光信息</span>
+ <a href="https://news.google.com/rss/articles/CBMipwFBVV95cUxQZ2dfSy1xSUd6eFJjQjRaUFJYSGlIclJVd1JKV2d1ek9FNmZyNDBOanBfMWFxUFEtalJpdFVKYUxTelV2NWtvTFhLWEVTa1JFcER2enNjaEl5VWV5ZWRFQzFDd3pJYkJyWWp6OE5SbE1Zai1IeWZ4YTAySXMzV0ZBWmNYTVdxS0FOemlnVkNsc0FlR3BOS0lVSmxDY0RqUTA0V0YxVGpfYw?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">原文 →</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>分化</div>
+<div><span class="dl">程度</span>中</div>
+<div><span class="dl">确定性</span>中</div>
+<div><span class="dl">窗口</span>中期</div>
+</div>
+<div class="verify-note">📝 英特尔AI受威胁可能间接利好国产AI芯片替代逻辑，但整体格局尚不明朗。</div>
+</div>
+</div></div>
+<div class="news-card" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-semi">半导体</div>
+
+</div>
+<div class="card-right">
+<div class="card-title">韩国股市连续两天熔断：SK海力士创纪录利润背后“集中与杠杆”风险显现</div>
+<div class="card-original-title">原文: Circuit Breakers Hit South Korean Stocks Two Days in a Row: Behind SK hynix's Record Profit, &quot;Concentration and Leverage</div>
+<div class="card-summary">韩国芯片股连续熔断，SK海力士尽管利润创纪录，但持仓集中和杠杆风险爆发，加剧波动。</div>
+<div class="card-meta">
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-high">高</span>
+<span>XenoSpectrum · 4天前</span>
+<span class="ticker-inline">📌 兆易创新</span>
+ <a href="https://news.google.com/rss/articles/CBMieEFVX3lxTFBVQjVQNnlfMHB2ZkpfZ2xUMy1OOTBnMGhDai1VcGd0MUpJaXNPWEpKWjhJMmlERm1LX0dxYi0yRnVIOXFMNVhUWWFnTE5KNFlHSWxNdkFOQll1a3ZaOFdoT0h6OU93bl9YSHFiaVhta0JQUXBweGNxYg?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">原文 →</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+<div class="verify-note">📝 高集中度杠杆交易引发踩踏，系统性风险传导A股。</div>
+</div>
+</div></div>
+<div class="news-card" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-semi">半导体</div>
+
+</div>
+<div class="card-right">
+<div class="card-title">韩国股市7月30日为何下跌？KOSPI跌超7%，SK海力士跌9.6%</div>
+<div class="card-original-title">原文: Korea Stock Market (KRX) Today (July 30): Why is the Korean Stock Market Down Today? KOSPI Falls Over 7%, KOSDAQ Slips N</div>
+<div class="card-summary">韩国股市延续跌势，SK海力士再跌近10%，三星反弹，半导体板块内部分化。</div>
+<div class="card-meta">
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-high">高</span>
+<span>sundayguardianlive.com · 5天前</span>
+<span class="ticker-inline">📌 兆易创新</span>
+ <a href="https://news.google.com/rss/articles/CBMizAJBVV95cUxQenJNWERBSWtLNEdjOHBJWldoUHZpSUNkbVJILVZLQU5Tc25JTGt5Tmhlb3BNZ3E0N08xVjVobWZDSXRqMTFNMDFQX2gtY2wyc0N3SjZEellQdjQ2cTJmSUM1ck1RU3diQ3hEcU9qbHVWRUFqM0JpVUI2SFdlc04zUWExLUdvaWRzNXdaSldvQ09HbFpSTEZCcXo1X2xEdXJWSkRFRFhvR3RWWkZmeGhkMll6anR2cjNNNURySGxNTGxmZDN2ZVd3eEdBcjZvWDJXV2dkckNFT2FoVkdvU2JWR1U1VnFfMEhEWXplNEVIN1VzMzFLZ2JTdnU1YVFjcTFoWlBFN2dOekgyc1JnUy0xZ1VoU3cxWTJhRDZ5NUsyWWJPVDREeXl5RnZyeWhDRUVXX1R5bUhrNUtUaEF1bnZUTnlKaWdyOHczMWNpMNIB0gJBVV95cUxOVTJudU5vT29hUFdMSHVueVo5a0c3OWh1b3RUSUw3VzNEcF9wLU1fSmtXeExyRlFLMGdCdjBZaF9BS2M2OE1SeXRVX1VnM0FkUmFGQjhQSk44Zlh6UVNfbElfeDhnVThQYXYtdWJEeXZFMFlCVGlZR2N2QVJhQ0RQZDNVbG9TcG84NTlUT2Z4dVVnZ1JZSkpac0lhS2E4S1VQUjRudkxTUkVmbmUyVlYwOUs4VnQ1NTh6ZGJSMEl3V3dYa1VFcjY3UFJFOWdqMDB1WndlZmNLWXk3RTNFTGJwM0ZPYm5IT01OOEZWc2g1Y2ZXSXJPWmZnd3Bmb0pjTDUxbzlGVkd4QjBkb2dRckR3MXExNF9DVmF0dGdsbmp0c3ZSUTdaM2JSV0NzSjZNTlNIaXdRMk51WTUzUW9iUFlvTlp3ZUVzRzVQZjh2aENiZV80QQ?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">原文 →</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+<div class="verify-note">📝 连续重挫后虽有分化，但整体空头氛围浓厚。</div>
+</div>
+</div></div>
+<div class="news-card" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-optics">光模块</div>
+
+</div>
+<div class="card-right">
+<div class="card-title">“易中天”集体反弹！中际旭创涨超4%，光通信多股下跌</div>
+<div class="card-original-title">原文: “易中天”集体反弹！中际旭创涨超4%，光通信多股下跌 - 新浪网</div>
+<div class="card-summary">光模块核心“易中天”反弹，但光通信内部多股仍下跌，板块内部分化严重。</div>
+<div class="card-meta">
+<span class="badge badge-mixed">分化</span>
+<span class="impact-tag impact-mid">中</span>
+<span>新浪网 · 5天前</span>
+<span class="ticker-inline">📌 中际旭创、天孚通信、新易盛</span>
+ <a href="https://news.google.com/rss/articles/CBMihgFBVV95cUxNbVJ0UUp0SFl1MjRBVlVyMmYzUVB3TFE3VVVOXzc0c3ozbTJCblJjdm9pa3BZR3JFX0NiZVFrSG5QNzVtVXExdXE4T21YY0xSand1RHg1MjdnZ3k4dHR6anB1MUhkSmkwRWxYWldFenB2TVFlNk9hcXVseV95ZGNZQTlDazk0QQ?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">原文 →</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>分化</div>
+<div><span class="dl">程度</span>中</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+<div class="verify-note">📝 龙头反弹但跟风品种弱势，资金聚焦核心标的。</div>
+</div>
+</div></div>
+<div class="news-card" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-semi">半导体</div>
+
+</div>
+<div class="card-right">
+<div class="card-title">韩国KOSPI今日为何大跌？芯片抛售潮触发8%暴跌</div>
+<div class="card-original-title">原文: Why Is KOSPI Down Today? Chip Rout Triggers 8% Crash - Memeburn</div>
+<div class="card-summary">韩国股市因芯片股恐慌抛售暴跌8%，全球半导体板块情绪受重创。</div>
+<div class="card-meta">
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-vhigh">极高</span>
+<span>Memeburn · 5天前</span>
+<span class="ticker-inline">📌 兆易创新、北方华创、中芯国际</span>
+ <a href="https://news.google.com/rss/articles/CBMiWEFVX3lxTE92WFRJc25YY0lvLW9ZQS1LdFl4SVhvLUd5RHY4MUcwbTZjcGZzeHdtLWtYQ3hpdjJ4WkducWRSQkcxV2dHeU5TZ2JmQTBJTDNCUldMa1dwYng?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">原文 →</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>极高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+<div class="verify-note">📝 全球半导体恐慌蔓延，A股相关标的有补跌风险。</div>
+</div>
+</div></div>
+<div class="news-card" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-semi">半导体</div>
+
+</div>
+<div class="card-right">
+<div class="card-title">7月29日KOSPI暴跌约8%，三星跌7%、SK海力士跌超9%</div>
+<div class="card-original-title">原文: Korea Stock Market (KRX) Today (July 29): Why Is the Korean Stock Market Down Today? KOSPI Crashes Around 8%, KOSDAQ Fal</div>
+<div class="card-summary">韩国股市遭遇黑色星期一，三星和SK海力士领跌，半导体恐慌达到顶峰。</div>
+<div class="card-meta">
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-vhigh">极高</span>
+<span>sundayguardianlive.com · 6天前</span>
+<span class="ticker-inline">📌 兆易创新、北方华创</span>
+ <a href="https://news.google.com/rss/articles/CBMixwJBVV95cUxPeGdySzl1VElWVndaSUVJZ2ZIOW02a1FCY2ppOHByUlpFQVJaNFEtZU9USGtFbzFKS2VPNjk5M1NDcll4WW5aNXRWVGZvRXFPSHdjX1N0S2NONF84QXBNU2lZeU1LaHVWMk84cjJaXzZrTTRmVUlybGhYRVBsQmQ0cGdnTVpKb3Z6TVdqdEU4OW1tby1paDBaQXgwZVQxQlFWdzVMaF81TjRDYk5pQ01tcWVjYzBEMlNsbWpCcW8yUVcwWXJZcTItcEg2UEwwcGRkazlVUWczWTVJLUlHYzVxOUU4V1FvWTIwUkN0YlFaVjRjbm13NHlWWGstclpwOHhDbHRZNVAxOHR0ME9RTTBVMG5heU9nbGxXVEZGYzl1ZzltVXJISnFUX3hFcVJ5UlAzeEFzMzVDMHpCQ3F0NUpZdXNQeU9sTGvSAcwCQVVfeXFMTmhBYmVQUTdzQUZodDNNZDBpb0ZIcHBmQUlnRl9wTWs4N1hHNG5OVWFlVzQzX3djUllBTkRuMk5oRlM2a3BxM0JDbHhwUEZ0YXhmcnpPWHdCX0ljMXlwb2xhZXNqeVotZXRWNU1TRTVjaWRRd3lSd1hYenlVN1UxZm5IMGZreXlsN0d5SVMtYnM4ai12bUFqXzBnTmxuQmVTUk9RU0ozTFl0aUNOLTlMbDRKQ0lCVXJWc0VZRi1zaTl1cEFNQl9ONUpwcVVQb3lyWEFSX1RDTS1WVDA2X0FINXFFRFpUcERYVlk3clhucGJ0My1xZDg2OTlDLW9Jb0FlVDhmdVE1aVlVX2ZWU0tmRmFwQks2Nm1JZmpCR2hMckN4Nms5NnlaQk1kNVRkcFpvS1pfWFl0LXlIWHVxZVpfOHltdjBmTEg5Z1d4bEQ?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">原文 →</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>极高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+<div class="verify-note">📝 暴跌开启恐慌模式，A股开盘承压。</div>
+</div>
+</div></div>
+<div class="news-card" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-optics">光模块</div>
+
+</div>
+<div class="card-right">
+<div class="card-title">龙头澄清无效？CPO概念继续承压，剑桥科技仍2连跌停、东山精密触及跌停</div>
+<div class="card-original-title">原文: 龙头澄清无效？CPO概念继续承压，剑桥科技仍2连跌停、东山精密触及跌停 - caiwennews.com</div>
+<div class="card-summary">CPO概念股在澄清后依旧遭抛售，剑桥科技连续跌停，东山精密跌停，市场对技术路线分歧加大。</div>
+<div class="card-meta">
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-high">高</span>
+<span>caiwennews.com · 6天前</span>
+<span class="ticker-inline">📌 剑桥科技、东山精密、中际旭创</span>
+ <a href="https://news.google.com/rss/articles/CBMiXEFVX3lxTE1ocTR4b0h2Z056VUdSdUlac0lUSTVrWkFvYkZvY0dZWFVScFYwTUI2R3BvRlQtWW10WkJpSHhHeGo1ZVVORjhUTm05cWs0T0ZfN3o3YUtOVjEwMVFV?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">原文 →</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+<div class="verify-note">📝 CPO技术路线疑虑导致资金出逃，短期压力难消。</div>
+</div>
+</div></div>
+<div class="news-card" onclick="this.classList.toggle('expanded')">
+<div class="card-left">
+<div class="card-cat cat-semi">半导体</div>
+
+</div>
+<div class="card-right">
+<div class="card-title">三星、SK海力士下跌拖累KOSPI暴跌，韩国紧盯科技巨头财报</div>
+<div class="card-original-title">原文: Samsung, Hynix slide drives KOSPI plunge as Korea eyes Big Tech earnings - CHOSUNBIZ - Chosunbiz</div>
+<div class="card-summary">三星电子和SK海力士股价重挫拖累KOSPI大跌，市场聚焦即将到来的科技巨头财报。</div>
+<div class="card-meta">
+<span class="badge badge-bear">利空</span>
+<span class="impact-tag impact-high">高</span>
+<span>Chosunbiz · 6天前</span>
+<span class="ticker-inline">📌 兆易创新、江波龙</span>
+ <a href="https://news.google.com/rss/articles/CBMigAFBVV95cUxNRU1GcmNXeTM4VDJBdUN2a3kzZ0M0anYyZ3I5U3YyTmNwY0l1N2lmcDFIQjVHVGMxSE1NSXp2VjVUcS1ZV3hmMUlPN0d3S3JkUHEwUVg4TFUyRF9HOUQwdGo1dXdaRExkMmVLbDN3bjZZajMxa3VjSFQ4Z0VPMlBzSNIBlAFBVV95cUxPTk9HRHZhM2R3S2JkTDdYOUNKWm5XS3h3d1c1eHNWYmYyVi1uZWtCa3RBS1FMWVlaT3FoQ2JPTGcwSGM2YXFKeFAzN1NkYlhfQktvaU94bUllbHJBM0VqeF9zVlZHREp2SDZUVHdiQ0RaZDhMTG5BUTVGM2Jrc0V5b1o4NGdPcXJlbGZoeGYyOEo5ZXRR?oc=5" target="_blank" rel="noopener" onclick="event.stopPropagation()">原文 →</a>
+</div>
+<div class="card-detail">
+<div class="detail-grid">
+<div><span class="dl">方向</span>利空</div>
+<div><span class="dl">程度</span>高</div>
+<div><span class="dl">确定性</span>高</div>
+<div><span class="dl">窗口</span>短期</div>
+</div>
+<div class="verify-note">📝 存储芯片龙头下跌，对A股存储板块构成直接压力。</div>
+</div>
+</div></div>
+</div>
+
+<div class="sec-title">板块冲击矩阵</div>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>板块</th><th>冲击</th><th>方向</th><th>新闻</th><th>传导逻辑</th><th>关联标的</th></tr></thead>
+    <tbody><tr><td style="font-weight:700;">半导体</td><td class="shock-strong">强</td><td style="color:#ea580c;">分化</td><td>9</td><td>韩国芯片股遭遇史诗级剧烈波动，暴跌后报复性反弹，高集中度杠杆风险暴露；大空头做空英伟达和美光打击情绪，但台积电先进封装等技术进展提供支撑，整体呈现高波动分化格局。</td><td>兆易创新、北方华创、中芯国际</td></tr>
+<tr><td style="font-weight:700;">光模块</td><td class="shock-strong">强</td><td style="color:#ea580c;">分化</td><td>6</td><td>光模块板块大起大落，核心龙头“易中天”反弹修复，但CPO概念股持续重挫，微软资本开支下调带来需求担忧，谷歌AI扩张又提供长期信心，内部分化极为严重。</td><td>中际旭创、天孚通信、新易盛</td></tr>
+<tr><td style="font-weight:700;">AI应用</td><td class="shock-mid">中</td><td style="color:#ea580c;">中性偏利好</td><td>2</td><td>谷歌AI数据中心扩张彰显算力军备竞赛延续，对AI基础设施和应用长期利好；微软资本开支调整带来短期不确定，但整体AI赛道具备韧性。</td><td>寒武纪、海光信息、工业富联</td></tr></tbody>
+  </table>
+</div>
+
+
+<div class="sec-title">今日要点</div>
+<div class="key-points"><div class="kp-card">全球半导体经历“过山车”行情，韩国KOSPI两日暴跌后一日暴涨16%，波动极端</div>
+<div class="kp-card">光模块板块大起大落，“易中天”反弹但CPO概念承压，内部分歧白热化</div>
+<div class="kp-card">微软下调资本开支指引与谷歌为AI数据中心债务兜底形成冰火两重天，AI投资逻辑分化</div>
+<div class="kp-card">大空头Michael Burry做空英伟达及半导体ETF，加剧科技股恐慌情绪</div>
+<div class="kp-card">台积电研发先进封装挑战英特尔，先进封装环节或成半导体新热点</div></div>
+
+
+<div class="footer">
+  基于 Google News RSS 自动抓取 · Claude API 智能分析 + 中文翻译<br>
+  监控范围：半导体 / 光模块 / AI应用 &nbsp;|&nbsp; 包含韩国及美股半导体市场<br>
+  不构成投资建议。<strong>股市有风险，投资需谨慎。</strong>
+</div>
+
+</div>
+</body>
+</html>
