@@ -3590,21 +3590,21 @@
     {
       "date": "20261103",
       "displayDate": "2026-11-03",
-      "isAi": true,
-      "aiCoverage": 100,
-      "newsCount": 41,
+      "isAi": false,
+      "aiCoverage": 0,
+      "newsCount": 91,
       "missingSectors": [],
       "covered": true,
       "impact": {
-        "vhigh": 0,
-        "high": 3
+        "vhigh": 4,
+        "high": 7
       },
-      "signalHitRate": 5,
+      "signalHitRate": 49,
       "directions": {
-        "利好": 1,
-        "利空": 1,
-        "分化": 0,
-        "中性": 2
+        "利好": 0,
+        "利空": 2,
+        "分化": 1,
+        "中性": 1
       },
       "health": {
         "level": "ok",
@@ -3613,12 +3613,12 @@
       "matrix": [
         {
           "name": "半导体",
-          "direction": "中性",
+          "direction": "利空",
           "shock": "强"
         },
         {
           "name": "黄金",
-          "direction": "中性",
+          "direction": "分化",
           "shock": "强"
         },
         {
@@ -3628,8 +3628,8 @@
         },
         {
           "name": "创新药",
-          "direction": "利好",
-          "shock": "弱"
+          "direction": "中性",
+          "shock": "中"
         }
       ]
     }
@@ -3639,7 +3639,7 @@
   "coverageRate": 90,
   "avgImpactHigh": 12,
   "matchedDays": 55,
-  "etfHistoryDays": 251,
+  "etfHistoryDays": 250,
   "research": {
     "total": 178,
     "stated": 162,
@@ -3696,8 +3696,8 @@
         "reliable": true
       }
     },
-    "spearmanBinary": 0.02893178477351779,
-    "spearmanWeighted": -0.03386537569641578,
+    "spearmanBinary": 0.034604683748717356,
+    "spearmanWeighted": -0.027612680531155884,
     "baselines": {
       "inSample": {
         "alwaysUp": 43,
@@ -3706,7 +3706,7 @@
         "bullishBias": 86
       },
       "unconditional": {
-        "obs": 1000,
+        "obs": 996,
         "alwaysUp": 48,
         "alwaysDown": 52,
         "majority": 52
@@ -3714,8 +3714,8 @@
     }
   },
   "recap": {
-    "fired": 109,
-    "hit": 102,
+    "fired": 108,
+    "hit": 101,
     "rate": 94,
     "since": "2026-08-19",
     "bySector": {
@@ -3735,8 +3735,8 @@
         "rate": 92
       },
       "黄金": {
-        "fired": 20,
-        "hit": 19,
+        "fired": 19,
+        "hit": 18,
         "rate": 95
       }
     }
