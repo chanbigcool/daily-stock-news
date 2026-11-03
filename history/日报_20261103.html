@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>行业板块日报 · 2026-11-03</title>
+<style>
+  :root{
+    --bg:#fff; --hover:#f9fafc; --chip:#eceff5; --tint:#f7f8f9;
+    --ink:#222; --ink2:#383838; --link:#555; --muted:#999; --faint:#b3b3b3;
+    --rule:#e6e7ea; --rule2:#f0f0f0;
+    --red:#de0422; --green:#13a85b;
+    --g1:#999; --g2:#d9d9d9; --track:#efefef;
+    --mono:"SF Mono","Cascadia Mono",Consolas,"Liberation Mono",monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;}
+  .bull{color:var(--red);}
+  .bear{color:var(--green);}
+  .neutral{color:var(--muted);}
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;}
+  a:focus-visible,button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--red);outline-offset:2px;}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}*{transition:none!important;animation:none!important;}}
+  .wrap{width:100%;max-width:1280px;margin:0 auto;padding:0 28px;}
+
+  /* 顶部工具条 + 主导航 */
+  .topbar{border-bottom:1px solid var(--rule2);font-size:13px;color:#6a6a6a;}
+  .topbar .wrap{display:flex;align-items:center;gap:26px;min-height:44px;padding-top:5px;padding-bottom:5px;flex-wrap:wrap;}
+  .topbar .tb-links{display:flex;align-items:center;gap:26px;}
+  .topbar a:hover{color:var(--red);}
+  .topbar a.on{color:var(--ink);font-weight:600;}
+  .tb-right{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);white-space:nowrap;}
+  .tb-right label{font-size:12px;color:var(--muted);}
+  #historySelect{font:inherit;font-size:12px;padding:4px 6px;border:1px solid var(--rule);background:#fff;color:var(--ink);max-width:128px;}
+  #today-btn{font:inherit;font-size:12px;padding:4px 10px;border:1px solid var(--rule);background:#fff;color:var(--ink2);cursor:pointer;}
+  #today-btn:hover{border-color:var(--ink);color:var(--ink);}
+  .src-tag{font-size:11.5px;color:var(--muted);border:1px solid var(--rule);padding:2px 8px;white-space:nowrap;}
+  .refresh-btn{min-width:84px;text-align:center;padding:5px 14px;font:inherit;font-size:12px;font-weight:600;color:var(--ink);background:#fff;border:1px solid var(--ink);cursor:pointer;transition:background .15s,color .15s;}
+  .refresh-btn:hover{background:var(--ink);color:#fff;}
+  .refresh-btn:disabled{color:var(--muted);border-color:var(--rule);cursor:progress;animation:pulse 1.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.55;}}
+  @media(prefers-reduced-motion:reduce){.refresh-btn:disabled{animation:none;}}
+  .refresh-toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:999;padding:9px 18px;font-size:12.5px;font-weight:600;color:#fff;transition:opacity .3s;}
+  .toast-ok{background:var(--green);}
+  .toast-err{background:var(--red);}
+
+  .nav{border-bottom:1px solid var(--rule);}
+  .nav .wrap{display:flex;align-items:center;height:64px;}
+  .brand{font-size:24px;font-weight:800;letter-spacing:-.6px;margin:0 40px 0 0;white-space:nowrap;}
+  .brand em{font-style:normal;color:var(--red);}
+  .nav-links{display:flex;gap:32px;}
+  .nav-links a{font-size:18px;color:#4d4d4d;line-height:1;}
+  .nav-links a:hover{color:var(--red);}
+  .nav-right{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap;}
+  .nav-right b{color:var(--ink);font-weight:600;}
+
+  /* 今日复盘:全页导语 */
+  .market-summary{display:flex;gap:16px;margin:22px 0 0;padding:16px 18px 17px 16px;border-left:3px solid var(--red);background:var(--tint);}
+  .ms-label{flex:none;font-size:11.5px;font-weight:700;color:var(--ink);letter-spacing:.08em;padding-top:4px;white-space:nowrap;}
+  .market-summary p{font-size:15px;line-height:1.75;color:var(--ink);max-width:76ch;text-wrap:pretty;}
+  .market-summary b{font-weight:700;font-variant-numeric:tabular-nums;}
+
+  /* 三栏。中栏留给正文,左右两栏按「能放下 2 列指数 + 5 字板块名」定宽 */
+  .cols{display:grid;grid-template-columns:288px minmax(0,1fr) 264px;gap:26px;align-items:start;padding-top:22px;}
+  .feed,.quotes,.rail{min-width:0;}
+  .ph{display:flex;align-items:center;gap:8px;height:48px;border-top:2px solid var(--ink);}
+  .ph h2{margin:0;font-size:16px;font-weight:700;line-height:1;}
+  .ph .note{margin-left:auto;font-size:12px;color:var(--muted);font-weight:400;}
+  .ph .more{font-size:12px;color:var(--muted);font-weight:400;}
+
+  /* 左栏 */
+  .qsec{padding:11px 0 9px;border-bottom:1px solid var(--rule);}
+  .qsec-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:7px;}
+  .sc{font:inherit;display:flex;align-items:baseline;flex-wrap:wrap;gap:3px 8px;min-width:0;flex:1;background:none;border:0;padding:0;text-align:left;cursor:pointer;color:inherit;}
+  .sc:hover .qname{color:var(--red);}
+  .sc[aria-pressed="true"] .qname{color:var(--red);}
+  .qname{font-size:16px;font-weight:700;line-height:1.3;}
+  .sc-badges{display:inline-flex;flex-wrap:wrap;gap:3px 8px;align-items:baseline;}
+  .qchg{font-size:15px;font-weight:700;flex:none;}
+  .qetf{display:grid;grid-template-columns:52px 1fr auto;gap:8px;align-items:center;padding:4px 9px;margin-bottom:3px;background:var(--chip);font-size:12px;line-height:20px;transition:background-color .12s ease,color .12s ease;}
+  .qetf:hover{background:var(--red);color:#fff;}
+  .qetf:hover .qcode,.qetf:hover .qetf-name,.qetf:hover .qchg{color:#fff;}
+  .qcode{font-family:var(--mono);font-size:10.5px;color:var(--muted);}
+  .qetf-name{color:var(--ink2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+  .qetf .qchg{font-weight:700;}
+  .qstats{margin-top:14px;}
+  .qstats div{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--rule2);font-size:12px;color:var(--muted);}
+  .qstats div:last-child{border-bottom:0;}
+  .qstats b{font-weight:700;color:var(--ink);}
+  .qstats b.bull{color:var(--red);}
+  .qstats b.bear{color:var(--green);}
+  .qfoot{margin-top:10px;font-size:11px;line-height:1.7;color:var(--faint);}
+  /* 左栏:大盘指数带。徽标颜色跟涨跌色相反:下行=绿、上行=红,与行情同源 */
+  .mkt{padding:11px 0 12px;border-bottom:1px solid var(--rule);}
+  .mkt-top{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+  .mkt-regime{font-size:12px;font-weight:700;line-height:1;padding:4px 8px;color:#fff;background:var(--muted);white-space:nowrap;}
+  .mkt-regime.down{background:var(--green);}
+  .mkt-regime.up{background:var(--red);}
+  .mkt-note{margin-left:auto;font-size:11px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mkt-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;}
+  .mkt-idx{display:flex;align-items:baseline;justify-content:space-between;gap:6px;padding:3px 0;font-size:12px;transition:background-color .12s ease;}
+  .mkt-idx:hover{background:var(--hover);}
+  .mkt-name{color:var(--ink2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+  .mkt-idx b{font-weight:700;flex:none;}
+  .mkt-foot{margin-top:9px;font-size:11px;line-height:1.65;color:var(--faint);}
+  /* 日韩:与 A 股指数用一条细线隔开,自带「截至」时间戳(收盘后就是收盘值) */
+  .mkt-abroad{margin-top:10px;padding-top:9px;border-top:1px solid var(--rule2);}
+  .mkt-abroad-h{display:flex;align-items:baseline;gap:8px;margin-bottom:2px;font-size:11px;color:var(--muted);}
+  .mkt-abroad-t{margin-left:auto;font-size:10.5px;color:var(--faint);white-space:nowrap;}
+  .mkt-abroad .mkt-idx{padding:2px 0;}
+
+  /* 徽标 */
+  .badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;}
+  .badge::before{content:'';width:4px;height:4px;background:currentColor;flex:none;}
+  .badge-bull{color:var(--red);}
+  .badge-bear{color:var(--green);}
+  .badge-neutral{color:var(--muted);}
+  .badge-mixed{color:var(--muted);}
+  .dir-legend{margin:12px 0 0;padding:9px 12px;background:var(--tint);border-left:2px solid var(--rule);font-size:12px;line-height:1.7;color:var(--link);}
+  .dir-legend b{color:var(--ink);font-weight:700;margin:0 2px;}
+
+  /* 中栏 */
+  .lead{padding:6px 0 18px;border-bottom:1px solid var(--rule);}
+  .lead h2{margin:0;font-size:27px;line-height:1.42;font-weight:700;letter-spacing:-.3px;color:var(--ink);text-wrap:balance;}
+  .flag{display:inline-block;background:var(--red);color:#fff;font-size:15px;font-weight:400;font-style:normal;line-height:1;padding:4px 5px;margin-right:8px;vertical-align:3px;letter-spacing:.02em;}
+  .lead .meta{margin:9px 0 8px;font-size:12px;color:var(--muted);}
+  .lead p{margin:0;font-size:15px;line-height:1.75;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+  .top-item{padding:14px 0 13px;border-bottom:1px solid var(--rule);}
+  .top-item h3{margin:0 0 6px;font-size:22px;line-height:1.4;font-weight:700;letter-spacing:-.2px;color:var(--ink);text-wrap:pretty;}
+  .top-item .meta{font-size:12px;color:var(--muted);}
+  .feed-empty{padding:28px 0;font-size:13px;color:var(--muted);}
+
+  /* 新闻流 */
+  .stream{margin-top:34px;}
+  .stream-bar{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;gap:32px;border-top:2px solid var(--ink);border-bottom:1px solid var(--rule);}
+  .stream-head{display:flex;align-items:baseline;gap:10px;padding:12px 0;white-space:nowrap;}
+  .stream-head h2{margin:0;font-size:16px;font-weight:700;}
+  .count{font-size:12px;color:var(--muted);}
+  .tabs{display:flex;gap:24px;margin-left:auto;align-self:stretch;align-items:center;overflow-x:auto;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{background:none;border:0;padding:14px 0;margin-bottom:-1px;font:inherit;font-size:14px;color:var(--link);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+  .tab b{margin-left:4px;font-size:11px;font-weight:400;color:var(--faint);font-variant-numeric:tabular-nums;}
+  .tab:hover{color:var(--ink);}
+  .tab.on{color:var(--red);font-weight:700;border-bottom-color:var(--red);}
+  .tab.on b{color:var(--red);}
+  .grp{margin-top:26px;}
+  .grp[hidden]{display:none!important;}
+  .grp-head{display:flex;align-items:baseline;gap:10px;padding:0 0 10px;border-bottom:2px solid var(--ink);font-size:15px;font-weight:700;color:var(--ink);}
+  .grp-head i{font-style:normal;font-size:11px;font-weight:400;color:var(--muted);}
+  .grp-head b{margin-left:auto;font-size:11px;font-weight:400;color:var(--muted);font-family:var(--mono);}
+  .grp-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:52px;align-items:start;}
+  .scol{min-width:0;position:relative;}
+  .scol+.scol::before{content:"";position:absolute;left:-26px;top:2px;bottom:0;width:1px;background:var(--rule);}
+  .item{border-bottom:1px solid var(--rule);}
+  .item[hidden]{display:none!important;}
+  .item>summary{display:grid;grid-template-columns:42px minmax(0,1fr) 14px;cursor:pointer;list-style:none;padding:10px 6px 10px 0;transition:background-color .12s ease;}
+  .item>summary::-webkit-details-marker{display:none;}
+  .item>summary::after{content:"+";font-family:var(--mono);font-size:14px;line-height:22px;color:#c9c9c9;text-align:right;transition:color .12s ease;}
+  .item[open]>summary::after{content:"−";color:var(--red);}
+  .item>summary:hover{background:var(--hover);}
+  .item>summary:hover::after{color:var(--muted);}
+  .item .t{font-size:12px;color:var(--muted);text-align:right;padding:2px 8px 0 0;font-family:var(--mono);}
+  .item .c{display:block;min-width:0;}
+  .item .title{display:block;font-size:14px;line-height:22px;color:var(--ink2);}
+  .item.high .title{font-size:15px;font-weight:700;color:var(--ink);}
+  .item.key .title{font-size:16px;font-weight:700;color:var(--ink);}
+  .item .summary{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:13px;line-height:20px;color:#777;margin-top:2px;}
+  .item[open] .summary{display:none;}
+  .item .meta{display:block;font-size:12px;color:var(--muted);margin-top:2px;}
+  .flag.sm{font-size:11px;padding:1px 5px;margin-right:6px;vertical-align:1px;}
+  .item .detail{padding:2px 0 14px 42px;font-size:13px;line-height:1.75;color:var(--link);}
+  .item .detail p{margin:0 0 6px;}
+  .item .detail .dl{font-size:11px;color:var(--muted);margin-right:5px;}
+  .item .detail .dim{color:var(--muted);}
+  .item .detail .src{color:var(--red);border-bottom:1px solid currentColor;padding-bottom:1px;}
+  .dgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:2px 0 8px;}
+  .dgrid>div{display:flex;flex-direction:column;gap:1px;}
+  .dgrid .dl{margin:0;}
+  .dgrid b{font-size:12.5px;color:var(--ink2);}
+  .dsec{margin:0 0 7px;}
+  .dlist{margin:2px 0 0;padding-left:16px;font-size:12.5px;}
+  .dlist li{margin-bottom:2px;}
+  .related li{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .related a{color:var(--link);font-family:var(--mono);font-size:12px;}
+  .related a:hover{text-decoration:underline;}
+  .ev-src{display:inline-flex;flex-wrap:wrap;gap:4px;}
+  .ev-src-badge{font-size:11px;padding:1px 6px;background:var(--tint);color:var(--link);border:1px solid var(--rule);white-space:nowrap;}
+  .stream-empty{padding:30px 0;text-align:center;font-size:13px;color:var(--muted);border-bottom:1px solid var(--rule);}
+  .stream-empty[hidden]{display:none!important;}
+  .stream-end{padding:18px 0 2px;font-size:12px;color:var(--muted);text-align:center;border-top:1px solid var(--rule);margin-top:22px;}
+  .stream-end b{color:var(--link);}
+
+  /* 右栏 */
+  .rail-dist{margin-top:20px;}
+  .points{list-style:none;margin:0;padding:6px 0 0;}
+  .points li{position:relative;padding-left:13px;font-size:13px;line-height:1.75;color:var(--ink2);margin-bottom:9px;}
+  .points li::before{content:"•";position:absolute;left:0;top:0;color:var(--muted);font-size:15px;}
+  .points li b{font-weight:700;color:var(--ink);margin-right:3px;}
+  .mini{padding:13px 0;border-bottom:1px solid var(--rule);}
+  .mini:last-child{border-bottom:0;}
+  .mini h3{margin:0 0 2px;font-size:14px;font-weight:700;color:var(--ink);}
+  .mini .sub{font-size:11px;color:var(--muted);margin-left:4px;font-weight:400;}
+  .stack{display:flex;height:12px;margin:11px 0 9px;background:var(--track);}
+  .stack i{display:block;}
+  .f-red{background:var(--red);}
+  .f-green{background:var(--green);}
+  .f-g1{background:var(--g1);}
+  .f-g2{background:var(--g2);}
+  .lgd{display:grid;grid-template-columns:1fr 1fr;gap:3px 14px;font-size:12px;color:var(--link);}
+  .lgd span{display:flex;align-items:center;gap:5px;}
+  .lgd i{width:7px;height:7px;display:inline-block;}
+  .lgd b{margin-left:auto;font-weight:700;color:var(--ink);}
+  .drow{display:grid;grid-template-columns:44px 1fr 24px;align-items:center;gap:7px;margin-top:8px;}
+  .dn{font-size:12px;color:var(--ink2);}
+  .db{display:flex;height:8px;background:var(--track);}
+  .db i{display:block;}
+  .dt{font-size:11px;color:var(--muted);text-align:right;}
+
+  /* 数据 */
+  .viz{margin-top:38px;}
+  .viz-card{padding:6px 0 18px;}
+  .vtitle{display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:700;color:var(--ink);}
+  .vtitle span{font-size:12px;color:var(--muted);font-weight:400;}
+  .legend{display:flex;gap:22px;flex-wrap:wrap;margin:10px 0 2px;}
+  .lg{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--link);}
+  .lg i{width:16px;height:2px;display:inline-block;}
+  .lg b{font-weight:700;}
+  svg{display:block;width:100%;height:auto;}
+  svg.tchart{touch-action:pan-y;}
+  .only-narrow{display:none;}
+  .chart-plot{position:relative;}
+  .chart-plot .tip{position:absolute;z-index:3;width:178px;padding:9px 11px;background:#fff;border:1px solid var(--rule);pointer-events:none;font-size:12px;line-height:1.5;font-variant-numeric:tabular-nums;}
+  .tip[hidden]{display:none;}
+  .tip-d{display:flex;justify-content:space-between;font-size:11px;color:var(--link);font-family:var(--mono);padding-bottom:5px;margin-bottom:5px;border-bottom:1px solid var(--rule2);}
+  .tip-d span{color:var(--faint);font-family:inherit;}
+  .tip .tr{display:grid;grid-template-columns:7px 1fr auto 46px;gap:7px;align-items:baseline;padding:1.5px 0;}
+  .tip .tr i{width:7px;height:7px;display:block;}
+  .tip .tr span{color:var(--ink2);}
+  .tip .tr b{font-weight:700;color:var(--ink);}
+  .tip .tr em{font-style:normal;font-size:11px;text-align:right;}
+  .hint{margin-top:7px;font-size:11px;color:var(--faint);}
+  .base{stroke-width:1;stroke-dasharray:3 3;stroke:#e6e7ea;}
+  .tl{fill:none;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round;}
+  .lead-line{stroke-width:1;}
+  .axis{font-size:10px;fill:var(--faint);font-family:var(--mono);}
+  .endlab{font-size:11px;font-weight:700;fill:var(--ink2);}
+  .endlab .en{font-weight:600;}
+  table.heat{width:100%;border-collapse:collapse;margin-top:12px;font-size:12px;}
+  table.heat th{font-size:12px;font-weight:600;color:var(--link);text-align:center;padding:8px 6px;background:var(--hover);border:1px solid var(--rule);width:19.5%;}
+  table.heat thead th:first-child{text-align:left;padding-left:12px;width:22%;}
+  table.heat tbody th{font-size:13px;font-weight:700;color:var(--ink);text-align:left;padding:9px 12px;background:#fff;border:1px solid var(--rule);}
+  table.heat td{text-align:center;padding:10px 6px;border:1px solid var(--rule);font-family:var(--mono);font-variant-numeric:tabular-nums;}
+
+  /* 矩阵 */
+  .matrix{margin-top:38px;}
+  .matrix-scroll{overflow-x:auto;}
+  .matrix table{width:100%;border-collapse:collapse;margin-top:12px;min-width:720px;}
+  .matrix th{font-size:12px;font-weight:600;color:var(--link);text-align:left;padding:10px 12px;background:var(--hover);border-bottom:1px solid var(--rule);white-space:nowrap;}
+  .matrix td{padding:13px 12px;border-bottom:1px solid var(--rule);vertical-align:top;font-size:13px;color:var(--ink2);}
+  .matrix tbody tr:hover td{background:var(--hover);}
+  .matrix .mx-name{font-size:15px;font-weight:700;color:var(--ink);white-space:nowrap;}
+  .matrix .tickers{font-size:12px;color:var(--link);line-height:1.7;}
+  .matrix .logic{line-height:1.7;}
+  .shock-strong{color:var(--red);font-weight:700;}
+  .shock-mid{color:var(--ink2);font-weight:600;}
+  .shock-weak{color:var(--muted);}
+  .dir-bull{color:var(--red);font-weight:600;}
+  .dir-bear{color:var(--green);font-weight:600;}
+  .dir-flat{color:var(--muted);}
+  .dir-mixed{color:var(--muted);font-weight:600;}
+
+  /* 页脚 */
+  .foot{margin:36px 0 56px;padding-top:14px;border-top:1px solid var(--rule);font-size:11px;line-height:1.9;color:var(--faint);}
+  .foot b{color:var(--muted);font-weight:600;}
+
+  /* 锚点落点要让开吸顶的新闻流工具条 */
+  #news,#stream,#data,#matrix{scroll-margin-top:56px;}
+
+  /* 桌面宽屏:画布再放一档,左右栏各加宽,中栏行宽保持舒适 */
+  @media (min-width:1400px){
+    .wrap{max-width:1360px;padding:0 32px;}
+    .cols{grid-template-columns:312px minmax(0,1fr) 292px;gap:36px;}
+    .lead h2{font-size:30px;}
+    .top-item h3{font-size:23px;}
+    .grp-cols{column-gap:60px;}
+    .scol+.scol::before{left:-30px;}
+  }
+
+  @media (max-width:1080px){
+    .cols{grid-template-columns:250px minmax(0,1fr) 240px;gap:18px;}
+    .lead h2{font-size:25px;}
+    .top-item h3{font-size:21px;}
+  }
+  @media (max-width:900px){
+    main{display:flex;flex-direction:column;}
+    .cols{display:contents;}
+    .feed{order:1;margin-top:24px;}
+    .quotes{order:2;margin-top:30px;}
+    .rail{order:3;margin-top:30px;}
+    .stream{order:4;margin-top:28px;}
+    .viz{order:5;}
+    .matrix{order:6;}
+    .foot{order:7;}
+    .nav-links{gap:22px;}
+    .nav-links a{font-size:16px;}
+    .brand{margin-right:26px;font-size:22px;}
+  }
+  @media (max-width:860px){
+    .grp-cols{display:block;}
+    .scol+.scol::before{display:none;}
+  }
+  @media (max-width:720px){
+    .topbar .wrap{gap:10px;}
+    .topbar .tb-links{display:none;}
+    .tb-right{margin-left:0;flex-wrap:wrap;gap:8px;white-space:normal;}
+    .nav .wrap{height:56px;}
+    .nav-links{display:none;}
+    .nav-right{font-size:11px;}
+    .nav-right .gen-note{display:none;}
+    .brand{font-size:21px;margin-right:0;}
+    .wrap{padding:0 16px;}
+    .market-summary{flex-direction:column;gap:5px;margin-top:16px;padding:13px 14px 14px;}
+    .ms-label{padding-top:0;}
+    .market-summary p{font-size:14px;}
+    .lead h2{font-size:23px;line-height:1.45;}
+    .top-item h3{font-size:19px;}
+    .stream-bar{flex-wrap:wrap;gap:0;padding-top:12px;}
+    .stream-head{width:100%;padding:0;flex-wrap:wrap;white-space:normal;}
+    .count{font-size:11px;}
+    .tabs{width:100%;margin:8px 0 0;gap:16px;overflow-x:auto;}
+    .tab{padding:10px 0;}
+    .item>summary{grid-template-columns:40px minmax(0,1fr) 14px;padding-right:0;}
+    .item .detail{padding-left:40px;}
+    .dgrid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .only-wide{display:none;}
+    .only-narrow{display:block;}
+    .foot{margin-bottom:36px;}
+  }
+</style>
+<script>
+(function(){
+  var p = window.location.pathname;
+  if (p.indexOf('/history/') >= 0) p = p.slice(0, p.indexOf('/history/'));
+  else if (p.slice(-5) === '.html') p = p.slice(0, p.lastIndexOf('/'));
+  else if (p.slice(-1) === '/') p = p.slice(0, -1);
+  window.BASE = p;
+})();
+</script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <span class="tb-links">
+      <a class="on" href="#" onclick="goToday();return false;">今日日报</a>
+      <a href="#" onclick="location.href=(window.BASE||'')+'/db.html';return false;">数据查询</a>
+      <a href="#" onclick="location.href=(window.BASE||'')+'/history/index.html';return false;">历史存档</a>
+    </span>
+    <span class="tb-right">
+      <label for="historySelect">历史</label>
+      <select id="historySelect" onchange="showHistoryDate()"><option value="">选择日期</option></select>
+      <button type="button" id="today-btn" onclick="goToday()">今天</button>
+      <span class="src-tag">关键词引擎分类</span>
+      <button type="button" class="refresh-btn" onclick="triggerRefresh()" title="手动刷新日报">刷新日报</button>
+    </span>
+  </div>
+</div>
+
+<header class="nav">
+  <div class="wrap">
+    <h1 class="brand">行业板块<em>日报</em></h1>
+    <nav class="nav-links">
+      <a href="#news">要闻</a>
+      <a href="#stream">新闻流</a>
+      <a href="#data">数据</a>
+      <a href="#matrix">板块矩阵</a>
+    </nav>
+    <div class="nav-right"><b>2026-11-03</b>　周二　·　28 条<span class="gen-note">　·　更新 2026-11-03 09:02:32（北京时间）</span></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="market-summary">
+    <span class="ms-label">今日复盘</span>
+    <p>本日报聚焦半导体、光模块、创新药、黄金四大赛道，28 条新闻经关键词引擎自动分析生成。</p>
+  </div>
+
+  <div class="cols">
+    <aside class="quotes">
+    <div class="ph"><h2>大盘</h2><span class="note">当日收盘</span></div><div class="mkt">
+    <div class="mkt-top">
+      <span class="mkt-regime down" title="沪深300 5日 −2.11% · 20日 −7.46% · 距60日高点 −15.27% · 7指数 0跌 7涨 · 全市场 0涨 / 0跌 / 5577平">普跌 · 下行</span>
+      <span class="mkt-note">0涨 / 0跌</span>
+    </div>
+    <div class="mkt-grid"><div class="mkt-idx" title="上证 3638.03">
+        <span class="mkt-name">上证</span>
+        <b class="num neutral">0.00%</b>
+      </div><div class="mkt-idx" title="深成 0">
+        <span class="mkt-name">深成</span>
+        <b class="num neutral">0.00%</b>
+      </div><div class="mkt-idx" title="创业板 0">
+        <span class="mkt-name">创业板</span>
+        <b class="num neutral">0.00%</b>
+      </div><div class="mkt-idx" title="沪深300 4016.92">
+        <span class="mkt-name">沪深300</span>
+        <b class="num neutral">0.00%</b>
+      </div><div class="mkt-idx" title="中证500 6420.2">
+        <span class="mkt-name">中证500</span>
+        <b class="num neutral">0.00%</b>
+      </div><div class="mkt-idx" title="中证1000 6329.34">
+        <span class="mkt-name">中证1000</span>
+        <b class="num neutral">0.00%</b>
+      </div><div class="mkt-idx" title="北证50 890.86">
+        <span class="mkt-name">北证50</span>
+        <b class="num neutral">0.00%</b>
+      </div></div>
+    
+    <div class="mkt-foot">沪深300 5日 −2.11% · 20日 −7.46% · 距60日高点 −15.27% · 7指数 0跌 7涨</div>
+  </div>
+    <div class="ph"><h2>板块行情</h2><span class="note">当日收盘</span></div>
+    <div class="qsec">
+      <div class="qsec-top">
+        <button type="button" class="sc" data-sector="半导体" data-cat="semi" aria-label="只看半导体新闻" aria-pressed="false">
+          <span class="qname">半导体</span>
+          <span class="sc-badges"><span class="badge badge-bull" title="今日复盘：板块方向以当日 ETF 实际涨跌校准">复盘 利好</span><span class="badge badge-bull" title="次日倾向：只由新闻内容研判，未经行情校准">次日 利好</span></span>
+        </button>
+        <span class="qchg num neutral">—</span>
+      </div>
+      
+    </div><div class="qsec">
+      <div class="qsec-top">
+        <button type="button" class="sc" data-sector="光模块" data-cat="optics" aria-label="只看光模块新闻" aria-pressed="false">
+          <span class="qname">光模块</span>
+          <span class="sc-badges"><span class="badge badge-bull" title="今日复盘：板块方向以当日 ETF 实际涨跌校准">复盘 利好</span><span class="badge badge-bull" title="次日倾向：只由新闻内容研判，未经行情校准">次日 利好</span></span>
+        </button>
+        <span class="qchg num neutral">—</span>
+      </div>
+      
+    </div><div class="qsec">
+      <div class="qsec-top">
+        <button type="button" class="sc" data-sector="创新药" data-cat="pharma" aria-label="只看创新药新闻" aria-pressed="false">
+          <span class="qname">创新药</span>
+          <span class="sc-badges"><span class="badge badge-neutral" title="今日复盘：板块方向以当日 ETF 实际涨跌校准">复盘 中性</span><span class="badge badge-neutral" title="次日倾向：只由新闻内容研判，未经行情校准">次日 中性</span></span>
+        </button>
+        <span class="qchg num neutral">—</span>
+      </div>
+      
+    </div><div class="qsec">
+      <div class="qsec-top">
+        <button type="button" class="sc" data-sector="黄金" data-cat="gold" aria-label="只看黄金新闻" aria-pressed="false">
+          <span class="qname">黄金</span>
+          <span class="sc-badges"><span class="badge badge-bull" title="今日复盘：板块方向以当日 ETF 实际涨跌校准">复盘 利好</span><span class="badge badge-bull" title="次日倾向：只由新闻内容研判，未经行情校准">次日 利好</span></span>
+        </button>
+        <span class="qchg num neutral">—</span>
+      </div>
+      
+    </div>
+    <div class="qstats">
+      <div><span>收录</span><b class="num">28</b></div>
+      <div><span>高影响</span><b class="num">8</b></div>
+      <div title="条目方向 = 这条新闻对基本面/政策的影响，不是涨跌预测；次日涨跌预测看板块矩阵的「次日倾向」"><span>利好</span><b class="num bull">13</b></div>
+      <div title="条目方向 = 这条新闻对基本面/政策的影响，不是涨跌预测；次日涨跌预测看板块矩阵的「次日倾向」"><span>利空</span><b class="num bear">4</b></div>
+    </div>
+    <div class="qfoot">涨跌幅为当日收盘口径；板块均值为组内 ETF 的简单平均。点击板块名可只看该板块新闻。</div>
+  </aside>
+    <section id="news" class="feed">
+    <div class="ph"><h2>要闻</h2><span class="note">事件优先，跨板块选摘</span></div>
+    <article class="lead">
+    <h2><i class="flag">重点</i>现货黄金突破3960美元/盎司，日内涨0.38%。</h2>
+    <div class="meta">黄金 · <span class="bull">利好</span> · 新浪财经 08:31</div>
+    <p>现货黄金突破3960美元/盎司，日内涨0.38%。</p>
+  </article>
+    <article class="top-item">
+      <h3>华尔街见闻早餐 | 2026年11月3日</h3>
+      <div class="meta">半导体 · <span class="neutral">分化</span> · 华尔街见闻 07:25</div>
+    </article><article class="top-item">
+      <h3>114家公司10月以来披露在手订单充裕 9家公司同步推出回购计划</h3>
+      <div class="meta">光模块 · <span class="bull">利好</span> · 新浪财经 07:58</div>
+    </article><article class="top-item">
+      <h3>皓元医药与轩竹生物达成全面战略合作</h3>
+      <div class="meta">创新药 · <span class="neutral">中性</span> · 同花顺快讯 08:29</div>
+    </article><article class="top-item">
+      <h3>布油基金收盘重挫超7.6%，领跌美股大类资产类ETF，黄金ETF涨超1.6%</h3>
+      <div class="meta">黄金 · <span class="bull">利好</span> · 华尔街见闻 05:19</div>
+    </article>
+  </section>
+    <aside class="rail">
+    <div class="ph"><h2>今日要点</h2><span class="more">AI 研判</span></div>
+    <ul class="points"><li>今日共抓取 28 条新闻，聚焦半导体、光模块、创新药、黄金四大赛道。</li><li>极高影响事件 3 条，高影响 5 条，利好方向 13 条。</li><li>板块概况：半导体(利好, 强冲击, 13条)、黄金(利好, 强冲击, 10条)、光模块(利好, 中冲击, 3条)、创新药(中性, 弱冲击, 2条)。</li><li>重点关注：现货黄金突破3960美元/盎司，日内涨0.38%。；华尔街见闻早餐 | 2026年11月3日；114家公司10月以来披露在手订单充裕 9家公司同步推出回购计划。</li></ul>
+    <div class="ph rail-dist"><h2>当日分布</h2><span class="more">28 条</span></div>
+    <div class="mini">
+      <h3>情绪<span class="sub">利好 / 利空 / 中性 / 分化</span></h3>
+      <div class="stack"><i class="f-red" style="width:46.43%"></i><i class="f-green" style="width:14.29%"></i><i class="f-g1" style="width:32.14%"></i><i class="f-g2" style="width:7.14%"></i></div>
+    <div class="lgd"><span><i class="f-red"></i>利好<b class="num">13</b></span><span><i class="f-green"></i>利空<b class="num">4</b></span><span><i class="f-g1"></i>中性<b class="num">9</b></span><span><i class="f-g2"></i>分化<b class="num">2</b></span></div>
+    </div>
+    <div class="mini">
+      <h3>方向<span class="sub">按板块</span></h3>
+      <div class="drow"><span class="dn">半导体</span><span class="db"><i class="f-red" style="width:46.15%"></i><i class="f-green" style="width:15.38%"></i><i class="f-g1" style="width:23.08%"></i><i class="f-g2" style="width:15.38%"></i></span><span class="dt num">13</span></div><div class="drow"><span class="dn">光模块</span><span class="db"><i class="f-red" style="width:33.33%"></i><i class="f-green" style="width:0.00%"></i><i class="f-g1" style="width:66.67%"></i><i class="f-g2" style="width:0.00%"></i></span><span class="dt num">3</span></div><div class="drow"><span class="dn">创新药</span><span class="db"><i class="f-red" style="width:0.00%"></i><i class="f-green" style="width:0.00%"></i><i class="f-g1" style="width:100.00%"></i><i class="f-g2" style="width:0.00%"></i></span><span class="dt num">2</span></div><div class="drow"><span class="dn">黄金</span><span class="db"><i class="f-red" style="width:60.00%"></i><i class="f-green" style="width:20.00%"></i><i class="f-g1" style="width:20.00%"></i><i class="f-g2" style="width:0.00%"></i></span><span class="dt num">10</span></div>
+    </div>
+    <div class="mini">
+      <h3>时间窗口<span class="sub">短期 / 中期</span></h3>
+      <div class="stack"><i class="f-g2" style="width:32.14%"></i><i class="f-g1" style="width:67.86%"></i></div>
+    <div class="lgd"><span><i class="f-g2"></i>短期<b class="num">9</b></span><span><i class="f-g1"></i>中期<b class="num">19</b></span></div>
+    </div>
+  </aside>
+  </div>
+
+  <section id="stream" class="stream">
+    <div class="stream-bar">
+      <div class="stream-head">
+        <h2>新闻流</h2>
+        <span class="count" id="streamCount">共 <span class="num">28</span> 条 · 按发布时间倒序</span>
+      </div>
+      <div class="tabs" id="streamFilter" role="group" aria-label="按板块筛选新闻"><button type="button" class="tab on" data-f="all" aria-pressed="true">全部<b>28</b></button><button type="button" class="tab" data-f="半导体" data-cat="semi" aria-pressed="false">半导体<b>13</b></button><button type="button" class="tab" data-f="光模块" data-cat="optics" aria-pressed="false">光模块<b>3</b></button><button type="button" class="tab" data-f="创新药" data-cat="pharma" aria-pressed="false">创新药<b>2</b></button><button type="button" class="tab" data-f="黄金" data-cat="gold" aria-pressed="false">黄金<b>10</b></button><button type="button" class="tab" data-f="key" aria-pressed="false">高影响<b>8</b></button></div>
+    </div>
+    <div class="timeline" id="timeline">
+      <div class="grp" data-session="pre">
+      <div class="grp-head"><span>盘前</span><i>09:30 前</i><b class="num" data-gcount>25</b></div>
+      <div class="grp-cols"><div class="scol"><details class="item high" data-sector="半导体" data-tier="high">
+      <summary>
+        <span class="t num">09:00</span>
+        <span class="c">
+          <span class="title">苹果Q4业绩强劲仍难掩隐忧：存储涨价拖累盈利前景 iPhone Duo仍供给受限</span>
+          <span class="summary">【苹果Q4业绩强劲仍难掩隐忧：存储涨价拖累盈利前景 iPhone Duo仍供给受限】财联社11月3日电，美东时间周一盘后，苹果公布第四财季财报。受益于新款iPh</span>
+          <span class="meta">半导体 · <span class="bull">利好</span> · 财联社</span>
+        </span>
+      </summary>
+      <div class="detail"><p>苹果Q4业绩强劲仍难掩隐忧：存储涨价拖累盈利前景 iPhone Duo仍供给受限</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>涨价信号·利好(+50分·供不应求/涨价,量价齐升利好)</li><li>行情信号·利空(-27分·板块行情走弱)</li><li>行情信号·利好(+11分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“涨价”</li><li>“下跌”</li><li>“上涨”</li></ul></div><p class="dim">涨价·利好(50·供不应求/涨价,量价齐升利好)+行情·利空(27·板块行情走弱)+行情·利好(11·板块行情上涨)</p><p><a class="src" href="https://www.cls.cn/detail/2523256" target="_blank" rel="noopener">原文 · 财联社</a></p></div>
+    </details><details class="item quiet" data-sector="黄金" data-tier="quiet">
+      <summary>
+        <span class="t num">09:00</span>
+        <span class="c">
+          <span class="title">上海黄金交易所黄金T+D 11月3日（周二）早盘盘初上涨1.25%报849.02元/克；</span>
+          
+          <span class="meta">黄金 · <span class="bull">利好</span> · 金十数据 · 5 家报道</span>
+        </span>
+      </summary>
+      <div class="detail"><p>上海黄金交易所黄金T+D 11月3日（周二）早盘盘初上涨1.25%报849.02元/克；上海黄金交易所白银T+D 11月3日（周二）早盘盘初上涨2.57%报12</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利好(+15分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“上涨”</li></ul></div><p class="dim">行情·利好(15·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><div class="dsec"><span class="dl">来源聚合（5 家）</span><span class="ev-src"><span class="ev-src-badge">金十数据</span><span class="ev-src-badge">东方财富</span><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">同花顺快讯</span><span class="ev-src-badge">华尔街见闻</span></span></div><div class="dsec"><span class="dl">相关报道（19 篇）</span><ul class="dlist related"><li><a href="富时中国A50指数期货开盘跌0.57%。" target="_blank" rel="noopener">富时中国A50指数期货开盘跌0.57%。</a></li><li><a href="韩国KOSPI指数日内大跌3.00%，现报5679.65点。" target="_blank" rel="noopener">韩国KOSPI指数日内大跌3.00%，现报5679.65点。</a></li><li><a href="http://finance.eastmoney.com/news/1350,202611033919180932.html" target="_blank" rel="noopener">finance.eastmoney.com/news/1350,202611033919180932</a></li><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixmhha9986482.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixmhha998</a></li><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixkzyf0024485.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixkzyf002</a></li><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixkzyf0020421.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixkzyf002</a></li><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixkzyk2432191.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixkzyk243</a></li><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixkvsi0116613.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixkvsi011</a></li></ul></div></div>
+    </details><details class="item normal" data-sector="半导体" data-tier="normal">
+      <summary>
+        <span class="t num">08:46</span>
+        <span class="c">
+          <span class="title">中信证券：AI资本开支将持续拉动全球科技硬件与能源基础设施建设</span>
+          <span class="summary">中信证券研报称，展望2027年，AI资本开支将持续拉动全球科技硬件与能源基础设施建设，叠加关键材料自主可控需求与高端制造升级，有望推动新材料加速导入与规模化放量。建议重点聚焦AI新材料，把握下游扩产、材料升级、新技术迭代及国产替代带来的投资机会，推荐半导体、PCB、光通信、热管理和电子元器件上游关键材料环节。同时建议关注增长稳健、订单确定性高的能源材料与装备板块，推荐核电&amp;核聚变、氢能&amp;SOFC、SAF、燃气轮机等赛道。此外看好商业航天、具身智能、军工等高端制造行业的主题性投资机会。</span>
+          <span class="meta">半导体 · <span class="bull">利好</span> · 新浪财经</span>
+        </span>
+      </summary>
+      <div class="detail"><p>中信证券研报称，展望2027年，AI资本开支将持续拉动全球科技硬件与能源基础设施建设，叠加关键材料自主可控需求与高端制造升级，有望推动新材料加速导入与规模化放量。建议重点聚焦AI新材料，把握下游扩产、材料升级、新技术迭代及国产替代带来的投资机会，推荐半导体、PCB、光通信、热管理和电子元器件上游关键材料环节。同时建议关注增长稳健、订单确定性高的能源材料与装备板块，推荐核电&amp;核聚变、氢能&amp;SOFC、SAF、燃气轮机等赛道。此外看好商业航天、具身智能、军工等高端制造行业的主题性投资机会。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>政策信号·利好(+50分)</li><li>扩产信号·利好(+40分)</li><li>传闻信号·中性(±10分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“国产替代”</li><li>“扩产”</li><li>“有望”</li></ul></div><p class="dim">政策·利好(50)+扩产·利好(40)+传闻·中性(10)；体裁判定「观点/研报」,档位封顶「中」</p><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixmhhe6733816.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixmhhe673</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-03/detail-inixmhhe6751620.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+    </details><details class="item normal" data-sector="半导体" data-tier="normal">
+      <summary>
+        <span class="t num">08:32</span>
+        <span class="c">
+          <span class="title">日本爱信公司研发出新型AI芯片 能耗降低98%</span>
+          <span class="summary">日本汽车零部件供应商爱信公司周一表示，该公司开发了一种采用磁性技术的新型AI芯片，其功耗比类似的现有芯片低约98%，这一突破有望帮助更高效地处理大量数据。（科创</span>
+          <span class="meta">半导体 · <span class="bull">利好</span> · 同花顺快讯</span>
+        </span>
+      </summary>
+      <div class="detail"><p>日本爱信公司研发出新型AI芯片 能耗降低98%</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>技术信号·利好(+30分)</li><li>传闻信号·中性(±8分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“突破”</li><li>“有望”</li></ul></div><p class="dim">技术·利好(30)+传闻·中性(8)</p><p><a class="src" href="https://news.10jqka.com.cn/20261103/c681382613.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+    </details><details class="item key" data-sector="黄金" data-tier="key">
+      <summary>
+        <span class="t num">08:31</span>
+        <span class="c">
+          <span class="title"><i class="flag sm">重点</i>现货黄金突破3960美元/盎司，日内涨0.38%。</span>
+          
+          <span class="meta">黄金 · <span class="bull">利好</span> · 新浪财经 · 2 家报道</span>
+        </span>
+      </summary>
+      <div class="detail"><p>现货黄金突破3960美元/盎司，日内涨0.38%。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>极高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>价格信号·利好(+90分)</li><li>技术信号·利好(+60分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“现货黄金突破”</li><li>“突破”</li></ul></div><p class="dim">价格·利好(90)+技术·利好(60)</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">同花顺快讯</span></span></div><div class="dsec"><span class="dl">相关报道（8 篇）</span><ul class="dlist related"><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixmhha9973005.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixmhha997</a></li><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixmhhe6737609.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixmhhe673</a></li><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixkzyk2445946.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixkzyk244</a></li><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixkzym8896381.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixkzym889</a></li><li><a href="https://news.10jqka.com.cn/20261103/c681382576.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261103/c681382576.shtml</a></li><li><a href="https://news.10jqka.com.cn/20261102/c681374943.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261102/c681374943.shtml</a></li><li><a href="https://news.10jqka.com.cn/20261102/c681374745.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261102/c681374745.shtml</a></li><li><a href="https://news.10jqka.com.cn/20261102/c681374739.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261102/c681374739.shtml</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-03/detail-inixmhhi8814201.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+    </details><details class="item quiet" data-sector="创新药" data-tier="quiet">
+      <summary>
+        <span class="t num">08:29</span>
+        <span class="c">
+          <span class="title">皓元医药与轩竹生物达成全面战略合作</span>
+          
+          <span class="meta">创新药 · <span class="neutral">中性</span> · 同花顺快讯</span>
+        </span>
+      </summary>
+      <div class="detail"><p>皓元医药与轩竹生物达成全面战略合作</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://news.10jqka.com.cn/20261103/c681382529.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <summary>
+        <span class="t num">08:05</span>
+        <span class="c">
+          <span class="title">韩国综合股价指数跌幅扩大至3.1%。</span>
+          
+          <span class="meta">半导体 · <span class="bear">利空</span> · 新浪财经 · 2 家报道</span>
+        </span>
+      </summary>
+      <div class="detail"><p>韩国综合股价指数跌幅扩大至3.1%。 SK海力士领跌芯片股，SK海力士股价早盘下跌4.5%，报1,406,000韩元；三星电子股价早盘下跌4.2%，报219,500韩元。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-36分·板块行情走弱)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“领跌”</li></ul></div><p class="dim">行情·利空(36·板块行情走弱)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">金十数据</span><span class="ev-src-badge">新浪财经</span></span></div><div class="dsec"><span class="dl">相关报道（2 篇）</span><ul class="dlist related"><li><a href="韩国KOSPI指数开跌2.46%，SK海力士和三星电子均跌超4%。" target="_blank" rel="noopener">韩国KOSPI指数开跌2.46%，SK海力士和三星电子均跌超4%。</a></li><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixmhhh2342793.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixmhhh234</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-03/detail-inixmhhh2346263.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+    </details><details class="item quiet" data-sector="光模块" data-tier="quiet">
+      <summary>
+        <span class="t num">08:04</span>
+        <span class="c">
+          <span class="title">HSBC：恢复跟踪中际旭创A股，评级买进，目标价727元人民币。</span>
+          
+          <span class="meta">光模块 · <span class="neutral">中性</span> · 新浪财经</span>
+        </span>
+      </summary>
+      <div class="detail"><p>HSBC：恢复跟踪中际旭创A股，评级买进，目标价727元人民币。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">受影响公司</span>中际旭创</p><p><span class="dl">关联标的</span>中际旭创(300308)</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性；体裁判定「观点/研报」,档位封顶「中」</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-03/detail-inixmhhe6715130.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+    </details><details class="item normal" data-sector="半导体" data-tier="normal">
+      <summary>
+        <span class="t num">08:01</span>
+        <span class="c">
+          <span class="title">中信建投：AI需求高景气驱动功率半导体迈向新周期</span>
+          <span class="summary">中信建投研报称，AIDC爆发+新能源车增量驱动下，2026年以来功率半导体掀起涨价潮。以SiC为代表的第三代功率半导体器件适配AIDC高压直流化迭代趋势，在SS</span>
+          <span class="meta">半导体 · <span class="bull">利好</span> · 同花顺快讯</span>
+        </span>
+      </summary>
+      <div class="detail"><p>中信建投：AI需求高景气驱动功率半导体迈向新周期</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>涨价信号·利好(+25分·供不应求/涨价,量价齐升利好)</li><li>传闻信号·中性(±5分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“涨价”</li><li>“有望”</li></ul></div><p class="dim">涨价·利好(25·供不应求/涨价,量价齐升利好)+传闻·中性(5)</p><p><a class="src" href="https://news.10jqka.com.cn/20261103/c681379772.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+    </details></div><div class="scol"><details class="item high" data-sector="光模块" data-tier="high">
+      <summary>
+        <span class="t num">07:58</span>
+        <span class="c">
+          <span class="title">114家公司10月以来披露在手订单充裕 9家公司同步推出回购计划</span>
+          <span class="summary">进入10月以来，受A股市场剧烈震荡影响，上市公司主动透露经营基本面、稳定预期的意愿显著增强。据证券时报・数据宝不完全统计，114家公司10月以来披露在手订单保持</span>
+          <span class="meta">光模块 · <span class="bull">利好</span> · 新浪财经 · 2 家报道</span>
+        </span>
+      </summary>
+      <div class="detail"><p>114家公司10月以来披露在手订单充裕 9家公司同步推出回购计划</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>中际旭创、新易盛、天孚通信</p><p><span class="dl">关联标的</span>中际旭创(300308)、新易盛(300502)、天孚通信(300394)</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>回购信号·利好(+40分·回购/增持,大股东看好)</li><li>传闻信号·中性(±10分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“回购”</li><li>“计划”</li></ul></div><p class="dim">回购·利好(40·回购/增持,大股东看好)+传闻·中性(10)</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">同花顺快讯</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://news.10jqka.com.cn/20261103/c681379667.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261103/c681379667.shtml</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-03/detail-inixmhhh2342010.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+    </details><details class="item normal" data-sector="黄金" data-tier="normal">
+      <summary>
+        <span class="t num">07:56</span>
+        <span class="c">
+          <span class="title">中信建投：科技板块动荡，黄金遭受流动性冲击</span>
+          <span class="summary">中信建投研报称，本周美联储维持利率不变，美债收益率下行，均未给有色板块带来太多提振。美国科技巨头庞大支出计划引发市场对债务驱动的AI基础设施热潮能否持续的担忧，</span>
+          <span class="meta">黄金 · <span class="bear">利空</span> · 同花顺快讯</span>
+        </span>
+      </summary>
+      <div class="detail"><p>中信建投：科技板块动荡，黄金遭受流动性冲击</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-27分·板块行情走弱)</li><li>传闻信号·中性(±8分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“下挫”</li><li>“计划”</li></ul></div><p class="dim">行情·利空(27·板块行情走弱)+传闻·中性(8)</p><p><a class="src" href="https://news.10jqka.com.cn/20261103/c681379617.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+    </details><details class="item quiet" data-sector="创新药" data-tier="quiet">
+      <summary>
+        <span class="t num">07:35</span>
+        <span class="c">
+          <span class="title">美国纽约州报告30多年来首例麻疹相关儿童死亡病例</span>
+          
+          <span class="meta">创新药 · <span class="neutral">中性</span> · 新浪财经</span>
+        </span>
+      </summary>
+      <div class="detail"><p>美国纽约州卫生官于2026年11月2日宣布，该州刘易斯县（Lewis County）发生了一名儿童因麻疹死亡的病例，这是纽约州30多年来首次报告与麻疹相关的儿童死亡病例。死者为一名来自刘易斯县的儿童，该事件标志着30多年来当地首例已知的麻疹相关儿童死亡。为应对持续蔓延的麻疹疫情，纽约州州长凯茜·霍楚尔（Kathy Hochul）此前已于2026年10月5日签署行政命令，宣布全州进入“灾难紧急状态”（有效期至11月4日），并扩大了可注射MMR（麻疹、腮腺炎、风疹）三合一疫苗的医疗人员资质。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-03/detail-inixkzym8910824.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+    </details><details class="item quiet" data-sector="黄金" data-tier="quiet">
+      <summary>
+        <span class="t num">07:34</span>
+        <span class="c">
+          <span class="title">香港黄金产业集团：终止收购贵溪鲍家矿业20%股权事项</span>
+          
+          <span class="meta">黄金 · <span class="neutral">中性</span> · 新浪财经</span>
+        </span>
+      </summary>
+      <div class="detail"><p>11月3日早间，香港黄金产业集团在港交所公告，有关成立江西联合企业管理中心（有限合伙）及其收购贵溪鲍家矿业有限公司20%股权事项，作为合伙企业之有限合伙人，集团于2026年11月2日获合伙企业告知，由于合伙企业与蓝翔矿业未能就鲍家收购事项的若干商业条款达成一致，故无法就此订立正式股权转让协议，经友好协商后，各方于2026年11月2日相互同意订立终止协议，以终止意向协议及鲍家收购事项。由于合伙人成立合伙企业之主要目的为共同投资于贵溪鲍家，故集团联同合伙企业的其他合伙人已相互同意解散合伙企业，并于完成解散的必要程序前，将合伙企业的注册资本总额削减至人民币100万元，以支付解散的预期费用。董事会认为，终止不会对集团的财务表现及营运造成任何重大不利影响。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-03/detail-inixkzyk2459513.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+    </details><details class="item quiet" data-sector="黄金" data-tier="quiet">
+      <summary>
+        <span class="t num">07:27</span>
+        <span class="c">
+          <span class="title">国际金价走弱 金饰消费活跃</span>
+          
+          <span class="meta">黄金 · <span class="bear">利空</span> · 新浪财经</span>
+        </span>
+      </summary>
+      <div class="detail"><p>近期，国际金价大幅下降，伦敦金现货价格在10月31日创下一年来新低，盘中最低触及3869.96美元/盎司。国际金价持续走弱快速传导至终端消费市场，各大品牌金饰零售价同步下调，部分品牌金价较年内峰值每克下跌近550元。消费者购金热情被进一步点燃。11月1日，记者在深圳水贝黄金珠宝市场看到，市场中客流涌动，不少批发商和游客专程前来“淘货”。水贝黄金珠宝市场内屏幕显示，当日首饰金价格报990元/克。（证券日报）</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-54分·板块行情走弱)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“下跌”</li></ul></div><p class="dim">行情·利空(54·板块行情走弱)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixkzyf0027633.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixkzyf002</a></li></ul></div></div>
+    </details><details class="item key" data-sector="半导体" data-tier="key">
+      <summary>
+        <span class="t num">07:25</span>
+        <span class="c">
+          <span class="title"><i class="flag sm">重点</i>华尔街见闻早餐 | 2026年11月3日</span>
+          <span class="summary">芯片股拖累美股指，纳斯达克100指数陷入技术性回调区间，存储、光通信下挫，Marvell跌13%，Lumentum跌19%；油价大跌，黄金反弹。
+
+伊朗最高领袖</span>
+          <span class="meta">半导体 · <span class="neutral">分化</span> · 华尔街见闻</span>
+        </span>
+      </summary>
+      <div class="detail"><p>华尔街见闻早餐 | 2026年11月3日</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>极高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>业绩信号·利好(+90分)</li><li>业绩信号·利空(-90分)</li><li>回购信号·利好(+30分·回购/增持,大股东看好)</li><li>行情信号·利空(-27分·板块行情走弱)</li><li>行情信号·利好(+11分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“翻倍”</li><li>“亏损扩大”</li><li>“回购”</li><li>“大跌”</li><li>“反弹”</li></ul></div><p class="dim">业绩·利好(90)+业绩·利空(90)+回购·利好(30·回购/增持,大股东看好)+行情·利空(27·板块行情走弱)+行情·利好(11·板块行情上涨)</p><p><a class="src" href="https://wallstreetcn.com/articles/3192894" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+    </details><details class="item quiet" data-sector="黄金" data-tier="quiet">
+      <summary>
+        <span class="t num">07:21</span>
+        <span class="c">
+          <span class="title">全球最大黄金ETF--SPDR Gold Trust持仓较上日减少1.14吨，当前持仓量为1040.513吨。</span>
+          
+          <span class="meta">黄金 · <span class="neutral">中性</span> · 金十数据 · 2 家报道</span>
+        </span>
+      </summary>
+      <div class="detail"><p>全球最大黄金ETF--SPDR Gold Trust持仓较上日减少1.14吨，当前持仓量为1040.513吨。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">金十数据</span><span class="ev-src-badge">同花顺快讯</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://news.10jqka.com.cn/20261103/c681382375.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261103/c681382375.shtml</a></li></ul></div></div>
+    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <summary>
+        <span class="t num">07:18</span>
+        <span class="c">
+          <span class="title">亿咖通科技与Arm签署合作备忘录</span>
+          
+          <span class="meta">半导体 · <span class="bull">利好</span> · 同花顺快讯</span>
+        </span>
+      </summary>
+      <div class="detail"><p>亿咖通科技与Arm签署合作备忘录</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>扩产信号·利好(+20分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“量产”</li></ul></div><p class="dim">扩产·利好(20)</p><p><a class="src" href="https://news.10jqka.com.cn/20261103/c681378558.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+    </details></div><div class="scol"><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <summary>
+        <span class="t num">06:54</span>
+        <span class="c">
+          <span class="title">苹果首席财务官重申：存储（芯片）成本将在12月当季继续构成挑战，指引已经体现了这个因素。</span>
+          
+          <span class="meta">半导体 · <span class="neutral">中性</span> · 华尔街见闻</span>
+        </span>
+      </summary>
+      <div class="detail"><p>苹果首席财务官重申：存储（芯片）成本将在12月当季继续构成挑战，指引已经体现了这个因素。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://wallstreetcn.com/articles/3192880" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <summary>
+        <span class="t num">06:51</span>
+        <span class="c">
+          <span class="title">苹果公司首席运营官在电话会议上表示，随着苹果将更多产品转向 2 纳米技术，其在先进制程芯片生产方面的限制正在缓解。</span>
+          
+          <span class="meta">半导体 · <span class="neutral">中性</span> · 新浪财经</span>
+        </span>
+      </summary>
+      <div class="detail"><p>苹果公司首席运营官在电话会议上表示，随着苹果将更多产品转向 2 纳米技术，其在先进制程芯片生产方面的限制正在缓解。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-03/detail-inixkzyf0028967.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+    </details><details class="item high" data-sector="黄金" data-tier="high">
+      <summary>
+        <span class="t num">05:55</span>
+        <span class="c">
+          <span class="title">国际金价涨约1.9%，一度逼近4000美元关口</span>
+          <span class="summary">周一（11月2日）纽约尾盘，现货黄金涨1.88%，报3947.57美元/盎司，全天处于上涨状态，亚太盘初至北京时间21:16大致持稳于3900美元附近，之后显著</span>
+          <span class="meta">黄金 · <span class="bull">利好</span> · 华尔街见闻</span>
+        </span>
+      </summary>
+      <div class="detail"><p>国际金价涨约1.9%，一度逼近4000美元关口</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>价格信号·利好(+45分)</li><li>行情信号·利好(+11分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“现货白银”</li><li>“大涨”</li></ul></div><p class="dim">价格·利好(45)+行情·利好(11·板块行情上涨)</p><p><a class="src" href="https://wallstreetcn.com/articles/3192861" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+    </details><details class="item key" data-sector="黄金" data-tier="key">
+      <summary>
+        <span class="t num">05:19</span>
+        <span class="c">
+          <span class="title"><i class="flag sm">重点</i>布油基金收盘重挫超7.6%，领跌美股大类资产类ETF，黄金ETF涨超1.6%</span>
+          <span class="summary">周一（11月2日），美国布伦特油价基金收跌7.62%，巴克莱美国可转债ETF、纳斯达克100 ETF、大豆基金至多跌1.63%，标普500 ETF、农产品基金、</span>
+          <span class="meta">黄金 · <span class="bull">利好</span> · 华尔街见闻</span>
+        </span>
+      </summary>
+      <div class="detail"><p>布油基金收盘重挫超7.6%，领跌美股大类资产类ETF，黄金ETF涨超1.6%</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>极高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>价格信号·利好(+60分)</li><li>行情信号·利空(-36分·板块行情走弱)</li><li>行情信号·利好(+15分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“涨超”</li><li>“重挫”</li><li>“涨超”</li></ul></div><p class="dim">价格·利好(60)+行情·利空(36·板块行情走弱)+行情·利好(15·板块行情上涨)</p><p><a class="src" href="https://wallstreetcn.com/articles/3192848" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <summary>
+        <span class="t num">05:09</span>
+        <span class="c">
+          <span class="title">周一（11月2日），能源业ETF收跌3.96%，领跌美股行业ETF，科技行业ETF跌2.94%，半导体ETF、全球科</span>
+          
+          <span class="meta">半导体 · <span class="bear">利空</span> · 华尔街见闻</span>
+        </span>
+      </summary>
+      <div class="detail"><p>周一（11月2日），能源业ETF收跌3.96%，领跌美股行业ETF，科技行业ETF跌2.94%，半导体ETF、全球科技股指数ETF、网络股指数ETF至多跌2.71%，可选消费ETF则涨2.41%，全球航空业ETF涨4.16%。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-36分·板块行情走弱)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“领跌”</li></ul></div><p class="dim">行情·利空(36·板块行情走弱)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://wallstreetcn.com/articles/3192845" target="_blank" rel="noopener">wallstreetcn.com/articles/3192845</a></li></ul></div><p><a class="src" href="https://wallstreetcn.com/articles/3192842" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <summary>
+        <span class="t num">04:36</span>
+        <span class="c">
+          <span class="title">纳斯达克100指数跌幅扩大至1%。</span>
+          
+          <span class="meta">半导体 · <span class="neutral">分化</span> · 华尔街见闻 · 3 家报道</span>
+        </span>
+      </summary>
+      <div class="detail"><p>纳斯达克100指数跌幅扩大至1%。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-36分·板块行情走弱)</li><li>行情信号·利好(+8分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“跌幅扩大”</li><li>“上涨”</li></ul></div><p class="dim">行情·利空(36·板块行情走弱)+行情·利好(8·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><div class="dsec"><span class="dl">来源聚合（3 家）</span><span class="ev-src"><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">同花顺快讯</span><span class="ev-src-badge">华尔街见闻</span></span></div><div class="dsec"><span class="dl">相关报道（18 篇）</span><ul class="dlist related"><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixkzym8906318.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixkzym890</a></li><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixkzyh6821603.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixkzyh682</a></li><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixkvsk6886804.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixkvsk688</a></li><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixkvsi0110472.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixkvsi011</a></li><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixkvsk6868015.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixkvsk686</a></li><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixkvsn2514385.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixkvsn251</a></li><li><a href="https://finance.sina.cn/7x24/2026-11-03/detail-inixkvsn2510559.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-03/detail-inixkvsn251</a></li><li><a href="https://news.10jqka.com.cn/20261103/c681380158.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261103/c681380158.shtml</a></li></ul></div><p><a class="src" href="https://wallstreetcn.com/articles/3192829" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <summary>
+        <span class="t num">03:48</span>
+        <span class="c">
+          <span class="title">费城半导体指数日内跌3%</span>
+          
+          <span class="meta">半导体 · <span class="neutral">中性</span> · 同花顺快讯</span>
+        </span>
+      </summary>
+      <div class="detail"><p>费城半导体指数日内跌3%</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://news.10jqka.com.cn/20261103/c681376870.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+    </details><details class="item high" data-sector="黄金" data-tier="high">
+      <summary>
+        <span class="t num">00:01</span>
+        <span class="c">
+          <span class="title">现货黄金涨超2%，现报3966.43美元/盎司。</span>
+          
+          <span class="meta">黄金 · <span class="bull">利好</span> · 同花顺快讯</span>
+        </span>
+      </summary>
+      <div class="detail"><p>现货黄金涨超2%，现报3966.43美元/盎司。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>价格信号·利好(+60分)</li><li>行情信号·利好(+15分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“涨超”</li><li>“涨超”</li></ul></div><p class="dim">价格·利好(60)+行情·利好(15·板块行情上涨)</p><p><a class="src" href="https://news.10jqka.com.cn/20261103/c681376375.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+    </details></div></div>
+    </div><div class="grp" data-session="post">
+      <div class="grp-head"><span>盘后</span><i>15:00 后</i><b class="num" data-gcount>3</b></div>
+      <div class="grp-cols"><div class="scol"><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <summary>
+        <span class="t num">23:45</span>
+        <span class="c">
+          <span class="title">今夜 中国资产直线暴涨了！</span>
+          
+          <span class="meta">半导体 · <span class="bull">利好</span> · 东方财富</span>
+        </span>
+      </summary>
+      <div class="detail"><p>今夜 中国资产直线暴涨了！</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利好(+11分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“大涨”</li></ul></div><p class="dim">行情·利好(11·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="http://forex.eastmoney.com/news/1131,202611023919156438.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
+    </details><details class="item high" data-sector="黄金" data-tier="high">
+      <summary>
+        <span class="t num">21:44</span>
+        <span class="c">
+          <span class="title">黄金、白银短线大幅拉升</span>
+          <span class="summary">现货黄金站上3940美元/盎司，日内涨1.72%。同花顺黄金现货价格报844.65元/克，现涨1.61%。现货白银涨超3%，现报51.25美元/盎司。</span>
+          <span class="meta">黄金 · <span class="bull">利好</span> · 同花顺快讯</span>
+        </span>
+      </summary>
+      <div class="detail"><p>黄金、白银短线大幅拉升</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>价格信号·利好(+30分)</li><li>行情信号·利好(+23分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“涨超”</li><li>“拉升”</li></ul></div><p class="dim">价格·利好(30)+行情·利好(23·板块行情上涨)</p><p><a class="src" href="https://news.10jqka.com.cn/20261102/c681374915.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+    </details></div><div class="scol"></div><div class="scol"><details class="item quiet" data-sector="光模块" data-tier="quiet">
+      <summary>
+        <span class="t num">20:07</span>
+        <span class="c">
+          <span class="title">迈威尔科技将通过换股交易收购Lumentum</span>
+          
+          <span class="meta">光模块 · <span class="neutral">中性</span> · 同花顺快讯</span>
+        </span>
+      </summary>
+      <div class="detail"><p>迈威尔科技将通过换股交易收购Lumentum</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>传闻信号·中性(±5分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“有望”</li></ul></div><p class="dim">传闻·中性(5)</p><p><a class="src" href="https://news.10jqka.com.cn/20261102/c681371219.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+    </details></div></div>
+    </div>
+      <div class="stream-empty" id="streamEmpty" hidden>今日暂无入选新闻</div>
+      <div class="stream-end">共 <b class="num">28</b> 条 · 点击标题展开全文、研判依据与相关报道。</div>
+    </div>
+  </section>
+  <section id="data" class="viz">
+    <div class="ph"><h2>数据</h2><span class="note">走势 · 冲击热力图</span></div>
+    <div class="viz-card">
+        <div class="vtitle">板块 ETF 走势对比 <span>首日 = 100</span></div>
+        <div class="legend"><span class="lg"><i style="background:#222222"></i>黄金<b class="bear num">94.5</b></span><span class="lg"><i style="background:#555555"></i>创新药<b class="bear num">93.0</b></span><span class="lg"><i style="background:#999999"></i>半导体<b class="bear num">73.0</b></span><span class="lg"><i style="background:#c9c9c9"></i>光模块<b class="bear num">68.8</b></span></div>
+        <div class="chart-plot" id="trendPlot">
+          <div class="only-wide"><svg class="tchart" data-w="1100" data-pr="132" viewBox="0 0 1100 240" role="img" aria-label="板块 ETF 走势对比">
+          <rect x="0" y="0" width="1100" height="240" fill="transparent"/>
+          <line x1="8" y1="86.54545454545455" x2="968" y2="86.54545454545455" class="base"/>
+          <text x="8" y="82.54545454545455" class="axis">100</text>
+          <path d="M8.0,86.5L24.3,80.8L40.5,76.5L56.8,66.2L73.1,74.7L89.4,75.5L105.6,64.4L121.9,65.5L138.2,55.1L154.4,39.7L170.7,45.4L187.0,77.2L203.3,73.3L219.5,63.7L235.8,80.5L252.1,79.4L268.3,78.0L284.6,63.7L300.9,68.7L317.2,63.7L333.4,71.5L349.7,78.3L366.0,80.1L382.2,86.2L398.5,64.0L414.8,66.5L431.1,62.9L447.3,65.8L463.6,64.7L479.9,75.8L496.1,77.6L512.4,63.7L528.7,65.8L544.9,56.5L561.2,52.6L577.5,53.3L593.8,56.5L610.0,68.0L626.3,93.4L642.6,90.1L658.8,94.1L675.1,111.6L691.4,115.5L707.7,130.5L723.9,125.2L740.2,137.0L756.5,149.2L772.7,150.6L789.0,150.6L805.3,148.1L821.6,144.9L837.8,161.7L854.1,154.2L870.4,165.2L886.6,173.5L902.9,160.2L919.2,181.4L935.5,198.1L951.7,196.7" class="tl" style="stroke:#c9c9c9"/><path d="M8.0,86.5L24.3,64.0L40.5,60.1L56.8,48.9L73.1,51.1L89.4,56.9L105.6,49.8L121.9,55.3L138.2,51.8L154.4,32.4L170.7,32.1L187.0,64.6L203.3,68.5L219.5,65.9L235.8,79.5L252.1,79.1L268.3,74.9L284.6,58.9L300.9,67.5L317.2,63.0L333.4,72.0L349.7,78.2L366.0,80.1L382.2,89.4L398.5,78.5L414.8,83.0L431.1,84.9L447.3,86.5L463.6,92.3L479.9,99.1L496.1,92.3L512.4,77.2L528.7,80.4L544.9,68.2L561.2,66.6L577.5,63.3L593.8,65.3L610.0,74.6L626.3,91.7L642.6,88.8L658.8,100.1L675.1,115.5L691.4,117.5L707.7,125.8L723.9,126.5L740.2,136.8L756.5,142.0L772.7,143.9L789.0,150.3L805.3,148.4L821.6,147.4L837.8,155.2L854.1,146.5L870.4,157.4L886.6,170.6L902.9,159.7L919.2,173.5L935.5,187.0L951.7,181.9" class="tl" style="stroke:#999999"/><path d="M8.0,86.5L24.3,82.7L40.5,87.6L56.8,65.1L73.1,61.2L89.4,59.0L105.6,60.7L121.9,56.8L138.2,60.7L154.4,57.4L170.7,61.2L187.0,70.0L203.3,53.5L219.5,71.1L235.8,89.3L252.1,82.1L268.3,81.6L284.6,78.3L300.9,83.8L317.2,89.9L333.4,89.9L349.7,92.0L366.0,88.2L382.2,91.5L398.5,92.6L414.8,89.3L431.1,94.8L447.3,100.9L463.6,108.0L479.9,97.0L496.1,100.3L512.4,99.2L528.7,97.0L544.9,94.2L561.2,81.0L577.5,81.6L593.8,81.0L610.0,92.6L626.3,93.7L642.6,91.5L658.8,79.4L675.1,92.6L691.4,91.0L707.7,97.0L723.9,101.4L740.2,105.2L756.5,105.8L772.7,111.9L789.0,107.5L805.3,103.1L821.6,103.1L837.8,113.5L854.1,105.2L870.4,104.7L886.6,116.8L902.9,113.0L919.2,116.2L935.5,115.2L951.7,111.3" class="tl" style="stroke:#555555"/><path d="M8.0,86.5L24.3,76.8L40.5,70.3L56.8,66.2L73.1,61.5L89.4,61.3L105.6,57.4L121.9,59.9L138.2,64.0L154.4,58.9L170.7,58.4L187.0,62.8L203.3,51.9L219.5,45.4L235.8,38.0L252.1,39.4L268.3,40.0L284.6,43.0L300.9,41.8L317.2,56.0L333.4,56.8L349.7,65.8L366.0,57.3L382.2,54.8L398.5,60.7L414.8,59.7L431.1,60.0L447.3,58.2L463.6,64.1L479.9,67.0L496.1,68.9L512.4,65.7L528.7,67.7L544.9,61.3L561.2,64.6L577.5,67.6L593.8,66.0L610.0,70.6L626.3,79.8L642.6,81.9L658.8,77.1L675.1,83.8L691.4,77.8L707.7,79.1L723.9,78.5L740.2,82.6L756.5,83.9L772.7,80.4L789.0,80.5L805.3,84.5L821.6,86.4L837.8,88.6L854.1,95.3L870.4,95.9L886.6,96.7L902.9,94.2L919.2,94.3L935.5,98.8L951.7,106.1" class="tl" style="stroke:#222222"/>
+          
+            <line x1="972" y1="106.12181818181817" x2="978" y2="106.12181818181817" class="lead-line" style="stroke:#222222"/>
+            <text x="981" y="109.62181818181817" class="endlab"><tspan class="en" style="fill:#222222">黄金</tspan><tspan class="bear" dx="4">94.5</tspan></text>
+            <line x1="972" y1="111.30690909090907" x2="978" y2="120.12181818181817" class="lead-line" style="stroke:#555555"/>
+            <text x="981" y="123.62181818181817" class="endlab"><tspan class="en" style="fill:#555555">创新药</tspan><tspan class="bear" dx="4">93.0</tspan></text>
+            <line x1="972" y1="181.88763636363637" x2="978" y2="181.88763636363637" class="lead-line" style="stroke:#999999"/>
+            <text x="981" y="185.38763636363637" class="endlab"><tspan class="en" style="fill:#999999">半导体</tspan><tspan class="bear" dx="4">73.0</tspan></text>
+            <line x1="972" y1="196.73745454545454" x2="978" y2="196.73745454545454" class="lead-line" style="stroke:#c9c9c9"/>
+            <text x="981" y="200.23745454545454" class="endlab"><tspan class="en" style="fill:#c9c9c9">光模块</tspan><tspan class="bear" dx="4">68.8</tspan></text>
+          <text x="8" y="232" class="axis">08-04</text>
+          <text x="488" y="232" class="axis" text-anchor="middle">09-15</text>
+          <text x="968" y="232" class="axis" text-anchor="end">11-03</text>
+        </svg></div>
+          <div class="only-narrow"><svg class="tchart" data-w="360" data-pr="14" viewBox="0 0 360 240" role="img" aria-label="板块 ETF 走势对比">
+          <rect x="0" y="0" width="360" height="240" fill="transparent"/>
+          <line x1="8" y1="86.54545454545455" x2="346" y2="86.54545454545455" class="base"/>
+          <text x="8" y="82.54545454545455" class="axis">100</text>
+          <path d="M8.0,86.5L13.7,80.8L19.5,76.5L25.2,66.2L30.9,74.7L36.6,75.5L42.4,64.4L48.1,65.5L53.8,55.1L59.6,39.7L65.3,45.4L71.0,77.2L76.7,73.3L82.5,63.7L88.2,80.5L93.9,79.4L99.7,78.0L105.4,63.7L111.1,68.7L116.8,63.7L122.6,71.5L128.3,78.3L134.0,80.1L139.8,86.2L145.5,64.0L151.2,66.5L156.9,62.9L162.7,65.8L168.4,64.7L174.1,75.8L179.9,77.6L185.6,63.7L191.3,65.8L197.1,56.5L202.8,52.6L208.5,53.3L214.2,56.5L220.0,68.0L225.7,93.4L231.4,90.1L237.2,94.1L242.9,111.6L248.6,115.5L254.3,130.5L260.1,125.2L265.8,137.0L271.5,149.2L277.3,150.6L283.0,150.6L288.7,148.1L294.4,144.9L300.2,161.7L305.9,154.2L311.6,165.2L317.4,173.5L323.1,160.2L328.8,181.4L334.5,198.1L340.3,196.7" class="tl" style="stroke:#c9c9c9"/><path d="M8.0,86.5L13.7,64.0L19.5,60.1L25.2,48.9L30.9,51.1L36.6,56.9L42.4,49.8L48.1,55.3L53.8,51.8L59.6,32.4L65.3,32.1L71.0,64.6L76.7,68.5L82.5,65.9L88.2,79.5L93.9,79.1L99.7,74.9L105.4,58.9L111.1,67.5L116.8,63.0L122.6,72.0L128.3,78.2L134.0,80.1L139.8,89.4L145.5,78.5L151.2,83.0L156.9,84.9L162.7,86.5L168.4,92.3L174.1,99.1L179.9,92.3L185.6,77.2L191.3,80.4L197.1,68.2L202.8,66.6L208.5,63.3L214.2,65.3L220.0,74.6L225.7,91.7L231.4,88.8L237.2,100.1L242.9,115.5L248.6,117.5L254.3,125.8L260.1,126.5L265.8,136.8L271.5,142.0L277.3,143.9L283.0,150.3L288.7,148.4L294.4,147.4L300.2,155.2L305.9,146.5L311.6,157.4L317.4,170.6L323.1,159.7L328.8,173.5L334.5,187.0L340.3,181.9" class="tl" style="stroke:#999999"/><path d="M8.0,86.5L13.7,82.7L19.5,87.6L25.2,65.1L30.9,61.2L36.6,59.0L42.4,60.7L48.1,56.8L53.8,60.7L59.6,57.4L65.3,61.2L71.0,70.0L76.7,53.5L82.5,71.1L88.2,89.3L93.9,82.1L99.7,81.6L105.4,78.3L111.1,83.8L116.8,89.9L122.6,89.9L128.3,92.0L134.0,88.2L139.8,91.5L145.5,92.6L151.2,89.3L156.9,94.8L162.7,100.9L168.4,108.0L174.1,97.0L179.9,100.3L185.6,99.2L191.3,97.0L197.1,94.2L202.8,81.0L208.5,81.6L214.2,81.0L220.0,92.6L225.7,93.7L231.4,91.5L237.2,79.4L242.9,92.6L248.6,91.0L254.3,97.0L260.1,101.4L265.8,105.2L271.5,105.8L277.3,111.9L283.0,107.5L288.7,103.1L294.4,103.1L300.2,113.5L305.9,105.2L311.6,104.7L317.4,116.8L323.1,113.0L328.8,116.2L334.5,115.2L340.3,111.3" class="tl" style="stroke:#555555"/><path d="M8.0,86.5L13.7,76.8L19.5,70.3L25.2,66.2L30.9,61.5L36.6,61.3L42.4,57.4L48.1,59.9L53.8,64.0L59.6,58.9L65.3,58.4L71.0,62.8L76.7,51.9L82.5,45.4L88.2,38.0L93.9,39.4L99.7,40.0L105.4,43.0L111.1,41.8L116.8,56.0L122.6,56.8L128.3,65.8L134.0,57.3L139.8,54.8L145.5,60.7L151.2,59.7L156.9,60.0L162.7,58.2L168.4,64.1L174.1,67.0L179.9,68.9L185.6,65.7L191.3,67.7L197.1,61.3L202.8,64.6L208.5,67.6L214.2,66.0L220.0,70.6L225.7,79.8L231.4,81.9L237.2,77.1L242.9,83.8L248.6,77.8L254.3,79.1L260.1,78.5L265.8,82.6L271.5,83.9L277.3,80.4L283.0,80.5L288.7,84.5L294.4,86.4L300.2,88.6L305.9,95.3L311.6,95.9L317.4,96.7L323.1,94.2L328.8,94.3L334.5,98.8L340.3,106.1" class="tl" style="stroke:#222222"/>
+          
+          <text x="8" y="232" class="axis">08-04</text>
+          <text x="177" y="232" class="axis" text-anchor="middle">09-15</text>
+          <text x="346" y="232" class="axis" text-anchor="end">11-03</text>
+        </svg></div>
+          <div class="tip" id="trendTip" hidden></div>
+        </div>
+        <div class="hint">在图上移动或轻点，查看任意一日各板块指数；数值以首日 = 100 为基准。</div>
+      </div>
+    <div class="viz-card">
+      <div class="vtitle">冲击热力图 <span>板块 × 影响等级</span></div>
+      <table class="heat">
+    <thead><tr><th></th><th>低</th><th>中</th><th>高</th><th>极高</th></tr></thead>
+    <tbody><tr><th>半导体</th><td style="background:rgba(222,4,34,0.65);color:#fff">8</td><td style="background:rgba(222,4,34,0.26);color:var(--ink)">3</td><td style="background:rgba(222,4,34,0.11);color:var(--ink)">1</td><td style="background:rgba(222,4,34,0.11);color:var(--ink)">1</td></tr><tr><th>光模块</th><td style="background:rgba(222,4,34,0.18);color:var(--ink)">2</td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.11);color:var(--ink)">1</td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td></tr><tr><th>创新药</th><td style="background:rgba(222,4,34,0.18);color:var(--ink)">2</td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td></tr><tr><th>黄金</th><td style="background:rgba(222,4,34,0.34);color:var(--ink)">4</td><td style="background:rgba(222,4,34,0.11);color:var(--ink)">1</td><td style="background:rgba(222,4,34,0.26);color:var(--ink)">3</td><td style="background:rgba(222,4,34,0.18);color:var(--ink)">2</td></tr></tbody>
+  </table>
+    </div>
+  </section>
+  <section id="matrix" class="matrix">
+    <div class="ph"><h2>板块矩阵</h2><span class="note">方向与冲击取自新闻研判，ETF 均值为当日收盘</span></div>
+    <div class="dir-legend"><b>今日复盘</b>=板块方向以当日 ETF 实际涨跌校准（回答「今天为什么涨跌」）；<b>次日倾向</b>=只由新闻内容研判，未经行情校准。</div>
+    <div class="matrix-scroll">
+      <table>
+        <thead><tr><th>板块</th><th>冲击</th><th>今日复盘</th><th>次日倾向</th><th>新闻</th><th>传导逻辑</th><th>关联标的</th></tr></thead>
+        <tbody><tr><td class="mx-name">半导体</td><td class="shock-strong">强</td><td class="dir-bull">利好</td><td class="dir-bull">利好</td><td class="num">13</td><td class="logic">半导体板块13条新闻，方向以利好为主。关注：华尔街见闻早餐 | 2026年11月3日</td><td class="num tickers">中芯国际、北方华创、中微公司</td></tr>
+<tr><td class="mx-name">黄金</td><td class="shock-strong">强</td><td class="dir-bull">利好</td><td class="dir-bull">利好</td><td class="num">10</td><td class="logic">黄金板块10条新闻，方向以利好为主。关注：现货黄金突破3960美元/盎司，日内涨0.38%。</td><td class="num tickers">紫金矿业、山东黄金、中金黄金</td></tr>
+<tr><td class="mx-name">光模块</td><td class="shock-mid">中</td><td class="dir-bull">利好</td><td class="dir-bull">利好</td><td class="num">3</td><td class="logic">光模块板块3条新闻，方向以利好为主。关注：114家公司10月以来披露在手订单充裕 9家公司同步推出回购计划；进入10月以</td><td class="num tickers">中际旭创(300308)、新易盛(300502)、天孚通信(300394)</td></tr>
+<tr><td class="mx-name">创新药</td><td class="shock-weak">弱</td><td class="dir-flat">中性</td><td class="dir-flat">中性</td><td class="num">2</td><td class="logic">创新药板块2条新闻，方向以中性为主。关注：皓元医药与轩竹生物达成全面战略合作；据皓元医药消息，近日，皓元医药与轩竹生物科</td><td class="num tickers">百济神州、药明康德、恒瑞医药</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="foot">
+    基于多源财经 API 自动抓取 · 关键词引擎自动分类 · 每天更新（含周末）<br>
+    监控范围：半导体 / 光模块 / 创新药 / 黄金 &nbsp;|&nbsp; 包含韩国及美股半导体市场<br>
+    <strong>免责声明：</strong>基于公开信息自动整理，不构成投资建议。股市有风险，投资需谨慎。
+  </footer>
+</main>
+
+<script type="application/json" id="trend-data">{"dates":["2026-08-04","2026-08-05","2026-08-06","2026-08-07","2026-08-10","2026-08-11","2026-08-12","2026-08-13","2026-08-14","2026-08-17","2026-08-18","2026-08-19","2026-08-20","2026-08-21","2026-08-24","2026-08-25","2026-08-26","2026-08-27","2026-08-28","2026-08-31","2026-09-01","2026-09-02","2026-09-03","2026-09-04","2026-09-07","2026-09-08","2026-09-09","2026-09-10","2026-09-11","2026-09-14","2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22","2026-09-23","2026-09-24","2026-09-28","2026-09-29","2026-09-30","2026-10-08","2026-10-09","2026-10-12","2026-10-13","2026-10-14","2026-10-15","2026-10-16","2026-10-19","2026-10-20","2026-10-21","2026-10-22","2026-10-23","2026-10-26","2026-10-27","2026-10-28","2026-10-29","2026-10-30","2026-11-02","2026-11-03"],"series":[{"label":"黄金","color":"#222222","data":[100,102.76,104.6,105.76,107.1,107.15,108.27,107.54,106.4,107.85,107.97,106.73,109.82,111.66,113.75,113.38,113.19,112.35,112.69,108.65,108.44,105.88,108.29,108.99,107.33,107.6,107.53,108.03,106.36,105.55,105.01,105.91,105.33,107.15,106.21,105.36,105.82,104.52,101.9,101.32,102.68,100.78,102.49,102.11,102.27,101.11,100.76,101.74,101.72,100.58,100.05,99.43,97.51,97.35,97.13,97.84,97.81,96.52,94.45,null]},{"label":"创新药","color":"#555555","data":[100,101.09,99.69,106.08,107.18,107.8,107.33,108.42,107.33,108.27,107.18,104.68,109.36,104.37,99.22,101.25,101.4,102.34,100.78,99.06,99.06,98.44,99.53,98.6,98.28,99.22,97.66,95.94,93.92,97.04,96.1,96.41,97.04,97.82,101.56,101.4,101.56,98.28,97.97,98.6,102.03,98.28,98.75,97.04,95.79,94.7,94.54,92.82,94.07,95.32,95.32,92.36,94.7,94.85,91.42,92.51,91.58,91.89,92.98,null]},{"label":"半导体","color":"#999999","data":[100,106.39,107.49,110.68,110.05,108.4,110.41,108.86,109.86,115.34,115.43,106.21,105.11,105.84,102.01,102.1,103.29,107.85,105.39,106.67,104.11,102.37,101.83,99.18,102.28,101,100.46,100,98.36,96.44,98.36,102.65,101.74,105.21,105.66,106.58,106.03,103.38,98.54,99.36,96.16,91.78,91.23,88.86,88.68,85.75,84.29,83.74,81.92,82.47,82.74,80.55,83.01,79.91,76.16,79.27,75.34,71.51,72.97,null]},{"label":"光模块","color":"#c9c9c9","data":[100,101.62,102.84,105.78,103.35,103.14,106.29,105.98,108.92,113.29,111.66,102.64,103.75,106.49,101.72,102.03,102.43,106.49,105.07,106.49,104.26,102.33,101.83,100.1,106.39,105.68,106.69,105.88,106.19,103.04,102.54,106.49,105.88,108.52,109.63,109.43,108.52,105.27,98.07,98.99,97.87,92.9,91.78,87.53,89.05,85.7,82.25,81.85,81.85,82.56,83.47,78.7,80.83,77.69,75.35,79.11,73.12,68.36,68.76,null]}]}</script>
+<script>
+const REFRESH_URL = "https://1384887796-0ww1bkypy1.ap-guangzhou.tencentscf.com";
+// 勿在此写死密钥: 该值会被内联进公开页面,等同于直接发布
+const REFRESH_SECRET = "8d12ca84cba6f339f17425e8";
+const BASE = window.BASE || '';
+const PAGE_GENERATED_AT = "2026-11-03T01:02:32.290Z";
+const PHASE_CN = { fetch: '抓取新闻', analyze: 'AI 分析', 'analyze-kw': '关键词引擎', chart: '图表数据', write: '写入文件', commit: '提交 git', push: '推送 git', cloud: '云端构建', done: '完成', skipped: '空报告,跳过推送', error: '失败' };
+let refreshStartedAt = 0;
+let refreshTimer = null;
+let lastPhase = 'fetch';
+function isLocalHost() { return ['localhost', '127.0.0.1', '::1', '0.0.0.0'].includes(location.hostname); }
+function refreshAvailable() { return !!(REFRESH_URL || isLocalHost()); }
+const isCloud = !!(REFRESH_URL && !isLocalHost());
+function updateBtnPhase(phase) {
+  const btn = document.querySelector('.refresh-btn');
+  if (!btn) return;
+  const label = PHASE_CN[phase] || (phase ? String(phase) : '构建中');
+  btn.textContent = label + (refreshStartedAt ? ' ' + Math.round((Date.now() - refreshStartedAt) / 1000) + 's' : '');
+}
+function startBtnTimer() {
+  stopBtnTimer();
+  refreshTimer = setInterval(() => { if (document.querySelector('.refresh-btn')?.disabled) updateBtnPhase(lastPhase); }, 1000);
+}
+function stopBtnTimer() { if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; } }
+async function triggerRefresh() {
+  const btn = document.querySelector('.refresh-btn');
+  if (!refreshAvailable()) { showToast('刷新服务不可用', 'err'); return; }
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = '提交中…';
+  refreshStartedAt = Date.now();
+  if (isCloud) {
+    const runId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+    try {
+      const r = await fetch(REFRESH_URL + '/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(REFRESH_SECRET ? { 'X-Refresh-Secret': REFRESH_SECRET } : {}) },
+        body: JSON.stringify({ runId }),
+      });
+      const d = await r.json();
+      if (r.status === 202 && d.status === 'accepted') {
+        showToast('已在云端触发构建,完成后自动刷新', 'ok');
+        lastPhase = 'cloud';
+        updateBtnPhase(lastPhase);
+        startBtnTimer();
+        pollStatus(runId);
+      } else {
+        showToast(d.message || d.error || '请求失败', 'err');
+        resetBtn();
+      }
+    } catch (e) {
+      showToast('云端刷新服务异常,请稍后再试', 'err');
+      resetBtn();
+    }
+    return;
+  }
+  if (!isLocalHost()) {
+    showToast('刷新按钮仅在本机预览 (http://127.0.0.1:3456) 可用', 'err');
+    return;
+  }
+  try {
+    const r = await fetch('/refresh', { method: 'POST' });
+    const d = await r.json();
+    if (r.status === 202) {
+      showToast(d.status === 'already_running' ? '构建已在进行,完成后自动刷新' : '已开始重建,完成后自动刷新', 'ok');
+      lastPhase = d.phase || 'fetch';
+      updateBtnPhase(lastPhase);
+      startBtnTimer();
+      pollStatus();
+    } else {
+      showToast(d.message || '请求失败', 'err');
+      resetBtn();
+    }
+  } catch (e) {
+    showToast('刷新服务未启动,请本地运行 refresh-server.mjs', 'err');
+    resetBtn();
+  }
+}
+function showToast(msg, type) {
+  const t = document.createElement('div');
+  t.className = 'refresh-toast toast-' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 4000);
+}
+function resetBtn() {
+  stopBtnTimer();
+  const btn = document.querySelector('.refresh-btn');
+  if (!btn) return;
+  btn.disabled = false;
+  btn.textContent = '刷新日报';
+}
+async function pollStatus(myRunId) {
+  let previewNotified = false;
+  if (isCloud) {
+    const MAX = 90;
+    let netErrors = 0;
+    for (let i = 0; i < MAX; i++) {
+      await new Promise(r => setTimeout(r, 8000));
+      try {
+        const r = await fetch(BASE + '/history/build-state.json?_t=' + Date.now(), { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const d = await r.json();
+        netErrors = 0;
+        updateBtnPhase('cloud');
+        if (d.state === 'preview' && myRunId && d.runId === myRunId && !previewNotified) {
+          previewNotified = true;
+          showToast('基础版已发布（关键词引擎），AI 研判生成中，完成后自动刷新', 'ok');
+        }
+        if (d.state === 'done' && myRunId && d.runId === myRunId) {
+          stopBtnTimer();
+          showToast('刷新完成!即将自动重载', 'ok');
+          setTimeout(() => location.reload(), 1500);
+          return;
+        }
+      } catch (e) {
+        if (++netErrors >= 5) { stopBtnTimer(); showToast('云端构建暂不可见,请稍后刷新页面', 'err'); resetBtn(); return; }
+      }
+    }
+    stopBtnTimer();
+    showToast('云端构建超时,请查看 GitHub Actions 运行记录', 'err');
+    resetBtn();
+    return;
+  }
+  const MAX = 75;
+  let netErrors = 0;
+  for (let i = 0; i < MAX; i++) {
+    await new Promise(r => setTimeout(r, 8000));
+    try {
+      const r = await fetch('/status', { cache: 'no-store' });
+      const d = await r.json();
+      netErrors = 0;
+      if (d.phase) lastPhase = d.phase;
+      updateBtnPhase(d.phase || lastPhase);
+      if (d.state === 'done') {
+        stopBtnTimer();
+        const pf = d.phase === 'push_failed';
+        const skipped = d.phase === 'skipped';
+        const msg = skipped ? ('已跳过推送 —— ' + (d.error || '当日 0 条新闻'))
+          : pf ? '刷新完成(推送 main 失败,本地已更新),即将重载'
+            : '刷新完成!即将自动重载';
+        showToast(msg, (pf || skipped) ? 'err' : 'ok');
+        setTimeout(() => location.reload(), 1500);
+        return;
+      }
+      if (d.state === 'error') {
+        stopBtnTimer();
+        showToast('刷新失败:' + (d.error || '请查看服务端日志'), 'err');
+        resetBtn();
+        return;
+      }
+    } catch (e) {
+      if (++netErrors >= 3) { stopBtnTimer(); showToast('刷新服务失去响应,请检查是否关闭', 'err'); resetBtn(); return; }
+    }
+  }
+  stopBtnTimer();
+  showToast('构建超时,请查看服务端日志', 'err');
+  resetBtn();
+}
+const AUTO_CHECK_MS = 120000;
+const AUTO_RELOAD_KEY = 'dailyStockAutoReloadAt';
+const isHistoryPage = window.location.pathname.indexOf('/history/') >= 0;
+async function checkForNewBuild() {
+  if (isLocalHost() || isHistoryPage) return;
+  try {
+    const r = await fetch(BASE + '/history/build-state.json?_t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d.generatedAt || !PAGE_GENERATED_AT) return;
+    if (d.state === 'preview') return;
+    if (d.generatedAt <= PAGE_GENERATED_AT) return;
+    if (d.generatedAt === localStorage.getItem(AUTO_RELOAD_KEY)) return;
+    localStorage.setItem(AUTO_RELOAD_KEY, d.generatedAt);
+    showToast('检测到新日报,即将自动刷新', 'ok');
+    setTimeout(() => location.reload(), 3000);
+  } catch (e) { /* 网络抖动/部署时序,静默跳过 */ }
+}
+function startAutoCheck() {
+  setTimeout(checkForNewBuild, 1500);
+  setInterval(() => {
+    if (document.visibilityState === 'hidden') return;
+    checkForNewBuild();
+  }, AUTO_CHECK_MS);
+}
+startAutoCheck();
+async function loadHistoryDates() {
+  const sel = document.getElementById('historySelect');
+  if (!sel) return;
+  try {
+    const r = await fetch(BASE + '/history/dates.json');
+    const d = await r.json();
+    sel.innerHTML = '<option value="">选择日期</option>';
+    (d.dates || []).forEach(dt => {
+      const opt = document.createElement('option');
+      opt.value = dt;
+      const y = dt.slice(0, 4), m = dt.slice(4, 6), day = dt.slice(6, 8);
+      opt.textContent = y + '-' + m + '-' + day;
+      sel.appendChild(opt);
+    });
+  } catch (e) { console.warn('加载历史日期失败', e); }
+}
+function showHistoryDate() {
+  const sel = document.getElementById('historySelect');
+  const dt = sel.value;
+  if (!dt) return;
+  window.location.href = BASE + '/history/日报_' + dt + '.html';
+}
+function goToday() { window.location.href = BASE + '/'; }
+
+// ── 新闻流筛选:页签与左栏板块名共用一套状态,筛选后按权重重新分栏 ──
+var filterButtons = [].slice.call(document.querySelectorAll('#streamFilter .tab'));
+var filterNames = filterButtons.map(function(b){ return b.dataset.f; });
+var allItems = [].slice.call(document.querySelectorAll('.item'));
+var groupEls = [].slice.call(document.querySelectorAll('.grp'));
+var groupItems = groupEls.map(function(g){ return [].slice.call(g.querySelectorAll('.item')); });
+var countEl = document.getElementById('streamCount');
+var emptyEl = document.getElementById('streamEmpty');
+var totalItems = allItems.length;
+var currentFilter = 'all';
+
+function sectorFromHash() {
+  try { return decodeURIComponent((location.hash || '').replace(/^#/, '')); }
+  catch (e) { return ''; }
+}
+var SECTION_HASHES = ['news', 'stream', 'data', 'matrix'];
+function tierWeight(it) { return { quiet: 88, normal: 120, high: 140, key: 165 }[it.dataset.tier] || 100; }
+function cutColumns(arr, k) {
+  var total = arr.reduce(function(s, x){ return s + tierWeight(x); }, 0);
+  var cols = [], ci = 0, acc = 0;
+  for (var j = 0; j < k; j++) cols.push([]);
+  arr.forEach(function(x){
+    while (ci < k - 1 && acc >= total * (ci + 1) / k) ci++;
+    cols[ci].push(x);
+    acc += tierWeight(x);
+  });
+  return cols;
+}
+function syncGroups() {
+  groupEls.forEach(function(g, gi){
+    var vis = groupItems[gi].filter(function(it){ return !it.hidden; });
+    var cols = [].slice.call(g.querySelectorAll('.scol'));
+    cols.forEach(function(c){ c.textContent = ''; });
+    var buckets = cutColumns(vis, cols.length);
+    buckets.forEach(function(b, i){ b.forEach(function(it){ cols[i].appendChild(it); }); });
+    groupItems[gi].forEach(function(it){ if (it.hidden) cols[cols.length - 1].appendChild(it); });
+    g.hidden = !vis.length;
+    var counter = g.querySelector('[data-gcount]');
+    if (counter) counter.textContent = vis.length;
+  });
+}
+function applyFilter(f, opts) {
+  var active = f === 'key' || f === 'all' || filterNames.indexOf(f) >= 0 ? f : 'all';
+  currentFilter = active;
+  var shown = 0;
+  allItems.forEach(function(it){
+    var show = active === 'all' ? true
+      : active === 'key' ? (it.dataset.tier === 'key' || it.dataset.tier === 'high')
+      : it.dataset.sector === active;
+    it.hidden = !show;
+    if (show) shown++;
+  });
+  syncGroups();
+  if (countEl) {
+    if (active === 'all') countEl.innerHTML = '共 <span class="num">' + totalItems + '</span> 条 · 按发布时间倒序';
+    else countEl.textContent = (active === 'key' ? '高影响' : active) + ' · ' + shown + ' / ' + totalItems + ' 条';
+  }
+  if (emptyEl) {
+    emptyEl.hidden = shown !== 0;
+    emptyEl.textContent = active === 'key' ? '今日没有高影响新闻' : active === 'all' ? '今日暂无入选新闻' : '该板块今日无入选新闻';
+  }
+  filterButtons.forEach(function(b){
+    var on = b.dataset.f === active;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  [].slice.call(document.querySelectorAll('.sc')).forEach(function(b){
+    var on = (b.dataset.sector || '') === active;
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  // 板块导航锚点(#news/#stream/#data/#matrix)不是筛选状态,别把它们写掉
+  if (!(active === 'all' && SECTION_HASHES.indexOf(sectorFromHash()) >= 0)) {
+    history.replaceState(null, '', active === 'all'
+      ? location.pathname + location.search
+      : '#' + encodeURIComponent(active));
+  }
+  if (opts && opts.scroll && active !== 'all') {
+    var sec = document.getElementById('stream');
+    if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+filterButtons.forEach(function(b){
+  b.addEventListener('click', function(){ applyFilter(b.dataset.f === currentFilter && b.dataset.f !== 'all' ? 'all' : b.dataset.f, {}); });
+});
+[].slice.call(document.querySelectorAll('.sc')).forEach(function(b){
+  b.addEventListener('click', function(){
+    var s = b.dataset.sector || '';
+    applyFilter(s && s !== currentFilter ? s : 'all', { scroll: true });
+  });
+});
+window.addEventListener('hashchange', function(){
+  var h = sectorFromHash();
+  if (SECTION_HASHES.indexOf(h) >= 0) return;
+  applyFilter(h || 'all');
+});
+applyFilter(sectorFromHash() || 'all');
+
+// ── 走势图悬浮:任意一天各板块指数 ──
+(function(){
+  var dataEl = document.getElementById('trend-data');
+  var tip = document.getElementById('trendTip');
+  var plot = document.getElementById('trendPlot');
+  if (!dataEl || !tip || !plot) return;
+  var TD = JSON.parse(dataEl.textContent);
+  var NS = 'http://www.w3.org/2000/svg';
+  var PT = 16, PB = 30, PL = 8, TH = 240;
+  var n = TD.dates.length;
+  var step0 = n > 1 ? 1 : 0;
+  var all = TD.series.reduce(function(a, s){ return a.concat(s.data); }, []).filter(function(v){ return typeof v === 'number' && isFinite(v); });
+  if (!all.length) return;
+  var yMin = Math.floor(Math.min.apply(null, all) / 5) * 5;
+  var yMax = Math.ceil(Math.max.apply(null, all) / 5) * 5;
+  if (yMax === yMin) yMax = yMin + 1;
+
+  function mk(tag, attrs) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  [].slice.call(document.querySelectorAll('svg.tchart')).forEach(function(svg){
+    var W = +svg.getAttribute('data-w');
+    var PR = +svg.getAttribute('data-pr');
+    var step = n > 1 ? (W - PL - PR) / (n - 1) : 0;
+    var sx = function(i){ return PL + i * step; };
+    var sy = function(v){ return PT + ((yMax - v) / (yMax - yMin)) * (TH - PT - PB); };
+
+    var g = mk('g', {});
+    g.style.display = 'none';
+    g.style.pointerEvents = 'none';
+    var guide = mk('line', { y1: PT, y2: TH - PB, stroke: '#999', 'stroke-width': 1, 'stroke-dasharray': '3 3' });
+    g.appendChild(guide);
+    var dots = TD.series.map(function(s){
+      var c = mk('circle', { r: 2.8, fill: '#fff', 'stroke-width': 1 });
+      c.style.stroke = s.color;
+      g.appendChild(c);
+      return c;
+    });
+    svg.appendChild(g);
+    var idx = -1;
+
+    function moveTip(clientX, clientY) {
+      var box = plot.getBoundingClientRect();
+      var x = clientX - box.left, y = clientY - box.top;
+      var tw = tip.offsetWidth || 172, th = tip.offsetHeight || 112;
+      var left = x + 16;
+      if (left + tw > box.width - 4) left = x - tw - 16;
+      if (left < 4) left = 4;
+      var top = y - th - 14;
+      if (top < 4) top = y + 20;
+      if (top + th > box.height - 4) top = Math.max(4, box.height - th - 4);
+      tip.style.left = left + 'px';
+      tip.style.top = top + 'px';
+    }
+    function place(clientX, clientY) {
+      var box = svg.getBoundingClientRect();
+      if (!box.width) return;
+      var x = (clientX - box.left) * (W / box.width);
+      var i = step ? Math.round((x - PL) / step) : 0;
+      if (i < 0) i = 0;
+      if (i > n - 1) i = n - 1;
+      if (i !== idx) {
+        idx = i;
+        g.style.display = '';
+        guide.setAttribute('x1', sx(i));
+        guide.setAttribute('x2', sx(i));
+        TD.series.forEach(function(s, k){
+          var v = s.data[i];
+          if (typeof v === 'number' && isFinite(v)) {
+            dots[k].style.display = '';
+            dots[k].setAttribute('cx', sx(i));
+            dots[k].setAttribute('cy', sy(v));
+          } else {
+            dots[k].style.display = 'none';
+          }
+        });
+        tip.innerHTML = '<div class="tip-d">' + TD.dates[i] + '<span>第 ' + (i + 1) + ' 日</span></div>' +
+          TD.series.map(function(s){
+            var v = s.data[i];
+            if (typeof v !== 'number' || !isFinite(v)) return '<div class="tr"><i style="background:' + s.color + '"></i><span>' + s.label + '</span><b class="num">—</b><em></em></div>';
+            var prev = i > 0 ? s.data[i - 1] : 100;
+            var dod = (typeof prev === 'number' && prev) ? (v - prev) / prev * 100 : 0;
+            var mark = i === 0 || typeof prev !== 'number' ? '基准' : (dod >= 0 ? '+' : '−') + Math.abs(dod).toFixed(2) + '%';
+            var cls = i === 0 || typeof prev !== 'number' ? 'neutral' : dod >= 0 ? 'bull' : 'bear';
+            return '<div class="tr"><i style="background:' + s.color + '"></i><span>' + s.label + '</span><b class="num">' + v.toFixed(1) + '</b><em class="num ' + cls + '">' + mark + '</em></div>';
+          }).join('');
+        tip.hidden = false;
+      }
+      moveTip(clientX, clientY);
+    }
+    function hide() {
+      g.style.display = 'none';
+      tip.hidden = true;
+      idx = -1;
+    }
+    svg.addEventListener('pointermove', function(e){ place(e.clientX, e.clientY); });
+    svg.addEventListener('pointerdown', function(e){ place(e.clientX, e.clientY); });
+    svg.addEventListener('pointerleave', function(e){ if (e.pointerType === 'touch') return; hide(); });
+    document.addEventListener('pointerdown', function(e){ if (!plot.contains(e.target)) hide(); });
+  });
+})();
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadHistoryDates();
+  const btn = document.querySelector('.refresh-btn');
+  if (btn) {
+    const onHistory = window.location.pathname.indexOf('/history/') >= 0;
+    if (onHistory && !isLocalHost()) btn.style.display = 'none';
+    else if (!refreshAvailable()) btn.style.display = 'none';
+  }
+});
+</script>
+</body>
+</html>
