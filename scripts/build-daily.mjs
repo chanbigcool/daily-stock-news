@@ -131,7 +131,15 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
   // 这里只负责排版 —— 判定口径只能有一处。
   const mkt = result.market;
   const idxQuotes = mkt && Array.isArray(mkt.quotes) ? mkt.quotes.filter(q => typeof q.changePct === 'number') : [];
-  const regimeMode = !mkt ? '' : (mkt.step <= 1 ? 'down' : mkt.step >= 3 ? 'up' : 'flat');
+  // 徽章配色只跟**涨跌**那一半(普涨/普跌)走,不再跟强弱档位走:原先「普涨 · 偏弱」
+  // 按 step=偏弱 染成绿色,与 A 股「涨红跌绿」的读法相反 —— 用户第一眼读的是「普涨」。
+  // 档位(step)退为兜底:label 里只剩档位名(没抓到涨跌家数、或只按 7 指数广度判定)时,
+  // 仍按强弱上色;`分化` 走 .flat(中性灰)。CSS 里 .up=红 / .down=绿 定义不变。
+  const breadthHead = String((mkt && mkt.label) || '').split('·')[0].trim();
+  const breadthMode = /普涨|偏涨/.test(breadthHead) ? 'up'
+    : /普跌|偏跌/.test(breadthHead) ? 'down'
+      : /分化/.test(breadthHead) ? 'flat' : '';
+  const regimeMode = !mkt ? '' : (breadthMode || (mkt.step <= 1 ? 'down' : mkt.step >= 3 ? 'up' : 'flat'));
   const mktDrivers = mkt && Array.isArray(mkt.drivers) ? mkt.drivers : [];
   // 日韩:单独一块、单独口径。它们当天先于 A 股收盘,是开盘前最后一段外部信息;
   // 不参与上面的状态判定,所以视觉上也与 A 股指数隔开。

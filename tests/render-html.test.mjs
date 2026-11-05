@@ -218,6 +218,25 @@ test('大盘块:没有日韩数据时不出空壳', () => {
   assert.doesNotMatch(render({ market: mkt({ overseas: [] }) }), /<div class="mkt-abroad">/);
 });
 
+test('大盘徽章配色跟涨跌走:普涨 → up(红),普跌 → down(绿)', () => {
+  // 线上反馈:原按强弱档位上色,「普涨 · 偏弱」被染成绿色,与 A 股涨红跌绿相反,
+  // 而用户第一眼读的是「普涨」两个字。所以配色以涨跌家数那一半为准,与档位无关。
+  assert.match(
+    render({ market: mkt({ label: '普涨 · 偏弱', step: 1 }) }),
+    /<span class="mkt-regime up"[^>]*>普涨 · 偏弱<\/span>/,
+  );
+  assert.match(
+    render({ market: mkt({ label: '普跌 · 偏强', step: 3 }) }),
+    /<span class="mkt-regime down"[^>]*>普跌 · 偏强<\/span>/,
+  );
+});
+
+test('大盘徽章兜底:label 里只剩档位名时按强弱上色,分化走中性', () => {
+  assert.match(render({ market: mkt({ label: '偏弱', step: 1 }) }), /class="mkt-regime down"/);
+  assert.match(render({ market: mkt({ label: '偏强', step: 3 }) }), /class="mkt-regime up"/);
+  assert.match(render({ market: mkt({ label: '分化 · 中性', step: 2 }) }), /class="mkt-regime flat"/);
+});
+
 test('有 forwardDirection 但某板块为空 → 该格显「—」而不是充一个中性', () => {
   // 缺值时编一个「中性」等于谎报「研判为不表态」,与「没有这个数据」是两回事
   const html = renderHTML(
