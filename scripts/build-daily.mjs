@@ -141,20 +141,10 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
       : /分化/.test(breadthHead) ? 'flat' : '';
   const regimeMode = !mkt ? '' : (breadthMode || (mkt.step <= 1 ? 'down' : mkt.step >= 3 ? 'up' : 'flat'));
   const mktDrivers = mkt && Array.isArray(mkt.drivers) ? mkt.drivers : [];
-  // 日韩:单独一块、单独口径。它们当天先于 A 股收盘,是开盘前最后一段外部信息;
-  // 不参与上面的状态判定,所以视觉上也与 A 股指数隔开。
+  // 日韩:只给中栏「全球市场」用(asiaList),**不再在大盘块里重复一遍**。
+  // 早先这里有个独立的 `.mkt-abroad` 子块,因 ingest 白名单把 overseas 吃掉而从未
+  // 在线上出现;补好透传后它会和全球市场的亚太列重复,所以直接去掉,展示只留一处。
   const abroadQuotes = mkt && Array.isArray(mkt.overseas) ? mkt.overseas.filter(q => typeof q.changePct === 'number') : [];
-  const abroadAsOf = abroadQuotes.map(q => q.asOf).filter(Boolean).sort().pop() || '';
-  // 日经的接口不给时间戳,只能在工具提示里给点位;块标题退到「最新」,
-  // 免得把一个没有时间的信息标成某个具体时刻。
-  const abroadNote = abroadAsOf ? `截至 ${escHtml(abroadAsOf.slice(5, 16))}` : '最新';
-  const abroadHTML = abroadQuotes.length === 0 ? '' : `<div class="mkt-abroad">
-      <div class="mkt-abroad-h"><span>日韩</span><span class="mkt-abroad-t">${abroadNote}</span></div>
-      <div class="mkt-grid">${abroadQuotes.map(q => `<div class="mkt-idx" title="${escHtml(q.name)} ${q.price}${q.asOf ? ' · ' + escHtml(q.asOf) : ''}">
-        <span class="mkt-name">${escHtml(q.name)}</span>
-        <b class="num ${flowCls(q.changePct)}">${pct(q.changePct)}</b>
-      </div>`).join('')}</div>
-    </div>`;
   // 徽标 tooltip 带上全部驱动项;底部只留趋势项 —— 涨跌家数已经在右上角单独显示。
   const driverTip = mktDrivers.map(d => `${d.label} ${d.value}`).join(' · ');
   const footTip = mktDrivers.filter(d => d.key !== 'breadth').map(d => `${d.label} ${d.value}`).join(' · ');
@@ -169,7 +159,6 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
         <span class="mkt-name">${escHtml(q.name)}</span>
         <b class="num ${flowCls(q.changePct)}">${pct(q.changePct)}</b>
       </div>`).join('')}</div>
-    ${abroadHTML}
     ${footTip ? `<div class="mkt-foot">${escHtml(footTip)}</div>` : ''}
   </div>`;
 
@@ -699,11 +688,6 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
   .mkt-name{color:var(--ink2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
   .mkt-idx b{font-weight:700;flex:none;}
   .mkt-foot{margin-top:9px;font-size:11px;line-height:1.65;color:var(--faint);}
-  /* 日韩:与 A 股指数用一条细线隔开,自带「截至」时间戳(收盘后就是收盘值) */
-  .mkt-abroad{margin-top:10px;padding-top:9px;border-top:1px solid var(--rule2);}
-  .mkt-abroad-h{display:flex;align-items:baseline;gap:8px;margin-bottom:2px;font-size:11px;color:var(--muted);}
-  .mkt-abroad-t{margin-left:auto;font-size:10.5px;color:var(--faint);white-space:nowrap;}
-  .mkt-abroad .mkt-idx{padding:2px 0;}
 
   /* 全球市场:中栏尾部的「外部参照」带。日韩与美股分列,涨跌条以 0 为中点向两侧长,
      长度按当日全场最大振幅归一 —— 跨市场之间也能横向比幅度。 */

@@ -182,9 +182,10 @@ test('无 forwardDirection(旧存档)→ 保持单列「方向」,不出释义�
   assert.match(html, /class="badge badge-neutral">中性<\/span>/);
 });
 
-// ── 日韩指数:只展示,且在视觉上与 A 股 7 指数分开 ───────────
-// 它们不参与状态五档打分(见 pipeline/market.mjs),所以既不能混进 mkt-grid,
-// 也不能在没有数据时留空壳。
+// ── 日韩指数:只展示,只出现在中栏「全球市场」──
+// 它们不参与状态五档打分(见 pipeline/market.mjs),所以不能混进 A 股 mkt-grid。
+// 早先还有一个独立的 `.mkt-abroad` 子块,因 ingest 白名单吃掉 overseas 从未上线;
+// 补好透传后它会与全球市场的亚太列重复,已删除 —— 这里钉住「不许回来」。
 
 const mkt = (over = {}) => ({
   label: '普跌 · 下行', step: 0, regime: '下行',
@@ -197,7 +198,7 @@ const mkt = (over = {}) => ({
   ...over,
 });
 
-test('大盘块:日韩指数单独成块,带自己的截至时间', () => {
+test('大盘块:日韩不在这里重复出现(只交给全球市场)', () => {
   const html = render({
     market: mkt({
       overseas: [
@@ -206,16 +207,11 @@ test('大盘块:日韩指数单独成块,带自己的截至时间', () => {
       ],
     }),
   });
-  assert.match(html, /<div class="mkt-abroad">/);
-  assert.match(html, /日经225<\/span>\s*<b class="num bear">−0\.90%<\/b>/);
-  assert.match(html, /韩国综合<\/span>\s*<b class="num bear">−1\.24%<\/b>/);
-  assert.match(html, /截至 10-29 14:30/, '有收盘时间就标出来,避免把上一交易日收盘当今天');
-});
-
-test('大盘块:没有日韩数据时不出空壳', () => {
-  // 只看标记,不看 CSS —— 样式表里始终有 .mkt-abroad 的规则。
-  assert.doesNotMatch(render({ market: mkt() }), /<div class="mkt-abroad">/);
-  assert.doesNotMatch(render({ market: mkt({ overseas: [] }) }), /<div class="mkt-abroad">/);
+  assert.doesNotMatch(html, /mkt-abroad/);
+  // 日韩只应出现在全球市场区块里,且每行只出现一次（导语里点名领跌的那个不算重复）
+  assert.match(html, /<section id="global"/);
+  assert.equal(html.match(/class="gl-name">日经225/g).length, 1);
+  assert.equal(html.match(/class="gl-name">韩国综合/g).length, 1);
 });
 
 // ── 全球市场速览:日韩 + 美股,只作外部参照 ─────────────

@@ -148,8 +148,26 @@ test('loadFetchPayload:market / indexHistory 缺失→null;坏形状→空结构
     market: { quotes: 'nope' },
     indexHistory: { closes: {} },
   })), { expectRunId: 'run-abc' });
-  assert.deepEqual(half.market, { quotes: [], breadth: null });
+  assert.deepEqual(half.market, { quotes: [], breadth: null, overseas: [], us: [] });
   assert.equal(half.indexHistory, null);
+});
+
+test('loadFetchPayload:overseas / us 必须透传(白名单漏字段曾让日韩在线上一直是空)', () => {
+  // 回归用例。ingest 是 payload 进构建的唯一入口,它一旦只挑字段,
+  // 云函数抓到的日韩/美股就等于没抓 —— 2026-10 起到 11-05 每天存档里
+  // overseas 都是空数组,页面上的「日韩」块从未渲染过。
+  const p = loadFetchPayload(writePayload(mkPayload({
+    market: {
+      quotes: [{ name: '上证', price: 3648.3, changePct: -1.33 }],
+      breadth: null,
+      overseas: [{ name: '日经225', price: 51000, changePct: -0.9 }],
+      us: [{ name: '道琼斯', price: 53356.12, changePct: 3.03 }],
+    },
+  })), { expectRunId: 'run-abc' });
+  assert.equal(p.market.overseas.length, 1);
+  assert.equal(p.market.overseas[0].name, '日经225');
+  assert.equal(p.market.us.length, 1);
+  assert.equal(p.market.us[0].changePct, 3.03);
 });
 
 test('loadFetchPayload:文件不存在 / JSON 非法 → 抛错,信息里带路径或原因', () => {

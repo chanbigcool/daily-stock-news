@@ -75,8 +75,17 @@ export function loadFetchPayload(filePath, { expectRunId = '' } = {}) {
     stats: raw.stats || { api: { total: 0, okSources: 0, failSources: 0, items: 0 }, sources: [] },
     etfData: Array.isArray(raw.etfData) ? raw.etfData : [],
     etfHistory: raw.etfHistory && Array.isArray(raw.etfHistory.dates) ? raw.etfHistory : null,
+    // overseas / us 是「只展示」的两组海外行情:不进 quotes、不进 computeMarketState,
+    // 但渲染层要读,所以必须原样透传。**这里曾经是白名单,只放行 quotes/breadth** ——
+    // 结果 payload 里明明有日韩,构建侧永远是 0:存档里 2026-10 至今每天 overseas
+    // 都是空数组,大盘块的「日韩」子块从上线起就没在线上出现过。加字段时先看这里。
     market: raw.market && typeof raw.market === 'object'
-      ? { quotes: Array.isArray(raw.market.quotes) ? raw.market.quotes : [], breadth: raw.market.breadth || null }
+      ? {
+        quotes: Array.isArray(raw.market.quotes) ? raw.market.quotes : [],
+        breadth: raw.market.breadth || null,
+        overseas: Array.isArray(raw.market.overseas) ? raw.market.overseas : [],
+        us: Array.isArray(raw.market.us) ? raw.market.us : [],
+      }
       : null,
     indexHistory: raw.indexHistory && Array.isArray(raw.indexHistory.dates) ? raw.indexHistory : null,
     meta: {
