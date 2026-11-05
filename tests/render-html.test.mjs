@@ -218,6 +218,34 @@ test('大盘块:没有日韩数据时不出空壳', () => {
   assert.doesNotMatch(render({ market: mkt({ overseas: [] }) }), /<div class="mkt-abroad">/);
 });
 
+// ── 全球市场速览:日韩 + 美股,只作外部参照 ─────────────
+// 两段都只展示、不进 computeMarketState。条形的方向由涨跌符号决定,
+// 颜色与 A 股一致(涨红跌绿),这里钉住符号 → class 的映射。
+
+test('全球市场:日韩与美股分两列,涨红跌绿,条形按符号分向', () => {
+  const html = render({
+    market: mkt({
+      overseas: [{ name: '日经225', price: 44946.64, changePct: -0.9, asOf: '2026-11-05 14:30' }],
+      us: [{ name: '道琼斯', short: '道指', price: 53356.12, changePct: 3.03, asOf: '2026-11-05 05:51' }],
+    }),
+  });
+  assert.match(html, /<section id="global" class="global">/);
+  assert.match(html, /<span class="gl-name">日经225<\/span>/, '亚太用全名');
+  assert.match(html, /<span class="gl-name">道指<\/span>/, '美股列宽窄,用简称');
+  assert.match(html, /gl-chg num bear">−0\.90%/, '跌用 bear(绿)');
+  assert.match(html, /gl-chg num bull">\+3\.03%/, '涨用 bull(红)');
+  assert.match(html, /<i class="n" style="width:/, '跌条从中点向左');
+  assert.match(html, /<i class="p" style="width:/, '涨条从中点向右');
+  assert.match(html, /截至 11-05 14:30/, '亚太标「截至」');
+  assert.match(html, /11-05 05:51 收盘/, '美股标收盘时刻,避免被当成盘中价');
+});
+
+test('全球市场:日韩美股都没有时不渲染整块', () => {
+  assert.doesNotMatch(render({ market: mkt() }), /id="global"/);
+  assert.doesNotMatch(render({ market: mkt({ overseas: [], us: [] }) }), /id="global"/);
+});
+
+
 test('大盘徽章配色跟涨跌走:普涨 → up(红),普跌 → down(绿)', () => {
   // 线上反馈:原按强弱档位上色,「普涨 · 偏弱」被染成绿色,与 A 股涨红跌绿相反,
   // 而用户第一眼读的是「普涨」两个字。所以配色以涨跌家数那一半为准,与档位无关。

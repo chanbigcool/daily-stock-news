@@ -12,11 +12,11 @@
 // 口径提醒:涨跌家数**没有历史**,只能从上线当天起逐日落盘(market_history.json),
 // 因此它只参与展示,不进市场状态的分数 —— 否则回测里会出现一条凭空多出来的特征。
 
-import { INDEXES, OVERSEAS_INDEXES, MARKET_REGIME, CONFIG } from './config.mjs';
+import { INDEXES, OVERSEAS_INDEXES, US_INDEXES, MARKET_REGIME, CONFIG } from './config.mjs';
 import { fetchWithRetry } from './utils.mjs';
 import { fetchIndexHistoryKLine } from './charts.mjs';
 
-export { INDEXES, OVERSEAS_INDEXES, MARKET_REGIME };
+export { INDEXES, OVERSEAS_INDEXES, US_INDEXES, MARKET_REGIME };
 
 const SINA_HEADERS = {
   'User-Agent': 'Mozilla/5.0',
@@ -112,6 +112,52 @@ export async function fetchOverseasQuotes() {
   });
   if (!resp.ok) throw new Error('HTTP ' + resp.status);
   return parseOverseasQuotes(await decode(resp));
+}
+
+// ── 美股指数 ────────────────────────────────────────────
+// gb_ 段位:0 名称 / 1 现价 / 2 涨跌幅% / 3 北京时间 / 4 涨跌额
+//          5 今开 / 6 最高 / 7 最低 / 8 52周高 / 9 52周低
+// 美股当天 05:00 左右(北京时间)收盘,收盘后这些字段就固定不动,所以页面上的
+// 「截至」标记可以直接当收盘时间用。
+export function parseUSQuotes(text) {
+  const bySina = new Map();
+  const re = /var hq_str_(\w+)="([^"]*)"/g;
+  let m;
+  while ((m = re.exec(text)) !== null) bySina.set(m[1], m[2]);
+
+  const out = [];
+  for (const idx of US_INDEXES) {
+    const raw = bySina.get(idx.sina);
+    if (!raw) continue;
+    const f = raw.split(',');
+    const price = parseFloat(f[1]);
+    const changePct = parseFloat(f[2]);
+    // 休市时新浪可能给空串或 0,不能当成「0.00% 平盘」展示 —— 宁可不显示。
+    if (!(price > 0) || !Number.isFinite(changePct)) continue;
+    const stamp = String(f[3] || '');
+    out.push({
+      name: idx.name,
+      short: idx.short || idx.name,
+      price: Math.round(price * 100) / 100,
+      change: Number.isFinite(parseFloat(f[4])) ? Math.round(parseFloat(f[4]) * 100) / 100 : null,
+      changePct,
+      asOf: /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(stamp) ? stamp.slice(0, 16) : null,
+      // 振幅用日内高/低,给速览条一个「今天情绪有多激烈」的参照。
+      high: Number.isFinite(parseFloat(f[6])) ? parseFloat(f[6]) : null,
+      low: Number.isFinite(parseFloat(f[7])) ? parseFloat(f[7]) : null,
+    });
+  }
+  return out;
+}
+
+export async function fetchUSQuotes() {
+  const codes = US_INDEXES.map(i => i.sina).join(',');
+  const resp = await fetchWithRetry(`https://hq.sinajs.cn/list=${codes}`, {
+    headers: SINA_HEADERS,
+    signal: AbortSignal.timeout(CONFIG.apiTimeoutMs),
+  });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  return parseUSQuotes(await decode(resp));
 }
 
 // ── 全市场涨跌家数 ──────────────────────────────────────

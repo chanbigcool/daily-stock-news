@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  computeMarketState, regimeStep, countAbove, parseOverseasQuotes,
+  computeMarketState, regimeStep, countAbove, parseOverseasQuotes, parseUSQuotes,
   appendMarketDay, lastRegime, MARKET_REGIME,
 } from '../pipeline/market.mjs';
 
@@ -180,6 +180,26 @@ test('parseOverseasQuotes:空串、0 点位、字段不足一律跳过', () => {
   assert.deepEqual(parseOverseasQuotes('var hq_str_int_nikkei="";'), []);
   assert.deepEqual(parseOverseasQuotes('var hq_str_znb_KOSPI="首尔综合指数,0,0,0";'), []);
   assert.deepEqual(parseOverseasQuotes('var hq_str_znb_KOSDAQ="韩国创业板指数";'), []);
+});
+
+// ── 美股(只展示)──────────────────────────────────────
+
+test('parseUSQuotes:gb_ 四段式解析,时间戳转「YYYY-MM-DD HH:mm」', () => {
+  const text = 'var hq_str_gb_dji="道琼斯,53356.1211,3.03,2026-11-05 05:51:44,1569.4000,52410.2305,53492.3906,52410.2305,54744.3281,45057.2812";\n'
+    + 'var hq_str_gb_sox="费交所半导体股指数,10268.6543,-3.13,2026-11-05 06:16:01,-331.7419,10485.8796,10652.0175,10064.7343";\n';
+  const out = parseUSQuotes(text);
+  assert.deepEqual(out.map(q => q.name), ['道琼斯', '费城半导体'], '没给的标普/纳指应跳过,不能补零');
+  assert.equal(out[0].short, '道指', '展示用简称');
+  assert.equal(out[0].price, 53356.12);
+  assert.equal(out[0].changePct, 3.03);
+  assert.equal(out[0].asOf, '2026-11-05 05:51', '秒不要,只到分钟');
+  assert.equal(out[1].changePct, -3.13);
+});
+
+test('parseUSQuotes:空串、0 点位、没有时间戳的一律不进结果', () => {
+  assert.deepEqual(parseUSQuotes('var hq_str_gb_dji="";'), []);
+  assert.deepEqual(parseUSQuotes('var hq_str_gb_dji="道琼斯,0,0,2026-11-05 05:51:44";'), []);
+  assert.deepEqual(parseUSQuotes('var hq_str_gb_inx="标普500指数";'), []);
 });
 
 test('appendMarketDay:日韩单独入档,不混进 indices', () => {

@@ -23,7 +23,7 @@ import { scoreNewsItem } from '../pipeline/sentiment.mjs';
 import { evaluateHealth, formatSourceSummary } from '../pipeline/health.mjs';
 import { SECTORS, CATEGORY_CLS, IMPACT_RANK, impactCompare } from '../pipeline/sectors.mjs';
 import { loadETFHistory, saveETFHistory, accumulateETF, buildETFChartData, buildSentimentData, buildImpactHeatmap, buildDirectionChart, buildTimeWindowData, fetchETFHistoryKLine, saveIndexHistory } from '../pipeline/charts.mjs';
-import { fetchIndexQuotes, fetchMarketBreadth, fetchIndexHistory, fetchOverseasQuotes, computeMarketState, appendMarketDay } from '../pipeline/market.mjs';
+import { fetchIndexQuotes, fetchMarketBreadth, fetchIndexHistory, fetchOverseasQuotes, fetchUSQuotes, computeMarketState, appendMarketDay } from '../pipeline/market.mjs';
 import { loadFetchPayload } from '../pipeline/ingest.mjs';
 import { pushServerChan as serverChanPush } from '../pipeline/notify.mjs';
 
@@ -224,6 +224,57 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
     <div class="ph"><h2>要闻</h2><span class="note">事件优先，跨板块选摘</span></div>
     ${leadHTML}
     ${sideHTML}
+  </section>`;
+
+  // ── 中栏尾部:全球市场速览 ─────────────────────────────
+  // 日韩当天先于 A 股收盘、美股在 A 股开盘前 3~4 小时收盘,两段合起来就是
+  // 「今天开盘时手上握着多少外部信息」。只做参照,不进 computeMarketState。
+  // 历史存档里没有 us 字段的旧日报自然不渲染,不留空壳。
+  const asiaList = abroadQuotes.slice();
+  const usList = mkt && Array.isArray(mkt.us) ? mkt.us.filter(q => typeof q.changePct === 'number') : [];
+  const glAll = asiaList.concat(usList);
+  const glMaxAbs = glAll.reduce((a, q) => Math.max(a, Math.abs(q.changePct)), 0) || 1;
+  const fmtPx = (x) => typeof x !== 'number' || !Number.isFinite(x) ? '—'
+    : x.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const glTally = (list) => {
+    const up = list.filter(q => q.changePct > 0).length;
+    const down = list.filter(q => q.changePct < 0).length;
+    if (up === list.length) return '全线上涨';
+    if (down === list.length) return '全线下跌';
+    return `${up} 涨 ${down} 跌`;
+  };
+  const glExtreme = (list) => list.reduce((a, b) => (Math.abs(b.changePct) > Math.abs(a.changePct) ? b : a));
+  const glStamp = (list) => list.map(q => q.asOf).filter(Boolean).sort().pop() || '';
+  const glRow = (q) => {
+    const w = Math.abs(q.changePct) / glMaxAbs * 50;
+    const side = q.changePct >= 0 ? 'p' : 'n';
+    return `<div class="gl-row" title="${escHtml(q.name)} ${fmtPx(q.price)}${q.asOf ? ' · 截至 ' + escHtml(q.asOf) : ''}">
+      <span class="gl-name">${escHtml(q.short || q.name)}</span>
+      <span class="gl-bar"><i class="${side}" style="width:${w.toFixed(2)}%"></i></span>
+      <span class="gl-chg num ${flowCls(q.changePct)}">${pct(q.changePct)}</span>
+    </div>`;
+  };
+  const glCol = (label, note, list) => list.length === 0 ? '' : `<div class="gl-col">
+      <div class="gl-h"><span>${label}</span><span class="gl-t">${escHtml(note)}</span></div>
+      ${list.map(glRow).join('')}
+    </div>`;
+  const glBriefParts = [];
+  if (usList.length) {
+    const e = glExtreme(usList);
+    glBriefParts.push(`隔夜美股 ${glTally(usList)}，<b class="${flowCls(e.changePct)}">${escHtml(e.short || e.name)} ${pct(e.changePct)}</b> ${e.changePct > 0 ? '领涨' : '领跌'}`);
+  }
+  if (asiaList.length) {
+    const e = glExtreme(asiaList);
+    glBriefParts.push(`亚太${glTally(asiaList)}，<b class="${flowCls(e.changePct)}">${escHtml(e.short || e.name)} ${pct(e.changePct)}</b> ${e.changePct > 0 ? '领涨' : '领跌'}`);
+  }
+  const globalHTML = glAll.length === 0 ? '' : `<section id="global" class="global">
+    <div class="ph"><h2>全球市场</h2><span class="note">外部参照 · 不参与大盘判定</span></div>
+    ${glBriefParts.length ? `<p class="gl-brief">${glBriefParts.join('；')}。</p>` : ''}
+    <div class="gl-cols">
+      ${glCol('亚太', glStamp(asiaList) ? `截至 ${glStamp(asiaList).slice(5)}` : '最新', asiaList)}
+      ${glCol('美股', glStamp(usList) ? `${glStamp(usList).slice(5)} 收盘` : '上一交易日', usList)}
+    </div>
+    <div class="gl-foot">亚太为当日收盘（韩股 14:30 后即收盘值），美股为北京时间凌晨收盘值；两者只作参照，不参与大盘判定。</div>
   </section>`;
 
   // ── 右栏:今日要点 + 当日分布 ─────────────────────
@@ -607,7 +658,7 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
 
   /* 三栏。中栏留给正文,左右两栏按「能放下 2 列指数 + 5 字板块名」定宽 */
   .cols{display:grid;grid-template-columns:288px minmax(0,1fr) 264px;gap:26px;align-items:start;padding-top:22px;}
-  .feed,.quotes,.rail{min-width:0;}
+  .feed,.quotes,.rail,.maincol{min-width:0;}
   .ph{display:flex;align-items:center;gap:8px;height:48px;border-top:2px solid var(--ink);}
   .ph h2{margin:0;font-size:16px;font-weight:700;line-height:1;}
   .ph .note{margin-left:auto;font-size:12px;color:var(--muted);font-weight:400;}
@@ -653,6 +704,26 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
   .mkt-abroad-h{display:flex;align-items:baseline;gap:8px;margin-bottom:2px;font-size:11px;color:var(--muted);}
   .mkt-abroad-t{margin-left:auto;font-size:10.5px;color:var(--faint);white-space:nowrap;}
   .mkt-abroad .mkt-idx{padding:2px 0;}
+
+  /* 全球市场:中栏尾部的「外部参照」带。日韩与美股分列,涨跌条以 0 为中点向两侧长,
+     长度按当日全场最大振幅归一 —— 跨市场之间也能横向比幅度。 */
+  .global{margin-top:22px;}
+  .gl-brief{margin:0 0 14px;padding:11px 14px;background:var(--tint);border-left:2px solid var(--red);font-size:13px;line-height:1.75;color:var(--ink2);}
+  .gl-brief b{font-weight:700;font-variant-numeric:tabular-nums;}
+  .gl-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 30px;}
+  .gl-col{min-width:0;}
+  .gl-h{display:flex;align-items:baseline;gap:8px;padding-bottom:7px;border-bottom:1px solid var(--ink);font-size:11.5px;font-weight:700;letter-spacing:.06em;color:var(--ink);}
+  .gl-t{margin-left:auto;font-weight:400;font-size:10.5px;color:var(--faint);white-space:nowrap;letter-spacing:0;}
+  .gl-row{display:grid;grid-template-columns:76px minmax(40px,1fr) 62px;gap:10px;align-items:center;padding:8px 2px;border-bottom:1px solid var(--rule2);font-size:12.5px;line-height:1.4;}
+  .gl-row:last-child{border-bottom:0;}
+  .gl-name{color:var(--ink2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+  .gl-chg{text-align:right;font-weight:700;}
+  .gl-bar{position:relative;height:8px;background:var(--track);}
+  .gl-bar::after{content:'';position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:#c9c9c9;}
+  .gl-bar i{position:absolute;top:0;height:100%;min-width:1px;}
+  .gl-bar i.p{left:50%;background:var(--red);}
+  .gl-bar i.n{right:50%;background:var(--green);}
+  .gl-foot{margin-top:10px;padding-top:9px;border-top:1px solid var(--rule2);font-size:11px;line-height:1.7;color:var(--faint);}
 
   /* 徽标 */
   .badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;}
@@ -839,7 +910,9 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
   @media (max-width:900px){
     main{display:flex;flex-direction:column;}
     .cols{display:contents;}
-    .feed{order:1;margin-top:24px;}
+    /* 中栏整体是一个容器(要闻 + 全球市场),display:contents 后要自己接管排序 */
+    .maincol{order:1;margin-top:24px;}
+    .feed{order:0;margin-top:0;}
     .quotes{order:2;margin-top:30px;}
     .rail{order:3;margin-top:30px;}
     .stream{order:4;margin-top:28px;}
@@ -879,6 +952,9 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
     .dgrid{grid-template-columns:repeat(2,minmax(0,1fr));}
     .only-wide{display:none;}
     .only-narrow{display:block;}
+    /* 窄屏下亚太/美股各占一行,横向并排会把条形压到看不见 */
+    .gl-cols{grid-template-columns:1fr;gap:0;}
+    .gl-col+.gl-col{margin-top:16px;}
     .foot{margin-bottom:36px;}
   }
 </style>
@@ -932,7 +1008,10 @@ export function renderHTML(result, todayDisplay, etfData, chartData) {
 
   <div class="cols">
     ${quotesHTML}
-    ${feedHTML}
+    <div class="maincol">
+      ${feedHTML}
+      ${globalHTML}
+    </div>
     ${railHTML}
   </div>
 
@@ -1859,6 +1938,8 @@ async function main() {
   let marketBreadth = payloadMarket ? payloadMarket.breadth : null;
   // 日韩只展示:不进 quotes、不进 computeMarketState。
   let overseasQuotes = payloadMarket && Array.isArray(payloadMarket.overseas) ? payloadMarket.overseas : [];
+  // 美股同属「只展示」:gb_ 系列在北京时间凌晨收盘,payload 里抓一次就够。
+  let usQuotes = payloadMarket && Array.isArray(payloadMarket.us) ? payloadMarket.us : [];
   let indexHistory = payloadIndexHistory;
   if (!CONFIG.isCi) {
     if (!marketQuotes.length) {
@@ -1869,6 +1950,9 @@ async function main() {
     }
     if (!overseasQuotes.length) {
       try { overseasQuotes = await fetchOverseasQuotes(); } catch (err) { console.warn(`  日韩行情失败: ${err.message}`); }
+    }
+    if (!usQuotes.length) {
+      try { usQuotes = await fetchUSQuotes(); } catch (err) { console.warn(`  美股行情失败: ${err.message}`); }
     }
     if (!indexHistory) {
       try { indexHistory = await fetchIndexHistory(); } catch (err) { console.warn(`  指数K线失败: ${err.message}`); }
@@ -1889,7 +1973,7 @@ async function main() {
     prevRegime: prevDay ? prevDay.regime : null,
   });
   const marketCtx = marketQuotes.length > 0
-    ? { ...marketState, quotes: marketQuotes, overseas: overseasQuotes, breadth: marketBreadth, asOf: dateStr }
+    ? { ...marketState, quotes: marketQuotes, overseas: overseasQuotes, us: usQuotes, breadth: marketBreadth, asOf: dateStr }
     : null;
   if (!marketCtx) console.warn('  ⚠ 没有指数数据,本日日报不显示大盘指数带');
 
@@ -2045,7 +2129,7 @@ async function main() {
     console.log(`  ${marketState.label}(${marketState.score >= 0 ? '+' : ''}${marketState.score})`
       + ` · ${marketQuotes.length} 个指数`
       + ` · 涨跌家数 ${marketBreadth ? `${marketBreadth.up}涨/${marketBreadth.down}跌` : '缺失'}`
-      + ` · 日韩 ${overseasQuotes.length} 个`
+      + ` · 日韩 ${overseasQuotes.length} 个 · 美股 ${usQuotes.length} 个`
       + ` · 快照累计 ${marketHistory.days.length} 天`);
   } else {
     result.market = null;
