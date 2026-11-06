@@ -3728,16 +3728,16 @@
     {
       "date": "20261106",
       "displayDate": "2026-11-06",
-      "isAi": true,
-      "aiCoverage": 100,
-      "newsCount": 76,
+      "isAi": false,
+      "aiCoverage": 0,
+      "newsCount": 130,
       "missingSectors": [],
       "covered": true,
       "impact": {
-        "vhigh": 1,
-        "high": 12
+        "vhigh": 6,
+        "high": 18
       },
-      "signalHitRate": 12,
+      "signalHitRate": 62,
       "directions": {
         "利好": 0,
         "利空": 1,
@@ -3755,6 +3755,11 @@
           "shock": "强"
         },
         {
+          "name": "创新药",
+          "direction": "中性",
+          "shock": "强"
+        },
+        {
           "name": "黄金",
           "direction": "中性",
           "shock": "强"
@@ -3763,11 +3768,6 @@
           "name": "光模块",
           "direction": "利空",
           "shock": "强"
-        },
-        {
-          "name": "创新药",
-          "direction": "中性",
-          "shock": "强"
         }
       ]
     }
@@ -3775,9 +3775,9 @@
   "total": 84,
   "coveredAll": 76,
   "coverageRate": 90,
-  "avgImpactHigh": 12,
+  "avgImpactHigh": 13,
   "matchedDays": 58,
-  "etfHistoryDays": 251,
+  "etfHistoryDays": 250,
   "research": {
     "total": 190,
     "stated": 173,
@@ -3834,8 +3834,8 @@
         "reliable": true
       }
     },
-    "spearmanBinary": 0.06429175123820467,
-    "spearmanWeighted": -0.013571276276993883,
+    "spearmanBinary": 0.06462660410923698,
+    "spearmanWeighted": -0.014141758184556855,
     "baselines": {
       "inSample": {
         "alwaysUp": 44,
@@ -3844,7 +3844,7 @@
         "bullishBias": 86
       },
       "unconditional": {
-        "obs": 1000,
+        "obs": 996,
         "alwaysUp": 48,
         "alwaysDown": 52,
         "majority": 52
@@ -3853,14 +3853,14 @@
   },
   "recap": {
     "fired": 120,
-    "hit": 113,
-    "rate": 94,
+    "hit": 112,
+    "rate": 93,
     "since": "2026-08-19",
     "bySector": {
       "半导体": {
         "fired": 35,
-        "hit": 32,
-        "rate": 91
+        "hit": 31,
+        "rate": 89
       },
       "光模块": {
         "fired": 34,
