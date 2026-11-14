@@ -1,0 +1,317 @@
+{
+  "version": "2026-10-27",
+  "modelVersion": "l2-2026-10-27",
+  "note": "改词表/权重后重跑 node scripts/backtest.mjs --gate 并与本文件对比。rescore=当前词表重打分(主口径); archived=存档 AI 标签(副口径,上线判定以此为准)。2026-10-27 把公式抽到 pipeline/predict.mjs 后重跑,两口径数字逐位不变(ablation: 抽取只是搬家,没有改口径)。副口径闸门未过 → 页面按影子模式上线,forecast 只展示不参与方向。2026-10-27 闸门补上计划里的「剔除最好 5 天」一项:副口径通过(54.7% vs 54.1%),主口径不通过;副口径仍卡在「校准曲线单调」与「前后两半段」两项。",
+  "model": {
+    "kappa": 0.2,
+    "gammaB": 0.1,
+    "gammaP": 0.03,
+    "posCapWhenBearishPrior": 0.55,
+    "prior": "one-sided valve: kappa*min(0,tanh(z))"
+  },
+  "sources": {
+    "etfDays": 250,
+    "indexDays": 250,
+    "archives": 72
+  },
+  "tracks": {
+    "rescore": {
+      "n": 192,
+      "nDays": 48,
+      "accuracy": 55.7,
+      "brier": 0.2504,
+      "majority": 57.3,
+      "edgeVsMajority": -1.6,
+      "bullishShare": 16.1,
+      "halves": [
+        51,
+        60.4
+      ],
+      "bySector": {
+        "半导体": 52.1,
+        "光模块": 56.3,
+        "创新药": 50,
+        "黄金": 64.6
+      },
+      "calibration": [
+        {
+          "bin": 1,
+          "n": 38,
+          "avgP": 0.33,
+          "actualUp": 0.368
+        },
+        {
+          "bin": 2,
+          "n": 38,
+          "avgP": 0.467,
+          "actualUp": 0.447
+        },
+        {
+          "bin": 3,
+          "n": 39,
+          "avgP": 0.486,
+          "actualUp": 0.538
+        },
+        {
+          "bin": 4,
+          "n": 38,
+          "avgP": 0.498,
+          "actualUp": 0.368
+        },
+        {
+          "bin": 5,
+          "n": 39,
+          "avgP": 0.514,
+          "actualUp": 0.41
+        }
+      ],
+      "naiveAccuracy": 49.7,
+      "mcnemar": {
+        "b": 48,
+        "c": 39,
+        "n": 87,
+        "pBetter": 0.19559548265037635,
+        "pWorse": 0.8581964457972571
+      },
+      "trim5": {
+        "nDays": 43,
+        "n": 172,
+        "accuracy": 50.6,
+        "majority": 53.5
+      }
+    },
+    "archived": {
+      "n": 192,
+      "nDays": 48,
+      "accuracy": 59.4,
+      "brier": 0.2468,
+      "majority": 57.3,
+      "edgeVsMajority": 2.1,
+      "bullishShare": 24,
+      "halves": [
+        55.2,
+        63.5
+      ],
+      "bySector": {
+        "半导体": 62.5,
+        "光模块": 58.3,
+        "创新药": 50,
+        "黄金": 66.7
+      },
+      "calibration": [
+        {
+          "bin": 1,
+          "n": 38,
+          "avgP": 0.323,
+          "actualUp": 0.184
+        },
+        {
+          "bin": 2,
+          "n": 38,
+          "avgP": 0.478,
+          "actualUp": 0.579
+        },
+        {
+          "bin": 3,
+          "n": 39,
+          "avgP": 0.492,
+          "actualUp": 0.436
+        },
+        {
+          "bin": 4,
+          "n": 38,
+          "avgP": 0.501,
+          "actualUp": 0.368
+        },
+        {
+          "bin": 5,
+          "n": 39,
+          "avgP": 0.523,
+          "actualUp": 0.564
+        }
+      ],
+      "naiveAccuracy": 49.6,
+      "mcnemar": {
+        "b": 43,
+        "c": 30,
+        "n": 73,
+        "pBetter": 0.07985584155900978,
+        "pWorse": 0.9496781612398824
+      },
+      "trim5": {
+        "nDays": 43,
+        "n": 172,
+        "accuracy": 54.7,
+        "majority": 54.1
+      }
+    }
+  },
+  "bootstrap": {
+    "rescore": {
+      "reps": 2000,
+      "days": 48,
+      "mean": -0.01725520833333346,
+      "lo": -0.06770833333333337,
+      "hi": 0.03125
+    },
+    "archived": {
+      "reps": 2000,
+      "days": 48,
+      "mean": 0.019934895833333296,
+      "lo": -0.046875,
+      "hi": 0.08333333333333337
+    }
+  },
+  "gates": {
+    "rescore": {
+      "passed": false,
+      "checks": [
+        {
+          "id": "样本天数 ≥ 40",
+          "ok": true,
+          "detail": "48 天 / 192 行"
+        },
+        {
+          "id": "Brier ≤ 0.25",
+          "ok": false,
+          "detail": "0.2504"
+        },
+        {
+          "id": "Brier 比 naive 低 ≥0.005",
+          "ok": true,
+          "detail": "0.2504 vs 0.5034"
+        },
+        {
+          "id": "准确率 ≥ 多数类 −1pp",
+          "ok": false,
+          "detail": "55.7% vs 57.3%"
+        },
+        {
+          "id": "校准曲线单调(至多 1 处倒挂)",
+          "ok": true,
+          "detail": "1 处倒挂 / 5 箱"
+        },
+        {
+          "id": "相对 naive 未显著变差(p≥0.10)",
+          "ok": true,
+          "detail": "b=48 c=39 pWorse=0.858"
+        },
+        {
+          "id": "前后两半段都不低于基线 −2pp",
+          "ok": false,
+          "detail": "51.0% / 60.4%"
+        },
+        {
+          "id": "剔除最好 5 天后仍 ≥ 多数类 −1pp",
+          "ok": false,
+          "detail": "50.6% vs 53.5% (43 天)"
+        },
+        {
+          "id": "无板块低于基线 −5pp",
+          "ok": true,
+          "detail": "创新药 50.0% vs 基线 52.1%"
+        }
+      ]
+    },
+    "archived": {
+      "passed": false,
+      "checks": [
+        {
+          "id": "样本天数 ≥ 40",
+          "ok": true,
+          "detail": "48 天 / 192 行"
+        },
+        {
+          "id": "Brier ≤ 0.25",
+          "ok": true,
+          "detail": "0.2468"
+        },
+        {
+          "id": "Brier 比 naive 低 ≥0.005",
+          "ok": true,
+          "detail": "0.2468 vs 0.5036"
+        },
+        {
+          "id": "准确率 ≥ 多数类 −1pp",
+          "ok": true,
+          "detail": "59.4% vs 57.3%"
+        },
+        {
+          "id": "校准曲线单调(至多 1 处倒挂)",
+          "ok": false,
+          "detail": "2 处倒挂 / 5 箱"
+        },
+        {
+          "id": "相对 naive 未显著变差(p≥0.10)",
+          "ok": true,
+          "detail": "b=43 c=30 pWorse=0.950"
+        },
+        {
+          "id": "前后两半段都不低于基线 −2pp",
+          "ok": false,
+          "detail": "55.2% / 63.5%"
+        },
+        {
+          "id": "剔除最好 5 天后仍 ≥ 多数类 −1pp",
+          "ok": true,
+          "detail": "54.7% vs 54.1% (43 天)"
+        },
+        {
+          "id": "无板块低于基线 −5pp",
+          "ok": true,
+          "detail": "创新药 50.0% vs 基线 52.1%"
+        }
+      ]
+    }
+  },
+  "gate": {
+    "passed": false,
+    "checks": [
+      {
+        "id": "样本天数 ≥ 40",
+        "ok": true,
+        "detail": "48 天 / 192 行"
+      },
+      {
+        "id": "Brier ≤ 0.25",
+        "ok": true,
+        "detail": "0.2468"
+      },
+      {
+        "id": "Brier 比 naive 低 ≥0.005",
+        "ok": true,
+        "detail": "0.2468 vs 0.5036"
+      },
+      {
+        "id": "准确率 ≥ 多数类 −1pp",
+        "ok": true,
+        "detail": "59.4% vs 57.3%"
+      },
+      {
+        "id": "校准曲线单调(至多 1 处倒挂)",
+        "ok": false,
+        "detail": "2 处倒挂 / 5 箱"
+      },
+      {
+        "id": "相对 naive 未显著变差(p≥0.10)",
+        "ok": true,
+        "detail": "b=43 c=30 pWorse=0.950"
+      },
+      {
+        "id": "前后两半段都不低于基线 −2pp",
+        "ok": false,
+        "detail": "55.2% / 63.5%"
+      },
+      {
+        "id": "剔除最好 5 天后仍 ≥ 多数类 −1pp",
+        "ok": true,
+        "detail": "54.7% vs 54.1% (43 天)"
+      },
+      {
+        "id": "无板块低于基线 −5pp",
+        "ok": true,
+        "detail": "创新药 50.0% vs 基线 52.1%"
+      }
+    ]
+  }
+}
