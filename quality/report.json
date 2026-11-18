@@ -4276,84 +4276,130 @@
           "shock": "强"
         }
       ]
+    },
+    {
+      "date": "20261118",
+      "displayDate": "2026-11-18",
+      "isAi": false,
+      "aiCoverage": 0,
+      "newsCount": 159,
+      "missingSectors": [],
+      "covered": true,
+      "impact": {
+        "vhigh": 2,
+        "high": 5
+      },
+      "signalHitRate": 31,
+      "directions": {
+        "利好": 1,
+        "利空": 2,
+        "分化": 1,
+        "中性": 0
+      },
+      "health": {
+        "level": "ok",
+        "issues": []
+      },
+      "matrix": [
+        {
+          "name": "半导体",
+          "direction": "分化",
+          "shock": "强"
+        },
+        {
+          "name": "创新药",
+          "direction": "利空",
+          "shock": "强"
+        },
+        {
+          "name": "光模块",
+          "direction": "利空",
+          "shock": "中"
+        },
+        {
+          "name": "黄金",
+          "direction": "利好",
+          "shock": "中"
+        }
+      ]
     }
   ],
-  "total": 95,
-  "coveredAll": 87,
+  "total": 96,
+  "coveredAll": 88,
   "coverageRate": 92,
   "avgImpactHigh": 13,
-  "matchedDays": 65,
-  "etfHistoryDays": 250,
+  "matchedDays": 66,
+  "etfHistoryDays": 251,
   "research": {
-    "total": 217,
-    "stated": 199,
+    "total": 221,
+    "stated": 203,
     "correct": 100,
     "abstained": 18,
     "abstainRate": 8,
-    "statedShare": 0.9170506912442397,
-    "accuracy": 50,
+    "statedShare": 0.918552036199095,
+    "accuracy": 49,
     "lowSample": false,
     "reliable": true,
     "bySector": {
       "半导体": {
-        "total": 63,
-        "stated": 61,
+        "total": 64,
+        "stated": 62,
         "correct": 28,
         "abstained": 2,
         "abstainRate": 3,
-        "statedShare": 0.9682539682539683,
-        "accuracy": 46,
+        "statedShare": 0.96875,
+        "accuracy": 45,
         "lowSample": false,
         "reliable": true
       },
       "光模块": {
-        "total": 45,
-        "stated": 43,
+        "total": 46,
+        "stated": 44,
         "correct": 20,
         "abstained": 2,
         "abstainRate": 4,
-        "statedShare": 0.9555555555555556,
-        "accuracy": 47,
+        "statedShare": 0.9565217391304348,
+        "accuracy": 45,
         "lowSample": false,
         "reliable": true
       },
       "创新药": {
-        "total": 49,
-        "stated": 44,
+        "total": 50,
+        "stated": 45,
         "correct": 18,
         "abstained": 5,
         "abstainRate": 10,
-        "statedShare": 0.8979591836734694,
-        "accuracy": 41,
+        "statedShare": 0.9,
+        "accuracy": 40,
         "lowSample": false,
         "reliable": true
       },
       "黄金": {
-        "total": 60,
-        "stated": 51,
+        "total": 61,
+        "stated": 52,
         "correct": 34,
         "abstained": 9,
         "abstainRate": 15,
-        "statedShare": 0.85,
-        "accuracy": 67,
+        "statedShare": 0.8524590163934426,
+        "accuracy": 65,
         "lowSample": false,
         "reliable": true
       }
     },
-    "spearmanBinary": 0.09504017692436724,
-    "spearmanWeighted": 0.020267659143964695,
+    "spearmanBinary": 0.09780554686141348,
+    "spearmanWeighted": 0.020744095147470394,
     "baselines": {
       "inSample": {
-        "alwaysUp": 43,
-        "alwaysDown": 57,
-        "majority": 57,
-        "bullishBias": 84
+        "alwaysUp": 42,
+        "alwaysDown": 58,
+        "majority": 58,
+        "bullishBias": 85
       },
       "unconditional": {
-        "obs": 996,
-        "alwaysUp": 48,
-        "alwaysDown": 52,
-        "majority": 52
+        "obs": 1000,
+        "alwaysUp": 47,
+        "alwaysDown": 53,
+        "majority": 53
       }
     }
   },
@@ -4386,16 +4432,16 @@
     }
   },
   "forecast": {
-    "n": 60,
-    "correct": 30,
-    "accuracy": 50,
-    "nDays": 15,
-    "brier": 0.2654,
+    "n": 64,
+    "correct": 31,
+    "accuracy": 48,
+    "nDays": 16,
+    "brier": 0.2642,
     "brierBaseline": 0.25,
-    "brierSkill": -0.061,
-    "upRate": 45,
-    "majority": 55,
-    "edge": -5,
+    "brierSkill": -0.057,
+    "upRate": 42,
+    "majority": 58,
+    "edge": -10,
     "lowSample": false,
     "minSample": 30,
     "bins": [
@@ -4407,21 +4453,21 @@
       },
       {
         "label": "40–48%",
-        "n": 16,
+        "n": 17,
         "avgP": 43,
-        "upRate": 44
+        "upRate": 41
       },
       {
         "label": "48–52%",
-        "n": 25,
+        "n": 27,
         "avgP": 50,
-        "upRate": 44
+        "upRate": 41
       },
       {
         "label": "52–58%",
-        "n": 6,
+        "n": 7,
         "avgP": 53,
-        "upRate": 33
+        "upRate": 29
       },
       {
         "label": ">58%",
@@ -4432,31 +4478,31 @@
     ],
     "bySector": {
       "半导体": {
-        "n": 15,
-        "correct": 5,
-        "accuracy": 33
+        "n": 16,
+        "correct": 6,
+        "accuracy": 38
       },
       "光模块": {
-        "n": 15,
+        "n": 16,
         "correct": 9,
-        "accuracy": 60
+        "accuracy": 56
       },
       "创新药": {
-        "n": 15,
+        "n": 16,
         "correct": 7,
-        "accuracy": 47
+        "accuracy": 44
       },
       "黄金": {
-        "n": 15,
+        "n": 16,
         "correct": 9,
-        "accuracy": 60
+        "accuracy": 56
       }
     },
     "byMarket": {
       "无数据": {
-        "n": 4,
-        "correct": 0,
-        "accuracy": 0
+        "n": 8,
+        "correct": 1,
+        "accuracy": 13
       },
       "偏弱": {
         "n": 20,
