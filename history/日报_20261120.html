@@ -383,7 +383,7 @@
       <label for="historySelect">历史</label>
       <select id="historySelect" onchange="showHistoryDate()"><option value="">选择日期</option></select>
       <button type="button" id="today-btn" onclick="goToday()">今天</button>
-      <span class="src-tag">关键词引擎分类</span>
+      <span class="src-tag">Claude API 分析 + 中文翻译</span>
       <button type="button" class="refresh-btn" onclick="triggerRefresh()" title="手动刷新日报">刷新日报</button>
     </span>
   </div>
@@ -398,14 +398,14 @@
       <a href="#data">数据</a>
       <a href="#matrix">板块矩阵</a>
     </nav>
-    <div class="nav-right"><b>2026-11-20</b>　周五　·　71 条<span class="gen-note">　·　更新 2026-11-20 12:31:25（北京时间）</span></div>
+    <div class="nav-right"><b>2026-11-20</b>　周五　·　71 条<span class="gen-note">　·　更新 2026-11-20 12:56:17（北京时间）</span></div>
   </div>
 </header>
 
 <main class="wrap">
   <div class="market-summary">
     <span class="ms-label">今日复盘</span>
-    <p>本日报聚焦半导体、光模块、创新药、黄金四大赛道，71 条新闻经关键词引擎自动分析生成。</p>
+    <p>半导体板块英伟达陷入调查危机，多家公司订单储备充足；封测重挫光刻回升美光预测存储紧张；日韩半导体股遭抛售，国产芯片获政策支持；英伟达高管减持，云服务商受制裁影响，系统部署，参加活动；中际旭创融资买入14.93亿，恒生指数纳入光模块公司；江苏推进生物医药高质量发展，支持企业融资和并购；贵金属板块重挫…。</p>
   </div>
 
   <div class="cols">
@@ -462,7 +462,7 @@
       <div class="qsec-top">
         <button type="button" class="sc" data-sector="创新药" data-cat="pharma" aria-label="只看创新药新闻" aria-pressed="false">
           <span class="qname">创新药</span>
-          <span class="sc-badges"><span class="badge badge-neutral" title="今日复盘：板块方向以当日 ETF 实际涨跌校准">复盘 中性</span><span class="badge badge-neutral" title="次日倾向：只由新闻内容研判，未经行情校准">次日 中性</span></span>
+          <span class="sc-badges"><span class="badge badge-bull" title="今日复盘：板块方向以当日 ETF 实际涨跌校准">复盘 利好</span><span class="badge badge-neutral" title="次日倾向：只由新闻内容研判，未经行情校准">次日 中性</span></span>
         </button>
         <span class="qchg num neutral">—</span>
       </div>
@@ -479,9 +479,9 @@
     </div>
     <div class="qstats">
       <div><span>收录</span><b class="num">71</b></div>
-      <div><span>高影响</span><b class="num">6</b></div>
-      <div title="条目方向 = 这条新闻对基本面/政策的影响，不是涨跌预测；次日涨跌预测看板块矩阵的「次日倾向」"><span>利好</span><b class="num bull">7</b></div>
-      <div title="条目方向 = 这条新闻对基本面/政策的影响，不是涨跌预测；次日涨跌预测看板块矩阵的「次日倾向」"><span>利空</span><b class="num bear">11</b></div>
+      <div><span>高影响</span><b class="num">7</b></div>
+      <div title="条目方向 = 这条新闻对基本面/政策的影响，不是涨跌预测；次日涨跌预测看板块矩阵的「次日倾向」"><span>利好</span><b class="num bull">16</b></div>
+      <div title="条目方向 = 这条新闻对基本面/政策的影响，不是涨跌预测；次日涨跌预测看板块矩阵的「次日倾向」"><span>利空</span><b class="num bear">20</b></div>
     </div>
     <div class="qfoot">涨跌幅为当日收盘口径；板块均值为组内 ETF 的简单平均。点击板块名可只看该板块新闻。</div>
   </aside>
@@ -501,10 +501,10 @@
       <div class="meta">光模块 · <span class="bull">利好</span> · 财联社 11:21</div>
     </article><article class="top-item">
       <h3>江苏：打造“AI+生物医药”新范式 持企业股权融资、跨境合作、并购重组</h3>
-      <div class="meta">创新药 · <span class="neutral">中性</span> · 新浪财经 12:03</div>
+      <div class="meta">创新药 · <span class="bull">利好</span> · 新浪财经 12:03</div>
     </article><article class="top-item">
-      <h3>印度金价大幅回落，婚庆珠宝需求明显回暖</h3>
-      <div class="meta">黄金 · <span class="bear">利空</span> · 金十数据 12:00</div>
+      <h3>现货黄金创14个月新低 机构称美国通胀与油价是止跌关键信号</h3>
+      <div class="meta">黄金 · <span class="bear">利空</span> · 同花顺快讯 10:59</div>
     </article>
   </section>
       <section id="global" class="global">
@@ -553,21 +553,21 @@
     </div>
     <aside class="rail">
     <div class="ph"><h2>今日要点</h2><span class="more">AI 研判</span></div>
-    <ul class="points"><li>今日共抓取 71 条新闻，聚焦半导体、光模块、创新药、黄金四大赛道。</li><li>极高影响事件 1 条，高影响 5 条，利好方向 7 条。</li><li>板块概况：半导体(分化, 强冲击, 54条)、黄金(利空, 强冲击, 12条)、光模块(利好, 弱冲击, 4条)、创新药(中性, 弱冲击, 1条)。</li><li>重点关注：【印度金价大幅回落，婚庆珠宝需求明显回暖】；行业标准落地 国产化向多工序拓展 半导体材料设备板块触底回升；贵金属板块重挫。</li></ul>
+    <ul class="points"><li>[半导体] 国产半导体设备指数本月上涨19.8%</li><li>[半导体] SpaceX 430亿美元融资用NVIDIA GPU作抵押</li><li>【半导体】集成电路封测板块重挫，通富微电跌停</li><li>【半导体】美光预测2027年存储芯片供需更紧张</li><li>【半导体】英伟达近5亿美元收购AI开发商Inception</li><li>【半导体】费城半导体指数跌2.05%</li></ul>
     <div class="ph rail-dist"><h2>当日分布</h2><span class="more">71 条</span></div>
     <div class="mini">
       <h3>情绪<span class="sub">利好 / 利空 / 中性 / 分化</span></h3>
-      <div class="stack"><i class="f-red" style="width:9.86%"></i><i class="f-green" style="width:15.49%"></i><i class="f-g1" style="width:61.97%"></i><i class="f-g2" style="width:12.68%"></i></div>
-    <div class="lgd"><span><i class="f-red"></i>利好<b class="num">7</b></span><span><i class="f-green"></i>利空<b class="num">11</b></span><span><i class="f-g1"></i>中性<b class="num">44</b></span><span><i class="f-g2"></i>分化<b class="num">9</b></span></div>
+      <div class="stack"><i class="f-red" style="width:22.54%"></i><i class="f-green" style="width:28.17%"></i><i class="f-g1" style="width:39.44%"></i><i class="f-g2" style="width:9.86%"></i></div>
+    <div class="lgd"><span><i class="f-red"></i>利好<b class="num">16</b></span><span><i class="f-green"></i>利空<b class="num">20</b></span><span><i class="f-g1"></i>中性<b class="num">28</b></span><span><i class="f-g2"></i>分化<b class="num">7</b></span></div>
     </div>
     <div class="mini">
       <h3>方向<span class="sub">按板块</span></h3>
-      <div class="drow"><span class="dn">半导体</span><span class="db"><i class="f-red" style="width:11.11%"></i><i class="f-green" style="width:9.26%"></i><i class="f-g1" style="width:66.67%"></i><i class="f-g2" style="width:12.96%"></i></span><span class="dt num">54</span></div><div class="drow"><span class="dn">光模块</span><span class="db"><i class="f-red" style="width:25.00%"></i><i class="f-green" style="width:0.00%"></i><i class="f-g1" style="width:75.00%"></i><i class="f-g2" style="width:0.00%"></i></span><span class="dt num">4</span></div><div class="drow"><span class="dn">创新药</span><span class="db"><i class="f-red" style="width:0.00%"></i><i class="f-green" style="width:0.00%"></i><i class="f-g1" style="width:100.00%"></i><i class="f-g2" style="width:0.00%"></i></span><span class="dt num">1</span></div><div class="drow"><span class="dn">黄金</span><span class="db"><i class="f-red" style="width:0.00%"></i><i class="f-green" style="width:50.00%"></i><i class="f-g1" style="width:33.33%"></i><i class="f-g2" style="width:16.67%"></i></span><span class="dt num">12</span></div>
+      <div class="drow"><span class="dn">半导体</span><span class="db"><i class="f-red" style="width:22.22%"></i><i class="f-green" style="width:25.93%"></i><i class="f-g1" style="width:42.59%"></i><i class="f-g2" style="width:9.26%"></i></span><span class="dt num">54</span></div><div class="drow"><span class="dn">光模块</span><span class="db"><i class="f-red" style="width:75.00%"></i><i class="f-green" style="width:0.00%"></i><i class="f-g1" style="width:25.00%"></i><i class="f-g2" style="width:0.00%"></i></span><span class="dt num">4</span></div><div class="drow"><span class="dn">创新药</span><span class="db"><i class="f-red" style="width:100.00%"></i><i class="f-green" style="width:0.00%"></i><i class="f-g1" style="width:0.00%"></i><i class="f-g2" style="width:0.00%"></i></span><span class="dt num">1</span></div><div class="drow"><span class="dn">黄金</span><span class="db"><i class="f-red" style="width:0.00%"></i><i class="f-green" style="width:50.00%"></i><i class="f-g1" style="width:33.33%"></i><i class="f-g2" style="width:16.67%"></i></span><span class="dt num">12</span></div>
     </div>
     <div class="mini">
       <h3>时间窗口<span class="sub">短期 / 中期</span></h3>
-      <div class="stack"><i class="f-g2" style="width:14.08%"></i><i class="f-g1" style="width:85.92%"></i></div>
-    <div class="lgd"><span><i class="f-g2"></i>短期<b class="num">10</b></span><span><i class="f-g1"></i>中期<b class="num">61</b></span></div>
+      <div class="stack"><i class="f-g2" style="width:77.46%"></i><i class="f-g1" style="width:15.49%"></i><i class="f-g2" style="width:7.04%"></i></div>
+    <div class="lgd"><span><i class="f-g2"></i>短期<b class="num">55</b></span><span><i class="f-g1"></i>中期<b class="num">11</b></span><span><i class="f-g2"></i>长期<b class="num">5</b></span></div>
     </div>
   </aside>
   </div>
@@ -578,7 +578,7 @@
         <h2>新闻流</h2>
         <span class="count" id="streamCount">共 <span class="num">71</span> 条 · 按发布时间倒序</span>
       </div>
-      <div class="tabs" id="streamFilter" role="group" aria-label="按板块筛选新闻"><button type="button" class="tab on" data-f="all" aria-pressed="true">全部<b>71</b></button><button type="button" class="tab" data-f="半导体" data-cat="semi" aria-pressed="false">半导体<b>54</b></button><button type="button" class="tab" data-f="光模块" data-cat="optics" aria-pressed="false">光模块<b>4</b></button><button type="button" class="tab" data-f="创新药" data-cat="pharma" aria-pressed="false">创新药<b>1</b></button><button type="button" class="tab" data-f="黄金" data-cat="gold" aria-pressed="false">黄金<b>12</b></button><button type="button" class="tab" data-f="key" aria-pressed="false">高影响<b>6</b></button></div>
+      <div class="tabs" id="streamFilter" role="group" aria-label="按板块筛选新闻"><button type="button" class="tab on" data-f="all" aria-pressed="true">全部<b>71</b></button><button type="button" class="tab" data-f="半导体" data-cat="semi" aria-pressed="false">半导体<b>54</b></button><button type="button" class="tab" data-f="光模块" data-cat="optics" aria-pressed="false">光模块<b>4</b></button><button type="button" class="tab" data-f="创新药" data-cat="pharma" aria-pressed="false">创新药<b>1</b></button><button type="button" class="tab" data-f="黄金" data-cat="gold" aria-pressed="false">黄金<b>12</b></button><button type="button" class="tab" data-f="key" aria-pressed="false">高影响<b>7</b></button></div>
     </div>
     <div class="timeline" id="timeline">
       <div class="grp" data-session="pre">
@@ -592,17 +592,17 @@
           <span class="meta">半导体 · <span class="neutral">中性</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>【美国ITC发布对动态随机存取存储器（DRAM）设备及其下游产品和组件（III）的337部分终裁】2026年11月19日，美国国际贸易委员会（ITC）发布公告称，对特定动态随机存取存储器（DRAM）设备及其下游产品和组件（III）（Certain Dynamic Random Access Memory (DRAM) Devices, ProductsContaining the Same, and Components Thereof (III)，调查编码：337-TA-1523）作出337部分终裁：对本案行政法官于2026年10月27日作出的初裁（No.5）不予复审，即基于和解，终止本案调查。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><div class="dsec"><span class="dl">相关报道（2 篇）</span><ul class="dlist related"><li><a href="https://finance.sina.cn/7x24/2026-11-20/detail-inizixmi5631445.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-20/detail-inizixmi563</a></li><li><a href="https://finance.sina.cn/7x24/2026-11-20/detail-inizixmn3996488.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-20/detail-inizixmn399</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizixmr0410116.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>【美国ITC发布对动态随机存取存储器（DRAM）设备及其下游产品和组件（III）的337部分终裁】2026年11月19日，美国国际贸易委员会（ITC）发布公告称，对特定动态随机存取存储器（DRAM）设备及其下游产品和组件（III）（Certain Dynamic Random Access Memory (DRAM) Devices, ProductsContaining the Same, and Components Thereof (III)，调查编码：337-TA-1523）作出337部分终裁：对本案行政法官于2026年10月27日作出的初裁（No.5）不予复审，即基于和解，终止本案调查。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%（长期影响）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>调查终止</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“基于和解，终止本案调查”</li></ul></div><p class="dim">调查终止</p><div class="dsec"><span class="dl">相关报道（2 篇）</span><ul class="dlist related"><li><a href="https://finance.sina.cn/7x24/2026-11-20/detail-inizixmi5631445.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-20/detail-inizixmi563</a></li><li><a href="https://finance.sina.cn/7x24/2026-11-20/detail-inizixmn3996488.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-20/detail-inizixmn399</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizixmr0410116.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">09:17</span>
         <span class="c">
           <span class="title">市场震荡磨底，芯片产业链分化加剧，聚焦国产算力后续共识修复</span>
           
-          <span class="meta">半导体 · <span class="neutral">分化</span> · 东方财富</span>
+          <span class="meta">半导体 · <span class="bear">利空</span> · 东方财富</span>
         </span>
       </summary>
-      <div class="detail"><p>市场震荡磨底，芯片产业链分化加剧，聚焦国产算力后续共识修复</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-9分·板块行情走弱)</li><li>行情信号·利好(+4分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“收跌”</li><li>“走强”</li></ul></div><p class="dim">行情·利空(9·板块行情走弱)+行情·利好(4·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="http://stock.eastmoney.com/news/11134,202611203935899416.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
+      <div class="detail"><p>市场震荡磨底，芯片产业链分化加剧，聚焦国产算力后续共识修复</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>市场普跌半导体分化</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“市场震荡磨底，芯片产业链分化加剧”</li></ul></div><p class="dim">市场普跌半导体分化</p><p><a class="src" href="http://stock.eastmoney.com/news/11134,202611203935899416.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">09:11</span>
@@ -612,7 +612,7 @@
           <span class="meta">半导体 · <span class="neutral">中性</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>锴威特消息，针对高压辅助电源领域需求，锴威特推出了CSV387X系列产品，其中旗舰芯片CSV3872将1700V SiC功率器件、高压启动电路与准谐振（QR）反激控制，电流采样全部集成在单颗芯片中，从根本上解决了传统高压辅助电源的设计难题。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcq4116818.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>锴威特消息，针对高压辅助电源领域需求，锴威特推出了CSV387X系列产品，其中旗舰芯片CSV3872将1700V SiC功率器件、高压启动电路与准谐振（QR）反激控制，电流采样全部集成在单颗芯片中，从根本上解决了传统高压辅助电源的设计难题。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（市场接受度）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>新产品推出</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“锴威特推出了CSV387X系列产品”</li></ul></div><p class="dim">新产品推出</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcq4116818.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="光模块" data-tier="quiet">
       <summary>
         <span class="t num">08:59</span>
@@ -622,47 +622,47 @@
           <span class="meta">光模块 · <span class="neutral">中性</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>11月19日130股获融资买入超亿元 中际旭创获买入14.93亿元居首</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">受影响公司</span>中际旭创、新易盛</p><p><span class="dl">关联标的</span>中际旭创(300308)、新易盛(300502)</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682025921.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
-    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <div class="detail"><p>11月19日130股获融资买入超亿元 中际旭创获买入14.93亿元居首</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>中际旭创、新易盛、寒武纪</p><p><span class="dl">关联标的</span>中际旭创(300308)、新易盛(300502)</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情复述</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“中际旭创、新易盛、寒武纪融资买入金额排名前三”</li></ul></div><p class="dim">行情复述</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682025921.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+    </details><details class="item normal" data-sector="半导体" data-tier="normal">
       <summary>
         <span class="t num">08:57</span>
         <span class="c">
           <span class="title">美光：2027年存储芯片供需形势会比今年更加紧张</span>
-          
+          <span class="summary">美光科技总裁兼首席技术与产品官Scott DeBoer在接受采访时表示，存储芯片的供需在很长一段时间内都无法达到平衡。他指出，在可预见的未来，供需找不到明确的平</span>
           <span class="meta">半导体 · <span class="neutral">中性</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>美光：2027年存储芯片供需形势会比今年更加紧张</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682025797.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+      <div class="detail"><p>美光：2027年存储芯片供需形势会比今年更加紧张</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>长期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（市场变化）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>供需紧张</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“2027年存储芯片供需形势会比今年更加紧张”</li></ul></div><p class="dim">供需紧张</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682025797.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">08:51</span>
         <span class="c">
           <span class="title">昨日行情回顾</span>
           
-          <span class="meta">半导体 · <span class="neutral">分化</span> · 东方财富</span>
+          <span class="meta">半导体 · <span class="neutral">中性</span> · 东方财富</span>
         </span>
       </summary>
-      <div class="detail"><p>昨日行情回顾</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-18分·板块行情走弱)</li><li>行情信号·利好(+8分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“下跌”</li><li>“拉升”</li></ul></div><p class="dim">行情·利空(18·板块行情走弱)+行情·利好(8·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="http://stock.eastmoney.com/news/11215,202611203935906467.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
+      <div class="detail"><p>昨日行情回顾</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情复述</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“昨日市场震荡分化，三大指数小幅收跌”</li></ul></div><p class="dim">行情复述</p><p><a class="src" href="http://stock.eastmoney.com/news/11215,202611203935906467.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">08:46</span>
         <span class="c">
           <span class="title">天数智芯：生产经营正常，已与多家国内供应链伙伴建立合作关系</span>
           
-          <span class="meta">半导体 · <span class="neutral">中性</span> · 同花顺快讯</span>
+          <span class="meta">半导体 · <span class="bull">利好</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>天数智芯：生产经营正常，已与多家国内供应链伙伴建立合作关系</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>传闻信号·中性(±5分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“传闻”</li></ul></div><p class="dim">传闻·中性(5)</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682025457.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+      <div class="detail"><p>天数智芯：生产经营正常，已与多家国内供应链伙伴建立合作关系</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>天数智芯</p><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>供应链稳定</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“已与多家国内半导体供应链合作伙伴建立紧密合作关系”</li></ul></div><p class="dim">供应链稳定</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682025457.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">08:44</span>
         <span class="c">
           <span class="title">日韩股指双双重挫4%，AI与半导体股遭集中抛售</span>
           
-          <span class="meta">半导体 · <span class="neutral">分化</span> · 金十数据</span>
+          <span class="meta">半导体 · <span class="bear">利空</span> · 金十数据</span>
         </span>
       </summary>
-      <div class="detail"><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-36分·板块行情走弱)</li><li>行情信号·利好(+11分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“重挫”</li><li>“上涨”</li></ul></div><p class="dim">行情·利空(36·板块行情走弱)+行情·利好(11·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p></div>
+      <div class="detail"><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“日韩股指双双重挫4%，AI与半导体股遭集中抛售”</li></ul></div><p class="dim">行情·利空(36·板块行情走弱)+行情·利好(11·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p></div>
     </details><details class="item normal" data-sector="半导体" data-tier="normal">
       <summary>
         <span class="t num">08:41</span>
@@ -672,17 +672,17 @@
           <span class="meta">半导体 · <span class="bear">利空</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>国际货币基金组织(IMF)总裁格奥尔基耶娃警告称，人工智能(AI)相关金融资产“可能还会有一些”调整，市场热情此前“高得过头”。格奥尔基耶娃周四在深圳接受媒体采访时表示，IMF此前已预计市场会出现调整，目前尚未看到大幅回调，可能还会进一步调整，这将有助于市场回到更可持续的状态。格奥尔基耶娃说，所谓循环融资规模目前约为1万亿美元，其中约三分之二为债务融资。循环融资是指英伟达等芯片制造商向客户提供资金，帮助其购买自身设备。她表示，这一规模本身“并不算巨大”，但值得担忧的是其增长速度，以及融资结构逐步从股权转向更多债务。“这带来了潜在的金融稳定风险，”格奥尔基耶娃说。她表示，提高相关交易的透明度，并提醒企业警惕自身是否正在进入更危险的领域，有助于降低这种风险。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-54分·板块行情走弱)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“回调”</li></ul></div><p class="dim">行情·利空(54·板块行情走弱)；体裁判定「观点/研报」,档位封顶「中」</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcn7317447.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>国际货币基金组织(IMF)总裁格奥尔基耶娃警告称，人工智能(AI)相关金融资产“可能还会有一些”调整，市场热情此前“高得过头”。格奥尔基耶娃周四在深圳接受媒体采访时表示，IMF此前已预计市场会出现调整，目前尚未看到大幅回调，可能还会进一步调整，这将有助于市场回到更可持续的状态。格奥尔基耶娃说，所谓循环融资规模目前约为1万亿美元，其中约三分之二为债务融资。循环融资是指英伟达等芯片制造商向客户提供资金，帮助其购买自身设备。她表示，这一规模本身“并不算巨大”，但值得担忧的是其增长速度，以及融资结构逐步从股权转向更多债务。“这带来了潜在的金融稳定风险，”格奥尔基耶娃说。她表示，提高相关交易的透明度，并提醒企业警惕自身是否正在进入更危险的领域，有助于降低这种风险。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>50%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“循环融资可能威胁金融稳定”</li></ul></div><p class="dim">行情·利空(54·板块行情走弱)；体裁判定「观点/研报」,档位封顶「中」</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcn7317447.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="黄金" data-tier="quiet">
       <summary>
         <span class="t num">08:26</span>
         <span class="c">
           <span class="title">贵金属正被当作现金机抛售，真正的价格拐点可能藏在资金结构里；史上最大科技融资没有带动股指，反而抽走流动性；</span>
           
-          <span class="meta">黄金 · <span class="neutral">中性</span> · 金十数据</span>
+          <span class="meta">黄金 · <span class="bear">利空</span> · 金十数据</span>
         </span>
       </summary>
-      <div class="detail"><p>贵金属正被当作现金机抛售，真正的价格拐点可能藏在资金结构里；史上最大科技融资没有带动股指，反而抽走流动性；外交桌越坐越满，停火条件却没有靠近......点击查看</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p></div>
+      <div class="detail"><p>贵金属正被当作现金机抛售，真正的价格拐点可能藏在资金结构里；史上最大科技融资没有带动股指，反而抽走流动性；外交桌越坐越满，停火条件却没有靠近......点击查看</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>黄金跌3%</li><li>抛售加剧</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“贵金属正被当作现金机抛售”</li></ul></div><p class="dim">黄金跌3%；抛售加剧</p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">08:26</span>
@@ -692,7 +692,7 @@
           <span class="meta">半导体 · <span class="bear">利空</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>韩国股市基准的KOSPI指数一度下跌4.1%，Anthropic规模庞大的首次公开招股(IPO)未能缓解市场对全球AI交易可持续性的普遍担忧。Capital.com高级金融市场分析师Kyle Rodda表示：“Anthropic轰动市场的IPO事实证明，仍不足以缓解投资者对AI交易前景乃至整体股市前景的担忧”。“负面情绪源于市场持续担心AI投资和增长放缓，以及美联储可能很快大幅加息，尽管美国交易时段这种行动的隐含概率略有下降”。“就亚洲市场而言，Anthropic上市带来的提振几乎无迹可寻。AI交易降温，加上美联储激进加息可能导致金融环境收紧，这双重打击重创了亚洲市场”。存储芯片制造商SK海力士一度下跌6.5%，三星电子下跌4.8%。日本股市也下跌，日经225指数跌3%。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-54分·板块行情走弱)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“下跌”</li></ul></div><p class="dim">行情·利空(54·板块行情走弱)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcq4082975.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>韩国股市基准的KOSPI指数一度下跌4.1%，Anthropic规模庞大的首次公开招股(IPO)未能缓解市场对全球AI交易可持续性的普遍担忧。Capital.com高级金融市场分析师Kyle Rodda表示：“Anthropic轰动市场的IPO事实证明，仍不足以缓解投资者对AI交易前景乃至整体股市前景的担忧”。“负面情绪源于市场持续担心AI投资和增长放缓，以及美联储可能很快大幅加息，尽管美国交易时段这种行动的隐含概率略有下降”。“就亚洲市场而言，Anthropic上市带来的提振几乎无迹可寻。AI交易降温，加上美联储激进加息可能导致金融环境收紧，这双重打击重创了亚洲市场”。存储芯片制造商SK海力士一度下跌6.5%，三星电子下跌4.8%。日本股市也下跌，日经225指数跌3%。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“韩国股市基准的KOSPI指数一度下跌4.1%”</li></ul></div><p class="dim">行情·利空(54·板块行情走弱)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcq4082975.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">08:13</span>
@@ -702,17 +702,17 @@
           <span class="meta">半导体 · <span class="neutral">中性</span> · 财联社</span>
         </span>
       </summary>
-      <div class="detail"><p>伴随性能不断升级，国产算力芯片渗透率有望持续提升，最新整理国产AI芯片市占率等（附表）</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>传闻信号·中性(±10分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“有望”</li></ul></div><p class="dim">传闻·中性(10)；体裁判定「观点/研报」,档位封顶「中」</p><p><a class="src" href="https://www.cls.cn/detail/2539334" target="_blank" rel="noopener">原文 · 财联社</a></p></div>
-    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <div class="detail"><p>伴随性能不断升级，国产算力芯片渗透率有望持续提升，最新整理国产AI芯片市占率等（附表）</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>长期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><p class="dim">传闻·中性(10)；体裁判定「观点/研报」,档位封顶「中」</p><p><a class="src" href="https://www.cls.cn/detail/2539334" target="_blank" rel="noopener">原文 · 财联社</a></p></div>
+    </details><details class="item normal" data-sector="半导体" data-tier="normal">
       <summary>
         <span class="t num">08:12</span>
         <span class="c">
           <span class="title">九点特供</span>
-          
-          <span class="meta">半导体 · <span class="neutral">中性</span> · 财联社</span>
+          <span class="summary">阿里CEO称未来绝大部分模型将完全依赖国产芯片训练，分析师看好平头哥目标将算力贡献占比提升至40%至50%背景下，国产算力供给与资本市场定价将同步推进；得州数据中心审批传出重启消息</span>
+          <span class="meta">半导体 · <span class="bull">利好</span> · 财联社</span>
         </span>
       </summary>
-      <div class="detail"><p>阿里CEO称未来绝大部分模型将完全依赖国产芯片训练，分析师看好平头哥目标将算力贡献占比提升至40%至50%背景下，国产算力供给与资本市场定价将同步推进；得州数据中心审批传出重启消息</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性；体裁判定「观点/研报」,档位封顶「中」</p><p><a class="src" href="https://www.cls.cn/detail/2539475" target="_blank" rel="noopener">原文 · 财联社</a></p></div>
+      <div class="detail"><p>阿里CEO称未来绝大部分模型将完全依赖国产芯片训练，分析师看好平头哥目标将算力贡献占比提升至40%至50%背景下，国产算力供给与资本市场定价将同步推进；得州数据中心审批传出重启消息</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>长期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>利好国产芯片</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“阿里CEO称未来绝大部分模型将完全依赖国产芯片训练”</li></ul></div><p class="dim">利好国产芯片</p><p><a class="src" href="https://www.cls.cn/detail/2539475" target="_blank" rel="noopener">原文 · 财联社</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">08:00</span>
@@ -722,7 +722,7 @@
           <span class="meta">半导体 · <span class="neutral">分化</span> · 东方财富</span>
         </span>
       </summary>
-      <div class="detail"><p>券商晨会精华：关注主题投资新催化</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-18分·板块行情走弱)</li><li>行情信号·利好(+8分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“下挫”</li><li>“涨停”</li></ul></div><p class="dim">行情·利空(18·板块行情走弱)+行情·利好(8·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="http://stock.eastmoney.com/news/11215,202611203935909524.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
+      <div class="detail"><p>券商晨会精华：关注主题投资新催化</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>光刻胶活跃算力下挫</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“光刻胶、先进封装概念表现活跃，多股涨停；下跌方面，算力芯片概念震荡下挫”</li></ul></div><p class="dim">光刻胶活跃算力下挫</p><p><a class="src" href="http://stock.eastmoney.com/news/11215,202611203935909524.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
     </details><details class="item normal" data-sector="黄金" data-tier="normal">
       <summary>
         <span class="t num">07:59</span>
@@ -732,7 +732,7 @@
           <span class="meta">黄金 · <span class="neutral">分化</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>中信证券：2027年黄金仍看好 但预计幅度弱于2025年</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>央行购金信号·利好(+25分)</li><li>宏观信号·利好(+20分·降息→持有黄金机会成本下降,利好黄金)</li><li>宏观信号·利空(-20分)</li><li>行情信号·利空(-18分·板块行情走弱)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“央行购金”</li><li>“降息”</li><li>“加息”</li><li>“下跌”</li></ul></div><p class="dim">央行购金·利好(25)+宏观·利好(20·降息→持有黄金机会成本下降,利好黄金)+宏观·利空(20)+行情·利空(18·板块行情走弱)；体裁判定「观点/研报」,档位封顶「中」</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682022305.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+      <div class="detail"><p>中信证券：2027年黄金仍看好 但预计幅度弱于2025年</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>券商观点</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“中信证券研报称，2027年黄金仍看好，但预计幅度弱于2025年”</li></ul></div><p class="dim">券商观点</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682022305.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">07:49</span>
@@ -742,27 +742,27 @@
           <span class="meta">半导体 · <span class="neutral">中性</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>国金证券研报称，AI芯片功耗与热点密度持续提升，推动高导热散热材料需求增长。金刚石铜与纯金刚石分别切入封装盖板、冷板嵌件及芯片近端散热，制造降本与客户验证推进将逐步打开应用空间。看好订单放量后，具备批量交付能力的企业通过产能利用率提升与工艺降本释放业绩弹性。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性；体裁判定「观点/研报」,档位封顶「中」</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcq4056661.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
-    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <div class="detail"><p>国金证券研报称，AI芯片功耗与热点密度持续提升，推动高导热散热材料需求增长。金刚石铜与纯金刚石分别切入封装盖板、冷板嵌件及芯片近端散热，制造降本与客户验证推进将逐步打开应用空间。看好订单放量后，具备批量交付能力的企业通过产能利用率提升与工艺降本释放业绩弹性。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“AI芯片功耗与热点密度持续提升，推动高导热散热材料需求增长。”</li></ul></div><p class="dim">未命中明显信号,中性；体裁判定「观点/研报」,档位封顶「中」</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcq4056661.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+    </details><details class="item normal" data-sector="半导体" data-tier="normal">
       <summary>
         <span class="t num">07:47</span>
         <span class="c">
           <span class="title">中信建投：玻璃基板有望成为封装材料升级重要方向 产业化初期重点把握设备先行机会</span>
-          
+          <span class="summary">中信建投研报称，AI算力需求推动先进封装向多芯粒、多HBM与大尺寸演进，玻璃基板有望成为封装材料升级的重要方向，产业化初期重点把握设备先行机会。随着单一封装集成</span>
           <span class="meta">半导体 · <span class="neutral">中性</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>中信建投：玻璃基板有望成为封装材料升级重要方向 产业化初期重点把握设备先行机会</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>传闻信号·中性(±10分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“有望”</li></ul></div><p class="dim">传闻·中性(10)；体裁判定「观点/研报」,档位封顶「中」</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682022062.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
-    </details></div><div class="scol"><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <div class="detail"><p>中信建投：玻璃基板有望成为封装材料升级重要方向 产业化初期重点把握设备先行机会</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>50%（产业化进程）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>研报看好</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“玻璃基板有望成为封装材料升级重要方向”</li></ul></div><p class="dim">研报看好</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682022062.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+    </details></div><div class="scol"><details class="item normal" data-sector="半导体" data-tier="normal">
       <summary>
         <span class="t num">07:47</span>
         <span class="c">
           <span class="title">多家算力、半导体设备上市公司在手订单储备充足</span>
-          
-          <span class="meta">半导体 · <span class="neutral">中性</span> · 新浪财经</span>
+          <span class="summary">近期，“两创板”（科创板和创业板）上市公司密集举办2026年三季度业绩说明会，集中解读公司生产经营情况、分析行业变化、制定发展规划。记者梳理发现，订单与产能情况成为投资者关注的重要议题。从今年四季度的订单和产能交付节奏，到2027年客户需求能见度，相关公司以重要合同订单、战略合作协议、业绩向好预期积极回应市场关切，传递出高质量发展的澎湃动能和暖意。受访专家表示，订单回暖根植于长期产业升级逻辑，充足的在手订单与可落地产能，正推动“两创板”定价逻辑转向盈利兑现，以持续可验证的基本面，为硬科技资产锚定长期价值坐标。（证券日报）</span>
+          <span class="meta">半导体 · <span class="bull">利好</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>近期，“两创板”（科创板和创业板）上市公司密集举办2026年三季度业绩说明会，集中解读公司生产经营情况、分析行业变化、制定发展规划。记者梳理发现，订单与产能情况成为投资者关注的重要议题。从今年四季度的订单和产能交付节奏，到2027年客户需求能见度，相关公司以重要合同订单、战略合作协议、业绩向好预期积极回应市场关切，传递出高质量发展的澎湃动能和暖意。受访专家表示，订单回暖根植于长期产业升级逻辑，充足的在手订单与可落地产能，正推动“两创板”定价逻辑转向盈利兑现，以持续可验证的基本面，为硬科技资产锚定长期价值坐标。（证券日报）</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性；体裁判定「观点/研报」,档位封顶「中」</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcq4056021.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>近期，“两创板”（科创板和创业板）上市公司密集举办2026年三季度业绩说明会，集中解读公司生产经营情况、分析行业变化、制定发展规划。记者梳理发现，订单与产能情况成为投资者关注的重要议题。从今年四季度的订单和产能交付节奏，到2027年客户需求能见度，相关公司以重要合同订单、战略合作协议、业绩向好预期积极回应市场关切，传递出高质量发展的澎湃动能和暖意。受访专家表示，订单回暖根植于长期产业升级逻辑，充足的在手订单与可落地产能，正推动“两创板”定价逻辑转向盈利兑现，以持续可验证的基本面，为硬科技资产锚定长期价值坐标。（证券日报）</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>订单储备充足</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“订单与产能情况成为投资者关注的重要议题。”</li></ul></div><p class="dim">订单储备充足</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcq4056021.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item high" data-sector="半导体" data-tier="high">
       <summary>
         <span class="t num">07:36</span>
@@ -772,17 +772,17 @@
           <span class="meta">半导体 · <span class="bull">利好</span> · 东方财富</span>
         </span>
       </summary>
-      <div class="detail"><p>行业标准落地 国产化向多工序拓展 半导体材料设备板块触底回升</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>政策信号·利好(+50分)</li><li>扩产信号·利好(+20分)</li><li>传闻信号·中性(±5分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“国产化”</li><li>“扩产”</li><li>“有望”</li></ul></div><p class="dim">政策·利好(50)+扩产·利好(20)+传闻·中性(5)</p><p><a class="src" href="http://finance.eastmoney.com/news/1354,202611203935479545.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
-    </details><details class="item normal" data-sector="黄金" data-tier="normal">
+      <div class="detail"><p>行业标准落地 国产化向多工序拓展 半导体材料设备板块触底回升</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">受影响公司</span>国内晶圆厂、设备厂商</p><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>国产化加速拓展工序</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“国内厂商正从供应单一机型向覆盖多道关键工序拓展，国产化有望加速”</li></ul></div><p class="dim">国产化加速拓展工序</p><p><a class="src" href="http://finance.eastmoney.com/news/1354,202611203935479545.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
+    </details><details class="item quiet" data-sector="黄金" data-tier="quiet">
       <summary>
         <span class="t num">07:36</span>
         <span class="c">
           <span class="title">受金价下跌影响，澳洲金矿股跌至三个月低点</span>
-          <span class="summary">澳洲金矿股指数早盘交易中跌幅一度达到 2.8%，创下自 8 月 5 日以来的最低水平。 该指数本周预计将下跌约 13%，创下自 2022 年 6 月下旬以来的最大单周跌幅。受强势美元以及市场强烈预期美联储下月将加息的双重压力影响，现货黄金价格隔夜跌至 14 个月低点。行业龙头 Northern Star Resources（NST.AX）和 Evolution Mining（EVN.AX）股价跌幅分别高达 3.5% 和 2.9%。 Evolution Mining 股价跌至自 7 月下旬以来的最低点。算上今日的跌幅，该指数年初至今累计下跌 16.2%，表现落后于大盘仅 0.9% 的轻微跌幅。</span>
-          <span class="meta">黄金 · <span class="neutral">分化</span> · 新浪财经</span>
+          
+          <span class="meta">黄金 · <span class="bear">利空</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>澳洲金矿股指数早盘交易中跌幅一度达到 2.8%，创下自 8 月 5 日以来的最低水平。 该指数本周预计将下跌约 13%，创下自 2022 年 6 月下旬以来的最大单周跌幅。受强势美元以及市场强烈预期美联储下月将加息的双重压力影响，现货黄金价格隔夜跌至 14 个月低点。行业龙头 Northern Star Resources（NST.AX）和 Evolution Mining（EVN.AX）股价跌幅分别高达 3.5% 和 2.9%。 Evolution Mining 股价跌至自 7 月下旬以来的最低点。算上今日的跌幅，该指数年初至今累计下跌 16.2%，表现落后于大盘仅 0.9% 的轻微跌幅。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>订单信号·利好(+30分)</li><li>宏观信号·利空(-20分)</li><li>行情信号·利空(-18分·板块行情走弱)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“大单”</li><li>“加息”</li><li>“下跌”</li></ul></div><p class="dim">订单·利好(30)+宏观·利空(20)+行情·利空(18·板块行情走弱)；体裁判定「观点/研报」,档位封顶「中」</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcm5697781.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>澳洲金矿股指数早盘交易中跌幅一度达到 2.8%，创下自 8 月 5 日以来的最低水平。 该指数本周预计将下跌约 13%，创下自 2022 年 6 月下旬以来的最大单周跌幅。受强势美元以及市场强烈预期美联储下月将加息的双重压力影响，现货黄金价格隔夜跌至 14 个月低点。行业龙头 Northern Star Resources（NST.AX）和 Evolution Mining（EVN.AX）股价跌幅分别高达 3.5% 和 2.9%。 Evolution Mining 股价跌至自 7 月下旬以来的最低点。算上今日的跌幅，该指数年初至今累计下跌 16.2%，表现落后于大盘仅 0.9% 的轻微跌幅。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>非A股影响</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“澳洲金矿股指数早盘交易中跌幅一度达到2.8%”</li></ul></div><p class="dim">非A股影响</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcm5697781.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">07:33</span>
@@ -792,39 +792,37 @@
           <span class="meta">半导体 · <span class="bear">利空</span> · 东方财富 · 2 家报道</span>
         </span>
       </summary>
-      <div class="detail"><p>突发！克里米亚大桥遭袭，普京：不再讨论海上停火！深夜，一则利空突袭！美股、金银价格大“跳水”，恐慌指数飙升</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-54分·板块行情走弱)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“跳水”</li></ul></div><p class="dim">行情·利空(54·板块行情走弱)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">东方财富</span><span class="ev-src-badge">同花顺快讯</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://news.10jqka.com.cn/20261120/c682020081.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261120/c682020081.shtml</a></li></ul></div><p><a class="src" href="http://finance.eastmoney.com/news/1354,202611203935524866.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
-    </details><details class="item high" data-sector="黄金" data-tier="high">
+      <div class="detail"><p>突发！克里米亚大桥遭袭，普京：不再讨论海上停火！深夜，一则利空突袭！美股、金银价格大“跳水”，恐慌指数飙升</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>AMD、英伟达、美光科技、博通</p><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（长期影响未知）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>地缘风险拖累芯片股</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“AMD重挫近8%，做空机构Hunterbrook警告称其采用了与英伟达类似的“循环交易”。受此拖累，芯片股高开低走，英伟达跌超3%”</li></ul></div><p class="dim">地缘风险拖累芯片股</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">东方财富</span><span class="ev-src-badge">同花顺快讯</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://news.10jqka.com.cn/20261120/c682020081.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261120/c682020081.shtml</a></li></ul></div><p><a class="src" href="http://finance.eastmoney.com/news/1354,202611203935524866.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
+    </details><details class="item quiet" data-sector="黄金" data-tier="quiet">
       <summary>
         <span class="t num">07:29</span>
         <span class="c">
           <span class="title">华尔街见闻早餐 | 2026年11月20日</span>
-          <span class="summary">美股三大指数均跌超2%，道指跌破5万点，英伟达跌超3%；史上最大IPO首日冲高回落，Anthropic收涨约17%；黄金再跌3%。
-
-美联储副主席杰斐逊：目前A</span>
-          <span class="meta">黄金 · <span class="bear">利空</span> · 华尔街见闻</span>
+          
+          <span class="meta">黄金 · <span class="neutral">分化</span> · 华尔街见闻</span>
         </span>
       </summary>
-      <div class="detail"><p>华尔街见闻早餐 | 2026年11月20日</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>价格信号·利空(-45分)</li><li>技术信号·利好(+30分)</li><li>宏观信号·利空(-30分)</li><li>行情信号·利空(-27分·板块行情走弱)</li><li>行情信号·利好(+11分·板块行情上涨)</li><li>传闻信号·中性(±8分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“跌超”</li><li>“突破”</li><li>“加息”</li><li>“回落”</li><li>“收涨”</li><li>“计划”</li></ul></div><p class="dim">价格·利空(45)+技术·利好(30)+宏观·利空(30)+行情·利空(27·板块行情走弱)+行情·利好(11·板块行情上涨)+传闻·中性(8)</p><p><a class="src" href="https://wallstreetcn.com/articles/3202865" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
-    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <div class="detail"><p>华尔街见闻早餐 | 2026年11月20日</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>阿里巴巴、拼多多、AMD、苹果</p><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>汇总稿</li><li>事件分化</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“阿里Q3净利润同比大增213%”</li></ul></div><p class="dim">汇总稿；事件分化</p><p><a class="src" href="https://wallstreetcn.com/articles/3202865" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+    </details><details class="item normal" data-sector="半导体" data-tier="normal">
       <summary>
         <span class="t num">07:28</span>
         <span class="c">
           <span class="title">英特尔与微软宣布扩大合作，应对日益增长的云与AI需求</span>
-          
-          <span class="meta">半导体 · <span class="neutral">中性</span> · 同花顺快讯</span>
+          <span class="summary">据“英特尔中国”公众号消息，11月19日，英特尔与微软宣布，双方已达成一项长期协议，扩大持续数十年的合作，在Azure基础设施的若干特定领域携手推进，以应对日益</span>
+          <span class="meta">半导体 · <span class="bull">利好</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>英特尔与微软宣布扩大合作，应对日益增长的云与AI需求</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682021677.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
-    </details><details class="item quiet" data-sector="光模块" data-tier="quiet">
+      <div class="detail"><p>英特尔与微软宣布扩大合作，应对日益增长的云与AI需求</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%（合作规模和影响有限）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>合作利好云AI</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“英特尔与微软已达成一项长期协议”</li></ul></div><p class="dim">合作利好云AI</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682021677.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+    </details><details class="item normal" data-sector="光模块" data-tier="normal">
       <summary>
         <span class="t num">07:24</span>
         <span class="c">
           <span class="title">恒生科技指数将迎重大调整 宁德时代和中际旭创等股票或被纳入</span>
-          
-          <span class="meta">光模块 · <span class="neutral">中性</span> · 华尔街见闻</span>
+          <span class="summary">宁德时代和中际旭创等股票预计将在香港科技股基准指数的一次重大调整中被纳入。恒生指数公司预计将在周五收市后公布季度检讨结果，势将把恒生科技指数成份股数量从30只扩</span>
+          <span class="meta">光模块 · <span class="bull">利好</span> · 华尔街见闻</span>
         </span>
       </summary>
-      <div class="detail"><p>恒生科技指数将迎重大调整 宁德时代和中际旭创等股票或被纳入</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">受影响公司</span>中际旭创</p><p><span class="dl">关联标的</span>中际旭创(300308)</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://wallstreetcn.com/articles/3202862" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+      <div class="detail"><p>恒生科技指数将迎重大调整 宁德时代和中际旭创等股票或被纳入</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>宁德时代、中际旭创</p><p><span class="dl">关联标的</span>中际旭创(300308)</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>纳入指数</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“宁德时代和中际旭创等股票或被纳入”</li></ul></div><p class="dim">纳入指数</p><p><a class="src" href="https://wallstreetcn.com/articles/3202862" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">07:23</span>
@@ -845,7 +843,7 @@ Alphabet 公司（谷歌母公司）：3.3 万亿美元
 Anthropic：1.8 万亿美元
 沙特阿美（Saudi Aramco）：1.7 万亿美元
 博通公司（Broadcom Inc.）：1.7 万亿美元
-台湾积体电路制造公司（台积电，TSMC）：1.7 万亿美元</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcm5692962.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+台湾积体电路制造公司（台积电，TSMC）：1.7 万亿美元</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>长期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“Anthropic的首次公开募股（IPO）大获成功，使其跻身全球市值最高企业之列”</li></ul></div><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcm5692962.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">07:21</span>
@@ -855,37 +853,37 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="bear">利空</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>加州官员正在对英伟达公司展开调查。加州总检察长罗布·邦塔（Rob Bonta）在周四的一份声明中表示，其办公室还在调查该公司是否就相关情况误导了投资者。他表示，英伟达已收到传票，要求提供相关信息，以确定该公司是否违反了加州的企业证券法。上周，黄仁勋披露了自己的一段婚外情，将英伟达推入了一场前所未有的危机。这不仅导致公司股价大幅下挫，还致使他被迫辞去首席执行官一职。邦塔表示：“英伟达及其前首席执行官的行为亮起了明显的红灯，其中包括公司可能误导投资者的方式。英伟达目前陷入了一个混乱的跨国危机，但我们企业证券法的基本原则十分明确：公司绝不能误导其投资者。”总部位于加州圣克拉拉的英伟达没有立即回复置评请求。英伟达是全球最大的芯片制造商，直到不久前还是全球市值最高的上市公司。在黄仁勋的领导下，其产品成为人工智能基础设施大规模建设的核心。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-54分·板块行情走弱)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“下挫”</li></ul></div><p class="dim">行情·利空(54·板块行情走弱)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcq4043203.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
-    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <div class="detail"><p>加州官员正在对英伟达公司展开调查。加州总检察长罗布·邦塔（Rob Bonta）在周四的一份声明中表示，其办公室还在调查该公司是否就相关情况误导了投资者。他表示，英伟达已收到传票，要求提供相关信息，以确定该公司是否违反了加州的企业证券法。上周，黄仁勋披露了自己的一段婚外情，将英伟达推入了一场前所未有的危机。这不仅导致公司股价大幅下挫，还致使他被迫辞去首席执行官一职。邦塔表示：“英伟达及其前首席执行官的行为亮起了明显的红灯，其中包括公司可能误导投资者的方式。英伟达目前陷入了一个混乱的跨国危机，但我们企业证券法的基本原则十分明确：公司绝不能误导其投资者。”总部位于加州圣克拉拉的英伟达没有立即回复置评请求。英伟达是全球最大的芯片制造商，直到不久前还是全球市值最高的上市公司。在黄仁勋的领导下，其产品成为人工智能基础设施大规模建设的核心。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（调查结果未知）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“英伟达及其前首席执行官的行为亮起了明显的红灯，其中包括公司可能误导其投资者。”</li></ul></div><p class="dim">行情·利空(54·板块行情走弱)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcq4043203.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+    </details><details class="item normal" data-sector="半导体" data-tier="normal">
       <summary>
         <span class="t num">07:15</span>
         <span class="c">
           <span class="title">英伟达正就收购Inception进行深入谈判</span>
-          
+          <span class="summary">据媒体引述三位知情人士报道，英伟达正就收购初创公司Inception展开深入谈判。其中一位知情人士称，拟议交易价值至少5亿美元，外加这些新员工的业绩达标奖励。报道称，英伟达与Inception的谈判是在黄仁勋离职之前开始的，此前微软也曾表达过对类似交易的兴趣。英伟达和Inception的代表均未立即回应置评请求。</span>
           <span class="meta">半导体 · <span class="neutral">中性</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>据媒体引述三位知情人士报道，英伟达正就收购初创公司Inception展开深入谈判。其中一位知情人士称，拟议交易价值至少5亿美元，外加这些新员工的业绩达标奖励。报道称，英伟达与Inception的谈判是在黄仁勋离职之前开始的，此前微软也曾表达过对类似交易的兴趣。英伟达和Inception的代表均未立即回应置评请求。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcq4040177.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
-    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <div class="detail"><p>据媒体引述三位知情人士报道，英伟达正就收购初创公司Inception展开深入谈判。其中一位知情人士称，拟议交易价值至少5亿美元，外加这些新员工的业绩达标奖励。报道称，英伟达与Inception的谈判是在黄仁勋离职之前开始的，此前微软也曾表达过对类似交易的兴趣。英伟达和Inception的代表均未立即回应置评请求。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%（交易未完成）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“英伟达正就收购初创公司Inception展开深入谈判。”</li></ul></div><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizitcq4040177.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+    </details><details class="item high" data-sector="半导体" data-tier="high">
       <summary>
         <span class="t num">07:07</span>
         <span class="c">
           <span class="title">AI云服务商CEO在芯片危机求生战中触及“谷底”</span>
-          
-          <span class="meta">半导体 · <span class="neutral">中性</span> · 华尔街见闻</span>
+          <span class="summary">Aolani Cloud Pte首席执行官Nicholas Chia表示，在美国政府对部分关键市场实施芯片出口限制后，Aolani及其他新兴云服务商（neocl</span>
+          <span class="meta">半导体 · <span class="bear">利空</span> · 华尔街见闻</span>
         </span>
       </summary>
-      <div class="detail"><p>AI云服务商CEO在芯片危机求生战中触及“谷底”</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://wallstreetcn.com/articles/3202856" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
-    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <div class="detail"><p>AI云服务商CEO在芯片危机求生战中触及“谷底”</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（影响程度不确定）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>制裁影响估值</li><li>云行业利空</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“估值可能已腰斩”</li></ul></div><p class="dim">制裁影响估值；云行业利空</p><p><a class="src" href="https://wallstreetcn.com/articles/3202856" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+    </details><details class="item high" data-sector="半导体" data-tier="high">
       <summary>
         <span class="t num">06:46</span>
         <span class="c">
           <span class="title">英伟达接近以逾5亿美元收购扩散式AI开发商Inception</span>
-          
-          <span class="meta">半导体 · <span class="neutral">中性</span> · 同花顺快讯</span>
+          <span class="summary">据报道，英伟达接近以逾5亿美元收购一家扩散式AI开发商Inception。（财联社）</span>
+          <span class="meta">半导体 · <span class="bull">利好</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>英伟达接近以逾5亿美元收购扩散式AI开发商Inception</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>传闻信号·中性(±5分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“据报道”</li></ul></div><p class="dim">传闻·中性(5)</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682021020.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+      <div class="detail"><p>英伟达接近以逾5亿美元收购扩散式AI开发商Inception</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（收购可能影响供应链）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>收购增强AI</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“英伟达接近以逾5亿美元收购扩散式AI开发商Inception”</li></ul></div><p class="dim">收购增强AI</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682021020.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">06:44</span>
@@ -895,17 +893,17 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="neutral">中性</span> · 华尔街见闻</span>
         </span>
       </summary>
-      <div class="detail"><p>英伟达接近收购Inception。（The Information）</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://wallstreetcn.com/articles/3202846" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+      <div class="detail"><p>英伟达接近收购Inception。（The Information）</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>重复新闻</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“英伟达接近收购Inception。”</li></ul></div><p class="dim">重复新闻</p><p><a class="src" href="https://wallstreetcn.com/articles/3202846" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">06:30</span>
         <span class="c">
           <span class="title">加州正调查英伟达是否就风险误导投资者。</span>
           
-          <span class="meta">半导体 · <span class="neutral">中性</span> · 新浪财经 · 2 家报道</span>
+          <span class="meta">半导体 · <span class="bear">利空</span> · 新浪财经 · 2 家报道</span>
         </span>
       </summary>
-      <div class="detail"><p>加州正调查英伟达是否就风险误导投资者。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">同花顺快讯</span><span class="ev-src-badge">新浪财经</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://news.10jqka.com.cn/20261120/c682021570.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261120/c682021570.shtml</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizinvq7373247.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>加州正调查英伟达是否就风险误导投资者。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>50%（调查细节未知）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>调查利空</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“标题: 加州正调查英伟达是否就风险误导投资者。”</li></ul></div><p class="dim">调查利空</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">同花顺快讯</span><span class="ev-src-badge">新浪财经</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://news.10jqka.com.cn/20261120/c682021570.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261120/c682021570.shtml</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizinvq7373247.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">06:25</span>
@@ -915,7 +913,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="neutral">中性</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>SpaceX敲定320亿美元芯片专项债务定价，分为三档。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizinvq7371725.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>SpaceX敲定320亿美元芯片专项债务定价，分为三档。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“SpaceX敲定320亿美元芯片专项债务定价”</li></ul></div><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizinvq7371725.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details></div><div class="scol"><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">06:17</span>
@@ -925,7 +923,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="neutral">分化</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>【11月20日美股成交额前20：Anthropic首秀收涨17% 成交额869.07亿美元】周四美股成交额第1名Anthropic收涨17.07%，成交869.07亿美元。 Anthropic登陆华尔街首日大涨17%，收盘约97美元。这家Claude大模型开发商完成810亿美元募资，创下史上最大IPO纪录，投资者争相抢筹这轮AI热潮核心标的。 按周四收盘价计算，这家成立近六年的AI实验室市值达1.3万亿美元，完全摊薄估值1.75万亿美元，跻身万亿市值企业俱乐部，但首日收盘估值低于SpaceX。 第3名英伟达收跌3.30%，成交476.03亿美元。 根据特朗普周四公布的最新财务披露文件，美国总统唐纳德·特朗普在9月买入了价值最高26.5万美元的英伟达股票，并卖出了价值最高1.5万美元的该股股票。 第5名超威半导体收跌7.72%，成交351.941亿美元。 对冲基金Hunterbrook发布做空报告，称芯片厂商AMD越来越多地为采购自家芯片的企业提供融资与担保，存在与其主要竞争对手英伟达类似的循环交易，受此影响AMD股价走低。 第6名美光收跌2.10%，成交249.311亿美元。 第7名SpaceX收跌3.53%，成交166.161亿美元。 SpaceX拟于周四发行至少320亿美元的AI芯片债务。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-36分·板块行情走弱)</li><li>行情信号·利好(+15分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“收跌”</li><li>“大涨”</li></ul></div><p class="dim">行情·利空(36·板块行情走弱)+行情·利好(15·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizinvs4145803.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>【11月20日美股成交额前20：Anthropic首秀收涨17% 成交额869.07亿美元】周四美股成交额第1名Anthropic收涨17.07%，成交869.07亿美元。 Anthropic登陆华尔街首日大涨17%，收盘约97美元。这家Claude大模型开发商完成810亿美元募资，创下史上最大IPO纪录，投资者争相抢筹这轮AI热潮核心标的。 按周四收盘价计算，这家成立近六年的AI实验室市值达1.3万亿美元，完全摊薄估值1.75万亿美元，跻身万亿市值企业俱乐部，但首日收盘估值低于SpaceX。 第3名英伟达收跌3.30%，成交476.03亿美元。 根据特朗普周四公布的最新财务披露文件，美国总统唐纳德·特朗普在9月买入了价值最高26.5万美元的英伟达股票，并卖出了价值最高1.5万美元的该股股票。 第5名超威半导体收跌7.72%，成交351.941亿美元。 对冲基金Hunterbrook发布做空报告，称芯片厂商AMD越来越多地为采购自家芯片的企业提供融资与担保，存在与其主要竞争对手英伟达类似的循环交易，受此影响AMD股价走低。 第6名美光收跌2.10%，成交249.311亿美元。 第7名SpaceX收跌3.53%，成交166.161亿美元。 SpaceX拟于周四发行至少320亿美元的AI芯片债务。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“Anthropic首秀收涨17% 成交额869.07亿美元”</li></ul></div><p class="dim">行情·利空(36·板块行情走弱)+行情·利好(15·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizinvs4145803.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">06:00</span>
@@ -935,7 +933,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="neutral">中性</span> · 华尔街见闻</span>
         </span>
       </summary>
-      <div class="detail"><p>英伟达将参加12月1日的瑞银集团科技与AI活动。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://wallstreetcn.com/articles/3202830" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+      <div class="detail"><p>英伟达将参加12月1日的瑞银集团科技与AI活动。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>50%（活动影响未知）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>日程安排</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“英伟达将参加12月1日的瑞银集团科技与AI活动”</li></ul></div><p class="dim">日程安排</p><p><a class="src" href="https://wallstreetcn.com/articles/3202830" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">06:00</span>
@@ -945,7 +943,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="neutral">中性</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>英伟达将于12月1日在瑞银科技与人工智能大会上发表演讲。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizinvv0567956.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>英伟达将于12月1日在瑞银科技与人工智能大会上发表演讲。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“英伟达将于12月1日在瑞银科技与人工智能大会上发表演讲。”</li></ul></div><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizinvv0567956.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">06:00</span>
@@ -955,59 +953,59 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="neutral">中性</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>英伟达宣布即将举办面向金融社区的线上活动。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizinvs4135709.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
-    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <div class="detail"><p>英伟达宣布即将举办面向金融社区的线上活动。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“英伟达宣布即将举办面向金融社区的线上活动。”</li></ul></div><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizinvs4135709.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+    </details><details class="item high" data-sector="半导体" data-tier="high">
       <summary>
         <span class="t num">05:55</span>
         <span class="c">
           <span class="title">英伟达公司高管Timothy S. Teter于11月19日向美国证券交易委员会（SEC）提交144表格，拟出售3万股英伟达股票。</span>
           
-          <span class="meta">半导体 · <span class="neutral">中性</span> · 新浪财经</span>
+          <span class="meta">半导体 · <span class="bear">利空</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>英伟达公司高管Timothy S. Teter于11月19日向美国证券交易委员会（SEC）提交144表格，拟出售3万股英伟达股票。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizinvq7357473.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>英伟达公司高管Timothy S. Teter于11月19日向美国证券交易委员会（SEC）提交144表格，拟出售3万股英伟达股票。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%（减持规模小，影响有限）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>高管减持</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“拟出售3万股英伟达股票”</li></ul></div><p class="dim">高管减持</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizinvq7357473.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">04:30</span>
         <span class="c">
           <span class="title">基金净值透露调仓方向 机构探寻下阶段确定性</span>
           
-          <span class="meta">半导体 · <span class="bull">利好</span> · 东方财富</span>
+          <span class="meta">半导体 · <span class="neutral">分化</span> · 东方财富</span>
         </span>
       </summary>
-      <div class="detail"><p>基金净值透露调仓方向 机构探寻下阶段确定性</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">受影响公司</span>中芯国际、寒武纪</p><p><span class="dl">关联标的</span>中芯国际(688981)、寒武纪(688256)</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利好(+8分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“上涨”</li></ul></div><p class="dim">行情·利好(8·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="http://finance.eastmoney.com/news/1354,202611203935443451.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
-    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <div class="detail"><p>基金净值透露调仓方向 机构探寻下阶段确定性</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>光模块板块、PCB板块、中芯国际、华虹宏力、寒武纪</p><p><span class="dl">关联标的</span>中芯国际(688981)、寒武纪(688256)</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>光模块PCB跌国产涨</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“光模块、PCB两大市场热点板块本月以来跌幅均在10%上下，与此同时，以中芯国际、华虹宏力、寒武纪为代表的国产半导体产业链个股纷纷上涨”</li></ul></div><p class="dim">光模块PCB跌国产涨</p><p><a class="src" href="http://finance.eastmoney.com/news/1354,202611203935443451.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
+    </details><details class="item normal" data-sector="半导体" data-tier="normal">
       <summary>
         <span class="t num">04:17</span>
         <span class="c">
           <span class="title">英伟达：Vera Rubin NVL72系统现已在Azure数据中心运行。</span>
           
-          <span class="meta">半导体 · <span class="neutral">中性</span> · 新浪财经</span>
+          <span class="meta">半导体 · <span class="bull">利好</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>英伟达：Vera Rubin NVL72系统现已在Azure数据中心运行。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizihps7463525.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>英伟达：Vera Rubin NVL72系统现已在Azure数据中心运行。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（实际影响未知）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>系统部署</li><li>利好AI</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“Vera Rubin NVL72系统现已在Azure数据中心运行”</li></ul></div><p class="dim">系统部署；利好AI</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizihps7463525.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">04:17</span>
         <span class="c">
           <span class="title">英伟达：与微软合作将加速计算从Azure扩展至Windows个人电脑。</span>
           
-          <span class="meta">半导体 · <span class="neutral">中性</span> · 华尔街见闻 · 2 家报道</span>
+          <span class="meta">半导体 · <span class="bull">利好</span> · 华尔街见闻 · 2 家报道</span>
         </span>
       </summary>
       <div class="detail"><p>英伟达：与微软合作将加速计算从Azure扩展至Windows个人电脑。
 
-英伟达与微软将在Azure上部署Vera Rubin NVL72。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">同花顺快讯</span><span class="ev-src-badge">华尔街见闻</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://news.10jqka.com.cn/20261120/c682020145.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261120/c682020145.shtml</a></li></ul></div><p><a class="src" href="https://wallstreetcn.com/articles/3202794" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
-    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+英伟达与微软将在Azure上部署Vera Rubin NVL72。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“英伟达与微软将在Azure上部署Vera Rubin NVL72”</li></ul></div><p class="dim">未命中明显信号,中性</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">同花顺快讯</span><span class="ev-src-badge">华尔街见闻</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://news.10jqka.com.cn/20261120/c682020145.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261120/c682020145.shtml</a></li></ul></div><p><a class="src" href="https://wallstreetcn.com/articles/3202794" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+    </details><details class="item normal" data-sector="半导体" data-tier="normal">
       <summary>
         <span class="t num">02:21</span>
         <span class="c">
           <span class="title">香港家族办公室大举解除39亿美元AI押注 清仓美光、西部数据等股票</span>
-          
-          <span class="meta">半导体 · <span class="neutral">中性</span> · 同花顺快讯</span>
+          <span class="summary">由对冲基金老将Larry Chen创立的香港家族办公室上季度削减股票持仓，正值投资者更广泛撤离AI相关资产之际。根据在美国提交的13F文件，截至第三季度末，An</span>
+          <span class="meta">半导体 · <span class="bear">利空</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>香港家族办公室大举解除39亿美元AI押注 清仓美光、西部数据等股票</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682020027.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+      <div class="detail"><p>香港家族办公室大举解除39亿美元AI押注 清仓美光、西部数据等股票</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“Anther Capital Ltd.已不再持有此前价值约39亿美元的股份”</li></ul></div><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682020027.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">02:17</span>
@@ -1017,7 +1015,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="bull">利好</span> · 东方财富</span>
         </span>
       </summary>
-      <div class="detail"><p>科技主线轮动复苏 先进封装概念走强</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利好(+15分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“走强”</li></ul></div><p class="dim">行情·利好(15·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="http://finance.eastmoney.com/news/1354,202611203935442517.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
+      <div class="detail"><p>科技主线轮动复苏 先进封装概念走强</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“科技与红利板块均有所表现，芯片封装、白色家电等细分方向走强”</li></ul></div><p class="dim">行情·利好(15·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="http://finance.eastmoney.com/news/1354,202611203935442517.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">01:35</span>
@@ -1027,7 +1025,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="neutral">中性</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>Bessemer合伙人称Anthropic IPO是其“谷歌时刻”</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682019938.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+      <div class="detail"><p>Bessemer合伙人称Anthropic IPO是其“谷歌时刻”</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（观点主观）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“Bessemer Venture Partners合伙人Byron Deeter表示，Anthropic上市是“谷歌时刻””</li></ul></div><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682019938.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">01:30</span>
@@ -1037,7 +1035,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="neutral">中性</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>特朗普9月买入价值最高26.5万美元英伟达股票</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682019930.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+      <div class="detail"><p>特朗普9月买入价值最高26.5万美元英伟达股票</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>50%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“唐纳德·特朗普在9月买入了价值最高26.5万美元的英伟达股票”</li></ul></div><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682019930.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">01:11</span>
@@ -1047,7 +1045,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="neutral">分化</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>投资Anthropic的上市公司股价在其上市首秀后回吐早盘涨幅，亚马逊下跌1.4%，谷歌上涨0.3%，英伟达下跌1.6%，AMD下跌8.5%，博通下跌1.2%。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-18分·板块行情走弱)</li><li>行情信号·利好(+8分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“下跌”</li><li>“上涨”</li></ul></div><p class="dim">行情·利空(18·板块行情走弱)+行情·利好(8·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682019903.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+      <div class="detail"><p>投资Anthropic的上市公司股价在其上市首秀后回吐早盘涨幅，亚马逊下跌1.4%，谷歌上涨0.3%，英伟达下跌1.6%，AMD下跌8.5%，博通下跌1.2%。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“投资Anthropic的上市公司股价在其上市首秀后回吐早盘涨幅”</li></ul></div><p class="dim">行情·利空(18·板块行情走弱)+行情·利好(8·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682019903.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">01:05</span>
@@ -1057,17 +1055,17 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="neutral">中性</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>费城半导体指数日内跌2%</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682019892.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+      <div class="detail"><p>费城半导体指数日内跌2%</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>100%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>板块跌未超3</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“费城半导体指数日内跌2.05%”</li></ul></div><p class="dim">板块跌未超3</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682019892.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">00:57</span>
         <span class="c">
           <span class="title">英伟达股价转跌，此前一度上涨近5%。</span>
           
-          <span class="meta">半导体 · <span class="bull">利好</span> · 同花顺快讯</span>
+          <span class="meta">半导体 · <span class="neutral">中性</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>英伟达股价转跌，此前一度上涨近5%。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利好(+15分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“上涨”</li></ul></div><p class="dim">行情·利好(15·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682019848.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+      <div class="detail"><p>英伟达股价转跌，此前一度上涨近5%。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情波动未超3</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“英伟达股价转跌”</li></ul></div><p class="dim">行情波动未超3</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682019848.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">00:49</span>
@@ -1077,7 +1075,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="bull">利好</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>Anthropic上市首日开盘涨34% 市值达到1.5万亿美元</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利好(+8分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“上涨”</li></ul></div><p class="dim">行情·利好(8·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682019830.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+      <div class="detail"><p>Anthropic上市首日开盘涨34% 市值达到1.5万亿美元</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>AI上市利好</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“Anthropic上市首日开盘涨34% 市值达到1.5万亿美元”</li></ul></div><p class="dim">AI上市利好</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682019830.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
     </details></div></div>
     </div><div class="grp" data-session="mid">
       <div class="grp-head"><span>盘中</span><i>09:30—15:00</i><b class="num" data-gcount>23</b></div>
@@ -1087,10 +1085,10 @@ Anthropic：1.8 万亿美元
         <span class="c">
           <span class="title">江苏：打造“AI+生物医药”新范式 持企业股权融资、跨境合作、并购重组</span>
           
-          <span class="meta">创新药 · <span class="neutral">中性</span> · 新浪财经</span>
+          <span class="meta">创新药 · <span class="bull">利好</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>11月18日下午，江苏省政府召开“6+6”产业（生物医药、脑机接口）高质量发展专题推进会。会上，中国药科大学代表江苏省生物医药产业联盟作交流，华泰证券专家围绕产业发展态势趋势作报告，恒瑞医药、锐正基因、迈博太科、迪哲医药、金斯瑞生物、明视脑机科技、三迭纪等企业先后发言。会议认真研判全省生物医药、脑机接口产业发展的形势，要求加力落细落实促进江苏生物医药产业高质量发展三年行动计划，加强共性技术基础研究和应用研究，推动关键核心技术攻关，实施一批“补短板”攻关项目。畅通创新药械入院通道，积极探索“医保+商保”多元支付模式，助力创新产品临床应用；打造“AI+生物医药”新范式，大力培育创新主体，布局建设高质量数据集、研发行业应用大模型；支持企业股权融资、跨境合作、并购重组，常态化举办供需对接活动，推动产业链、资金链、人才链、创新链深度融合。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">受影响公司</span>恒瑞医药</p><p><span class="dl">关联标的</span>恒瑞医药(600276)</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>传闻信号·中性(±10分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“计划”</li></ul></div><p class="dim">传闻·中性(10)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizkcth7220031.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>11月18日下午，江苏省政府召开“6+6”产业（生物医药、脑机接口）高质量发展专题推进会。会上，中国药科大学代表江苏省生物医药产业联盟作交流，华泰证券专家围绕产业发展态势趋势作报告，恒瑞医药、锐正基因、迈博太科、迪哲医药、金斯瑞生物、明视脑机科技、三迭纪等企业先后发言。会议认真研判全省生物医药、脑机接口产业发展的形势，要求加力落细落实促进江苏生物医药产业高质量发展三年行动计划，加强共性技术基础研究和应用研究，推动关键核心技术攻关，实施一批“补短板”攻关项目。畅通创新药械入院通道，积极探索“医保+商保”多元支付模式，助力创新产品临床应用；打造“AI+生物医药”新范式，大力培育创新主体，布局建设高质量数据集、研发行业应用大模型；支持企业股权融资、跨境合作、并购重组，常态化举办供需对接活动，推动产业链、资金链、人才链、创新链深度融合。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>恒瑞医药、锐正基因、迈博太科、迪哲医药、金斯瑞生物、明视脑机科技、三迭纪</p><p><span class="dl">关联标的</span>恒瑞医药(600276)</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>政策利好</li><li>融资支持</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“支持企业股权融资、跨境合作、并购重组”</li></ul></div><p class="dim">政策利好；融资支持</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizkcth7220031.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item normal" data-sector="半导体" data-tier="normal">
       <summary>
         <span class="t num">12:02</span>
@@ -1100,7 +1098,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="neutral">分化</span> · 金十数据</span>
         </span>
       </summary>
-      <div class="detail"><p>SpaceX’s latest $43 bln debt financing is secured by 英伟达 GPUs, the FT reported. The 公司 says it plans to use the 芯片s at U.S. 数据中心s. Creditors fear that if SpaceX later launches the GPUs into space, they could be unable to repossess and sell the collateral in a default. They are seeking a restriction, though it is unclear whether it will be included in the final documents. SpaceX sold more than $30 bln of bonds to large investors on Thursday as part of a broader financing package called Project Saturn. The largest tranche was a $25 bln investment-grade bond backed by five years</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>政策信号·分化(±25分·制裁对国产替代链利好、对依赖海外设备/客户的公司利空,标为分化)</li><li>传闻信号·中性(±5分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“restriction”</li><li>“could”</li></ul></div><p class="dim">政策·分化(25·制裁对国产替代链利好、对依赖海外设备/客户的公司利空,标为分化)+传闻·中性(5)</p></div>
+      <div class="detail"><p>SpaceX’s latest $43 bln debt financing is secured by 英伟达 GPUs, the FT reported. The 公司 says it plans to use the 芯片s at U.S. 数据中心s. Creditors fear that if SpaceX later launches the GPUs into space, they could be unable to repossess and sell the collateral in a default. They are seeking a restriction, though it is unclear whether it will be included in the final documents. SpaceX sold more than $30 bln of bonds to large investors on Thursday as part of a broader financing package called Project Saturn. The largest tranche was a $25 bln investment-grade bond backed by five years</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">分化</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>NVIDIA</p><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（限制条款是否加入未知）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>SpaceX融资用GPU</li><li>债权人担忧风险</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“SpaceX’s latest $43 bln debt financing is secured by NVIDIA GPUs”</li></ul></div><p class="dim">SpaceX融资用GPU；债权人担忧风险</p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">12:02</span>
@@ -1110,17 +1108,17 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="neutral">中性</span> · 金十数据</span>
         </span>
       </summary>
-      <div class="detail"><p>【马斯克想把算力送上天，SpaceX债权人拟在合同里加一条：抵押的英伟达GPU请留在地球】金十数据11月20日讯，据英国《金融时报》报道，SpaceX最新一笔4</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>传闻信号·中性(±5分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“计划”</li></ul></div><p class="dim">传闻·中性(5)</p></div>
-    </details><details class="item high" data-sector="黄金" data-tier="high">
+      <div class="detail"><p>【马斯克想把算力送上天，SpaceX债权人拟在合同里加一条：抵押的英伟达GPU请留在地球】金十数据11月20日讯，据英国《金融时报》报道，SpaceX最新一笔4</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>NVIDIA</p><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%（条款是否最终确定）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>债权人加限制条款</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“SpaceX债权人拟在合同里加一条：抵押的英伟达GPU请留在地球”</li></ul></div><p class="dim">债权人加限制条款</p></div>
+    </details><details class="item normal" data-sector="黄金" data-tier="normal">
       <summary>
         <span class="t num">12:00</span>
         <span class="c">
           <span class="title">印度金价大幅回落，婚庆珠宝需求明显回暖</span>
           
-          <span class="meta">黄金 · <span class="bear">利空</span> · 金十数据</span>
+          <span class="meta">黄金 · <span class="neutral">中性</span> · 金十数据</span>
         </span>
       </summary>
-      <div class="detail"><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-54分·板块行情走弱)</li><li>传闻信号·中性(±8分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“回落”</li><li>“计划”</li></ul></div><p class="dim">行情·利空(54·板块行情走弱)+传闻·中性(8)</p></div>
+      <div class="detail"><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%（消费者对预算敏感）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>需求回暖</li><li>金价回落</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“婚庆相关采购正成为需求回暖的主要动力”</li></ul></div><p class="dim">需求回暖；金价回落</p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">11:59</span>
@@ -1130,7 +1128,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="neutral">中性</span> · 财联社</span>
         </span>
       </summary>
-      <div class="detail"><p>PCB+物理AI+文化传媒+芯片+算力租赁，五大热点一周以来获融资净买入情况（附表）</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://www.cls.cn/detail/2539326" target="_blank" rel="noopener">原文 · 财联社</a></p></div>
+      <div class="detail"><p>PCB+物理AI+文化传媒+芯片+算力租赁，五大热点一周以来获融资净买入情况（附表）</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>50%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>两融数据汇总</li></ul></div><p class="dim">两融数据汇总</p><p><a class="src" href="https://www.cls.cn/detail/2539326" target="_blank" rel="noopener">原文 · 财联社</a></p></div>
     </details><details class="item key" data-sector="黄金" data-tier="key">
       <summary>
         <span class="t num">11:56</span>
@@ -1140,7 +1138,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">黄金 · <span class="bear">利空</span> · 金十数据</span>
         </span>
       </summary>
-      <div class="detail"><p>黄金连跌五个交易日，较历史高点跌超2000美元，本周跌幅或超9%。美联储加息预期升温、AI股抛售潮蔓延，加上年底流动性需求，投资者纷纷抛售黄金筹集现金。点击查看</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>极高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>价格信号·利空(-60分)</li><li>宏观信号·利空(-40分)</li><li>行情信号·利空(-36分·板块行情走弱)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“跌超”</li><li>“加息”</li><li>“跌超”</li></ul></div><p class="dim">价格·利空(60)+宏观·利空(40)+行情·利空(36·板块行情走弱)</p></div>
+      <div class="detail"><p>黄金连跌五个交易日，较历史高点跌超2000美元，本周跌幅或超9%。美联储加息预期升温、AI股抛售潮蔓延，加上年底流动性需求，投资者纷纷抛售黄金筹集现金。点击查看</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>极高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>连续大跌</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“黄金连跌五个交易日，较历史高点跌超2000美元，本周跌幅或超9%”</li></ul></div><p class="dim">连续大跌</p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">11:38</span>
@@ -1150,8 +1148,8 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="neutral">中性</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>企查查APP显示，近日，杭州海纳智冷科技有限公司发生工商变更，新增智元机器人关联公司智元创新（上海）科技股份有限公司等为股东，同时注册资本增至1372.549万元。公开信息显示，海纳智冷是一家专注于芯片热管理解决方案的提供商。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p></div>
-    </details></div><div class="scol"><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <div class="detail"><p>企查查APP显示，近日，杭州海纳智冷科技有限公司发生工商变更，新增智元机器人关联公司智元创新（上海）科技股份有限公司等为股东，同时注册资本增至1372.549万元。公开信息显示，海纳智冷是一家专注于芯片热管理解决方案的提供商。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>智元机器人、海纳智冷</p><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>芯片热管理合作</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“海纳智冷是一家专注于芯片热管理解决方案的提供商”</li></ul></div><p class="dim">芯片热管理合作</p></div>
+    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">11:32</span>
         <span class="c">
@@ -1160,17 +1158,17 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="neutral">中性</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>ETF两市成交额报2815.93亿元，较昨日此时放量221.93亿元</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682036554.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
-    </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <div class="detail"><p>ETF两市成交额报2815.93亿元，较昨日此时放量221.93亿元</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>成交额增加</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“中韩半导体ETF（513310），成交额为：67.67亿元”</li></ul></div><p class="dim">成交额增加</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682036554.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+    </details></div><div class="scol"><details class="item normal" data-sector="半导体" data-tier="normal">
       <summary>
         <span class="t num">11:30</span>
         <span class="c">
           <span class="title">涉国产芯片等 最高检发布典型案例</span>
-          
-          <span class="meta">半导体 · <span class="neutral">中性</span> · 华尔街见闻</span>
+          <span class="summary">11月20日，最高人民检察院公开发布检察机关服务新质生产力发展典型案例。这批典型案例共5件，包括2件侵犯著作权刑事案件和3件侵犯商业秘密刑事案件，充分体现了检察</span>
+          <span class="meta">半导体 · <span class="bull">利好</span> · 华尔街见闻</span>
         </span>
       </summary>
-      <div class="detail"><p>涉国产芯片等 最高检发布典型案例</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://wallstreetcn.com/articles/3202989" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+      <div class="detail"><p>涉国产芯片等 最高检发布典型案例</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>长期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>政策利好</li><li>保护创新</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“充分体现了检察机关依法惩治侵犯关键核心技术犯罪、护航科技创新的坚定立场。”</li></ul></div><p class="dim">政策利好；保护创新</p><p><a class="src" href="https://wallstreetcn.com/articles/3202989" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
     </details><details class="item quiet" data-sector="黄金" data-tier="quiet">
       <summary>
         <span class="t num">11:30</span>
@@ -1180,7 +1178,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">黄金 · <span class="neutral">中性</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>钯连续跌8.85%，白银连续跌8.60%，黄金连续跌5.92%，铂连续跌5.74%，锡连续跌4.18%。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p></div>
+      <div class="detail"><p>钯连续跌8.85%，白银连续跌8.60%，黄金连续跌5.92%，铂连续跌5.74%，锡连续跌4.18%。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>100%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>期货数据</li></ul></div><p class="dim">期货数据</p></div>
     </details><details class="item normal" data-sector="光模块" data-tier="normal">
       <summary>
         <span class="t num">11:21</span>
@@ -1190,7 +1188,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">光模块 · <span class="bull">利好</span> · 财联社</span>
         </span>
       </summary>
-      <div class="detail"><p>AI光通信磷化铟价格维持高位、供给端仍面临扩产难题，这家公司产能已被客户锁定至2027年底，部分订单已取得出口许可并持续交付</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>扩产信号·利好(+40分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“扩产”</li></ul></div><p class="dim">扩产·利好(40)；体裁判定「观点/研报」,档位封顶「中」</p><p><a class="src" href="https://www.cls.cn/detail/2539788" target="_blank" rel="noopener">原文 · 财联社</a></p></div>
+      <div class="detail"><p>AI光通信磷化铟价格维持高位、供给端仍面临扩产难题，这家公司产能已被客户锁定至2027年底，部分订单已取得出口许可并持续交付</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>产能锁定</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“这家公司产能已被客户锁定至2027年底”</li></ul></div><p class="dim">产能锁定</p><p><a class="src" href="https://www.cls.cn/detail/2539788" target="_blank" rel="noopener">原文 · 财联社</a></p></div>
     </details><details class="item quiet" data-sector="黄金" data-tier="quiet">
       <summary>
         <span class="t num">11:19</span>
@@ -1200,7 +1198,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">黄金 · <span class="neutral">中性</span> · 金十数据</span>
         </span>
       </summary>
-      <div class="detail"><p>金十图示：2026年11月20日（周五）上海金早盘价为761.81元/克，较国际金价(758.08元/克)，高3.73元/克</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><div class="dsec"><span class="dl">相关报道（4 篇）</span><ul class="dlist related"><li><a href="金十图示：2026年11月20日（周五）白银ETF持仓报告" target="_blank" rel="noopener">金十图示：2026年11月20日（周五）白银ETF持仓报告</a></li><li><a href="金十图示：2026年11月20日（周五）黄金ETF持仓报告" target="_blank" rel="noopener">金十图示：2026年11月20日（周五）黄金ETF持仓报告</a></li><li><a href="金十图示：2026年11月20日（周五）全球富豪榜" target="_blank" rel="noopener">金十图示：2026年11月20日（周五）全球富豪榜</a></li><li><a href="金十图示：2026年11月20日（周五）全球汽车制造商市值变化" target="_blank" rel="noopener">金十图示：2026年11月20日（周五）全球汽车制造商市值变化</a></li></ul></div></div>
+      <div class="detail"><p>金十图示：2026年11月20日（周五）上海金早盘价为761.81元/克，较国际金价(758.08元/克)，高3.73元/克</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>100%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>纯价格</li></ul></div><p class="dim">纯价格</p><div class="dsec"><span class="dl">相关报道（4 篇）</span><ul class="dlist related"><li><a href="金十图示：2026年11月20日（周五）白银ETF持仓报告" target="_blank" rel="noopener">金十图示：2026年11月20日（周五）白银ETF持仓报告</a></li><li><a href="金十图示：2026年11月20日（周五）黄金ETF持仓报告" target="_blank" rel="noopener">金十图示：2026年11月20日（周五）黄金ETF持仓报告</a></li><li><a href="金十图示：2026年11月20日（周五）全球富豪榜" target="_blank" rel="noopener">金十图示：2026年11月20日（周五）全球富豪榜</a></li><li><a href="金十图示：2026年11月20日（周五）全球汽车制造商市值变化" target="_blank" rel="noopener">金十图示：2026年11月20日（周五）全球汽车制造商市值变化</a></li></ul></div></div>
     </details><details class="item quiet" data-sector="黄金" data-tier="quiet">
       <summary>
         <span class="t num">11:13</span>
@@ -1210,17 +1208,17 @@ Anthropic：1.8 万亿美元
           <span class="meta">黄金 · <span class="neutral">中性</span> · 金十数据</span>
         </span>
       </summary>
-      <div class="detail"><p>The most-active Shanghai 黄金 futures contract is down 6.00% intraday at 757.64 yuan per gram.</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">原文标题</span>The most-active Shanghai gold futures contract is </p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p></div>
+      <div class="detail"><p>The most-active Shanghai 黄金 futures contract is down 6.00% intraday at 757.64 yuan per gram.</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>100%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>期货下跌</li></ul></div><p class="dim">期货下跌</p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">11:01</span>
         <span class="c">
           <span class="title">Taiwan-listed 台积电 shares 下跌 5%, Foxconn drops 4.5% and </span>
           
-          <span class="meta">半导体 · <span class="neutral">中性</span> · 金十数据</span>
+          <span class="meta">半导体 · <span class="bear">利空</span> · 金十数据</span>
         </span>
       </summary>
-      <div class="detail"><p>Taiwan-listed 台积电 shares 下跌 5%, Foxconn drops 4.5% and MediaTek loses more than 9%.</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">原文标题</span>Taiwan-listed TSMC shares fall 5%, Foxconn drops 4</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p></div>
+      <div class="detail"><p>Taiwan-listed 台积电 shares 下跌 5%, Foxconn drops 4.5% and MediaTek loses more than 9%.</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>70%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>同意关键词预判</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“Taiwan-listed TSMC shares fall 5%, Foxconn drops 4.5% and MediaTek loses more than 9%.”</li></ul></div><p class="dim">未命中明显信号,中性</p></div>
     </details><details class="item high" data-sector="黄金" data-tier="high">
       <summary>
         <span class="t num">10:59</span>
@@ -1230,27 +1228,27 @@ Anthropic：1.8 万亿美元
           <span class="meta">黄金 · <span class="bear">利空</span> · 同花顺快讯</span>
         </span>
       </summary>
-      <div class="detail"><p>现货黄金创14个月新低 机构称美国通胀与油价是止跌关键信号</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>价格信号·利空(-45分)</li><li>宏观信号·利空(-30分)</li><li>行情信号·利空(-27分·板块行情走弱)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“跌破”</li><li>“加息”</li><li>“回落”</li></ul></div><p class="dim">价格·利空(45)+宏观·利空(30)+行情·利空(27·板块行情走弱)</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682034684.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
-    </details></div><div class="scol"><details class="item quiet" data-sector="半导体" data-tier="quiet">
+      <div class="detail"><p>现货黄金创14个月新低 机构称美国通胀与油价是止跌关键信号</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>创新低</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“伦敦现货黄金与COMEX12月黄金期货日内跌幅均超过3%，双双创下2025年9月以来盘中新低”</li></ul></div><p class="dim">创新低</p><p><a class="src" href="https://news.10jqka.com.cn/20261120/c682034684.shtml" target="_blank" rel="noopener">原文 · 同花顺快讯</a></p></div>
+    </details><details class="item normal" data-sector="半导体" data-tier="normal">
       <summary>
         <span class="t num">10:58</span>
         <span class="c">
           <span class="title">主力资金监控：长鑫科技净卖出超12亿</span>
-          
-          <span class="meta">半导体 · <span class="neutral">中性</span> · 财联社</span>
+          <span class="summary">【主力资金监控：长鑫科技净卖出超12亿】财联社11月20日电，财联社盯盘数据显示，今日早盘主力资金净流入通用设备、出版、美容护理等板块，净流出电子、半导体、电新</span>
+          <span class="meta">半导体 · <span class="bear">利空</span> · 财联社</span>
         </span>
       </summary>
-      <div class="detail"><p>主力资金监控：长鑫科技净卖出超12亿</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">受影响公司</span>长电科技、通富微电</p><p><span class="dl">关联标的</span>长电科技(600584)、通富微电(002156)</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://www.cls.cn/detail/2539770" target="_blank" rel="noopener">原文 · 财联社</a></p></div>
-    </details><details class="item quiet" data-sector="光模块" data-tier="quiet">
+      <div class="detail"><p>主力资金监控：长鑫科技净卖出超12亿</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>长电科技(600584)、通富微电(002156)</p><p class="dim"><span class="dl">置信度</span>60%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>资金净流出</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“长鑫科技遭净卖出超12亿元”</li></ul></div><p class="dim">资金净流出</p><p><a class="src" href="https://www.cls.cn/detail/2539770" target="_blank" rel="noopener">原文 · 财联社</a></p></div>
+    </details></div><div class="scol"><details class="item normal" data-sector="光模块" data-tier="normal">
       <summary>
         <span class="t num">10:51</span>
         <span class="c">
           <span class="title">风口研报·公司</span>
-          
-          <span class="meta">光模块 · <span class="neutral">中性</span> · 财联社</span>
+          <span class="summary">切入高端光通信测试领域后，公司前三季度业绩增长近300%，叠加主业制造产能的全球化布局，有望共同开启第二成长曲线</span>
+          <span class="meta">光模块 · <span class="bull">利好</span> · 财联社</span>
         </span>
       </summary>
-      <div class="detail"><p>切入高端光通信测试领域后，公司前三季度业绩增长近300%，叠加主业制造产能的全球化布局，有望共同开启第二成长曲线</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>传闻信号·中性(±10分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“有望”</li></ul></div><p class="dim">传闻·中性(10)；体裁判定「观点/研报」,档位封顶「中」</p><p><a class="src" href="https://www.cls.cn/detail/2539753" target="_blank" rel="noopener">原文 · 财联社</a></p></div>
+      <div class="detail"><p>切入高端光通信测试领域后，公司前三季度业绩增长近300%，叠加主业制造产能的全球化布局，有望共同开启第二成长曲线</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>中</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>业绩增长</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“公司前三季度业绩增长近300%”</li></ul></div><p class="dim">业绩增长</p><p><a class="src" href="https://www.cls.cn/detail/2539753" target="_blank" rel="noopener">原文 · 财联社</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">10:36</span>
@@ -1260,7 +1258,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="neutral">中性</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>天眼查App显示，近日，微科聚源股权投资基金（无锡）合伙企业（有限合伙）成立，执行事务合伙人为中芯聚源（宁波）投资管理合伙企业（有限合伙），出资额1.2亿元人民币，经营范围为以私募基金从事股权投资、投资管理、资产管理等活动，创业投资。合伙人信息显示，该基金由蓝思科技创始人周群飞名下长沙群欣投资咨询有限公司、无锡市高科技投资集团有限公司、南京华泰洋河股权投资母基金（有限合伙）等共同出资。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizixmn4067557.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>天眼查App显示，近日，微科聚源股权投资基金（无锡）合伙企业（有限合伙）成立，执行事务合伙人为中芯聚源（宁波）投资管理合伙企业（有限合伙），出资额1.2亿元人民币，经营范围为以私募基金从事股权投资、投资管理、资产管理等活动，创业投资。合伙人信息显示，该基金由蓝思科技创始人周群飞名下长沙群欣投资咨询有限公司、无锡市高科技投资集团有限公司、南京华泰洋河股权投资母基金（有限合伙）等共同出资。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">受影响公司</span>蓝思科技</p><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>新基金成立</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“蓝思科技创始人周群飞名下长沙群欣投资咨询有限公司...共同出资”</li></ul></div><p class="dim">新基金成立</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizixmn4067557.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="黄金" data-tier="quiet">
       <summary>
         <span class="t num">10:26</span>
@@ -1270,7 +1268,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">黄金 · <span class="bear">利空</span> · 东方财富</span>
         </span>
       </summary>
-      <div class="detail"><p>A股大盘跌2％</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-18分·板块行情走弱)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“领跌”</li></ul></div><p class="dim">行情·利空(18·板块行情走弱)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><p><a class="src" href="http://stock.eastmoney.com/news/11215,202611203935947623.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
+      <div class="detail"><p>A股大盘跌2％</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>100%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>大盘下跌</li></ul></div><p class="dim">大盘下跌</p><p><a class="src" href="http://stock.eastmoney.com/news/11215,202611203935947623.html" target="_blank" rel="noopener">原文 · 东方财富</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">10:19</span>
@@ -1280,7 +1278,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="bear">利空</span> · 新浪财经 · 2 家报道</span>
         </span>
       </summary>
-      <div class="detail"><p>集成电路封测板块重挫，通富微电跌停，长电科技、甬矽电子、汇成股份、伟测科技、颀中科技等跟跌。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">受影响公司</span>长电科技、通富微电</p><p><span class="dl">关联标的</span>长电科技(600584)、通富微电(002156)</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-36分·板块行情走弱)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“重挫”</li></ul></div><p class="dim">行情·利空(36·板块行情走弱)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">同花顺快讯</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://news.10jqka.com.cn/20261120/c682032534.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261120/c682032534.shtml</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizixmk7277024.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>集成电路封测板块重挫，通富微电跌停，长电科技、甬矽电子、汇成股份、伟测科技、颀中科技等跟跌。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>通富微电、长电科技、甬矽电子、汇成股份、伟测科技、颀中科技</p><p><span class="dl">关联标的</span>长电科技(600584)、通富微电(002156)</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>板块大跌</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“集成电路封测板块重挫”</li></ul></div><p class="dim">板块大跌</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">同花顺快讯</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://news.10jqka.com.cn/20261120/c682032534.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261120/c682032534.shtml</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizixmk7277024.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">09:44</span>
@@ -1290,7 +1288,7 @@ Anthropic：1.8 万亿美元
           <span class="meta">半导体 · <span class="bull">利好</span> · 华尔街见闻 · 3 家报道</span>
         </span>
       </summary>
-      <div class="detail"><p>A股光刻机、光刻胶概念低开回升，盛剑科技4连板，光华科技涨停，晶赛科技、广立微涨超10%，格林达、鼎龙股份跟涨。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利好(+8分·板块行情上涨)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“涨停”</li></ul></div><p class="dim">行情·利好(8·板块行情上涨)；体裁判定「汇总/栏目/行情复述」,档位封顶「低」</p><div class="dsec"><span class="dl">来源聚合（3 家）</span><span class="ev-src"><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">同花顺快讯</span><span class="ev-src-badge">华尔街见闻</span></span></div><div class="dsec"><span class="dl">相关报道（2 篇）</span><ul class="dlist related"><li><a href="https://finance.sina.cn/7x24/2026-11-20/detail-inizixmr0414489.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-20/detail-inizixmr041</a></li><li><a href="https://news.10jqka.com.cn/20261120/c682029326.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261120/c682029326.shtml</a></li></ul></div><p><a class="src" href="https://wallstreetcn.com/articles/3202937" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
+      <div class="detail"><p>A股光刻机、光刻胶概念低开回升，盛剑科技4连板，光华科技涨停，晶赛科技、广立微涨超10%，格林达、鼎龙股份跟涨。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bull">利好</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>盛剑科技、光华科技、晶赛科技、广立微、格林达、鼎龙股份</p><p><span class="dl">关联标的</span>—</p><p class="dim"><span class="dl">置信度</span>80%（短期波动）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>概念股上涨</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“A股光刻机、光刻胶概念低开回升”</li></ul></div><p class="dim">概念股上涨</p><div class="dsec"><span class="dl">来源聚合（3 家）</span><span class="ev-src"><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">同花顺快讯</span><span class="ev-src-badge">华尔街见闻</span></span></div><div class="dsec"><span class="dl">相关报道（2 篇）</span><ul class="dlist related"><li><a href="https://finance.sina.cn/7x24/2026-11-20/detail-inizixmr0414489.d.html" target="_blank" rel="noopener">finance.sina.cn/7x24/2026-11-20/detail-inizixmr041</a></li><li><a href="https://news.10jqka.com.cn/20261120/c682029326.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261120/c682029326.shtml</a></li></ul></div><p><a class="src" href="https://wallstreetcn.com/articles/3202937" target="_blank" rel="noopener">原文 · 华尔街见闻</a></p></div>
     </details><details class="item high" data-sector="黄金" data-tier="high">
       <summary>
         <span class="t num">09:34</span>
@@ -1300,17 +1298,17 @@ Anthropic：1.8 万亿美元
           <span class="meta">黄金 · <span class="bear">利空</span> · 新浪财经 · 2 家报道</span>
         </span>
       </summary>
-      <div class="detail"><p>贵金属板块重挫，山金国际跌超6%，赤峰黄金、四川黄金、中金黄金、山东黄金等跟跌。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>中</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">受影响公司</span>山东黄金、中金黄金、赤峰黄金、山金国际</p><p><span class="dl">关联标的</span>山东黄金(600547)、中金黄金(600489)、赤峰黄金(600988)、山金国际(000975)</p><p class="dim"><span class="dl">置信度</span>60%（关键词引擎自动研判，未经验证）</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>行情信号·利空(-36分·板块行情走弱)</li><li>价格信号·利空(-30分)</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“重挫”</li><li>“跌超”</li></ul></div><p class="dim">行情·利空(36·板块行情走弱)+价格·利空(30)</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">同花顺快讯</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://news.10jqka.com.cn/20261120/c682029964.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261120/c682029964.shtml</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizixmr0416831.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>贵金属板块重挫，山金国际跌超6%，赤峰黄金、四川黄金、中金黄金、山东黄金等跟跌。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>高</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>山金国际、赤峰黄金、四川黄金、中金黄金、山东黄金</p><p><span class="dl">关联标的</span>山东黄金(600547)、中金黄金(600489)、赤峰黄金(600988)、山金国际(000975)</p><p class="dim"><span class="dl">置信度</span>80%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>板块重挫</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“贵金属板块重挫，山金国际跌超6%，赤峰黄金、四川黄金、中金黄金、山东黄金等跟跌”</li></ul></div><p class="dim">板块重挫</p><div class="dsec"><span class="dl">来源聚合（2 家）</span><span class="ev-src"><span class="ev-src-badge">新浪财经</span><span class="ev-src-badge">同花顺快讯</span></span></div><div class="dsec"><span class="dl">相关报道（1 篇）</span><ul class="dlist related"><li><a href="https://news.10jqka.com.cn/20261120/c682029964.shtml" target="_blank" rel="noopener">news.10jqka.com.cn/20261120/c682029964.shtml</a></li></ul></div><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizixmr0416831.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details><details class="item quiet" data-sector="半导体" data-tier="quiet">
       <summary>
         <span class="t num">09:32</span>
         <span class="c">
           <span class="title">算力芯片概念延续调整 天普股份连续2日跌停</span>
           
-          <span class="meta">半导体 · <span class="neutral">中性</span> · 新浪财经</span>
+          <span class="meta">半导体 · <span class="bear">利空</span> · 新浪财经</span>
         </span>
       </summary>
-      <div class="detail"><p>早盘算力芯片概念延续调整，天普股份2连跌停，华东重机一字跌停，海光信息、艾布鲁、燧原科技、大胜达、沐曦股份跟跌。</p><div class="dgrid"><div><span class="dl">方向</span><b class="neutral">中性</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>低</b></div><div><span class="dl">窗口</span><b>中期</b></div></div><p><span class="dl">受影响公司</span>海光信息</p><p><span class="dl">关联标的</span>海光信息(688041)</p><p class="dim"><span class="dl">置信度</span>40%（关键词引擎自动研判，未经验证）</p><p class="dim">未命中明显信号,中性</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizixmi5635107.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
+      <div class="detail"><p>早盘算力芯片概念延续调整，天普股份2连跌停，华东重机一字跌停，海光信息、艾布鲁、燧原科技、大胜达、沐曦股份跟跌。</p><div class="dgrid"><div><span class="dl">方向</span><b class="bear">利空</b></div><div><span class="dl">冲击</span><b>低</b></div><div><span class="dl">确定性</span><b>高</b></div><div><span class="dl">窗口</span><b>短期</b></div></div><p><span class="dl">受影响公司</span>天普股份、华东重机、海光信息、艾布鲁、燧原科技、大胜达、沐曦股份</p><p><span class="dl">关联标的</span>海光信息(688041)</p><p class="dim"><span class="dl">置信度</span>90%</p><div class="dsec"><span class="dl">研判依据</span><ul class="dlist"><li>板块调整</li></ul></div><div class="dsec"><span class="dl">证据（AI 提取，请以原文为准）</span><ul class="dlist"><li>“算力芯片概念延续调整”</li></ul></div><p class="dim">板块调整</p><p><a class="src" href="https://finance.sina.cn/7x24/2026-11-20/detail-inizixmi5635107.d.html" target="_blank" rel="noopener">原文 · 新浪财经</a></p></div>
     </details></div></div>
     </div>
       <div class="stream-empty" id="streamEmpty" hidden>今日暂无入选新闻</div>
@@ -1359,7 +1357,7 @@ Anthropic：1.8 万亿美元
       <div class="vtitle">冲击热力图 <span>板块 × 影响等级</span></div>
       <table class="heat">
     <thead><tr><th></th><th>低</th><th>中</th><th>高</th><th>极高</th></tr></thead>
-    <tbody><tr><th>半导体</th><td style="background:rgba(222,4,34,0.65);color:#fff">51</td><td style="background:rgba(222,4,34,0.05);color:var(--ink)">2</td><td style="background:rgba(222,4,34,0.04);color:var(--ink)">1</td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td></tr><tr><th>光模块</th><td style="background:rgba(222,4,34,0.07);color:var(--ink)">3</td><td style="background:rgba(222,4,34,0.04);color:var(--ink)">1</td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td></tr><tr><th>创新药</th><td style="background:rgba(222,4,34,0.04);color:var(--ink)">1</td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td></tr><tr><th>黄金</th><td style="background:rgba(222,4,34,0.09);color:var(--ink)">5</td><td style="background:rgba(222,4,34,0.05);color:var(--ink)">2</td><td style="background:rgba(222,4,34,0.08);color:var(--ink)">4</td><td style="background:rgba(222,4,34,0.04);color:var(--ink)">1</td></tr></tbody>
+    <tbody><tr><th>半导体</th><td style="background:rgba(222,4,34,0.65);color:#fff">38</td><td style="background:rgba(222,4,34,0.23);color:var(--ink)">12</td><td style="background:rgba(222,4,34,0.10);color:var(--ink)">4</td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td></tr><tr><th>光模块</th><td style="background:rgba(222,4,34,0.05);color:var(--ink)">1</td><td style="background:rgba(222,4,34,0.08);color:var(--ink)">3</td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td></tr><tr><th>创新药</th><td style="background:rgba(222,4,34,0.05);color:var(--ink)">1</td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td><td style="background:rgba(222,4,34,0.03);color:var(--ink)"></td></tr><tr><th>黄金</th><td style="background:rgba(222,4,34,0.14);color:var(--ink)">7</td><td style="background:rgba(222,4,34,0.06);color:var(--ink)">2</td><td style="background:rgba(222,4,34,0.06);color:var(--ink)">2</td><td style="background:rgba(222,4,34,0.05);color:var(--ink)">1</td></tr></tbody>
   </table>
     </div>
   </section>
@@ -1371,14 +1369,14 @@ Anthropic：1.8 万亿美元
         <thead><tr><th>板块</th><th>冲击</th><th>今日复盘</th><th>次日倾向</th><th>新闻</th><th>传导逻辑</th><th>关联标的</th></tr></thead>
         <tbody><tr><td class="mx-name">半导体</td><td class="shock-strong">强</td><td class="dir-mixed">分化</td><td class="dir-bull">利好</td><td class="num">54</td><td class="logic">半导体板块54条新闻，方向以分化为主。关注：行业标准落地 国产化向多工序拓展 半导体材料设备板块触底回升；【行业标准落地</td><td class="num tickers">中芯国际(688981)、寒武纪(688256)、长电科技(600584)、通富微电(002156)、海光信息(688041)</td></tr>
 <tr><td class="mx-name">黄金</td><td class="shock-strong">强</td><td class="dir-bear">利空</td><td class="dir-bear">利空</td><td class="num">12</td><td class="logic">黄金板块12条新闻，方向以利空为主。关注：黄金连跌五个交易日，较历史高点跌超2000美元，本周跌幅或超9%。美联储加息预</td><td class="num tickers">山东黄金(600547)、中金黄金(600489)、赤峰黄金(600988)、山金国际(000975)</td></tr>
-<tr><td class="mx-name">光模块</td><td class="shock-weak">弱</td><td class="dir-bull">利好</td><td class="dir-bull">利好</td><td class="num">4</td><td class="logic">光模块板块4条新闻，方向以利好为主</td><td class="num tickers">中际旭创(300308)、新易盛(300502)</td></tr>
-<tr><td class="mx-name">创新药</td><td class="shock-weak">弱</td><td class="dir-flat">中性</td><td class="dir-flat">中性</td><td class="num">1</td><td class="logic">创新药板块1条新闻，方向以中性为主</td><td class="num tickers">恒瑞医药(600276)</td></tr></tbody>
+<tr><td class="mx-name">光模块</td><td class="shock-strong">强</td><td class="dir-bull">利好</td><td class="dir-bull">利好</td><td class="num">4</td><td class="logic">光模块板块4条新闻，方向以利好为主</td><td class="num tickers">中际旭创(300308)、新易盛(300502)</td></tr>
+<tr><td class="mx-name">创新药</td><td class="shock-weak">弱</td><td class="dir-bull">利好</td><td class="dir-flat">中性</td><td class="num">1</td><td class="logic">创新药板块1条新闻，方向以利好为主</td><td class="num tickers">恒瑞医药(600276)</td></tr></tbody>
       </table>
     </div>
   </section>
 
   <footer class="foot">
-    基于多源财经 API 自动抓取 · 关键词引擎自动分类 · 每天更新（含周末）<br>
+    基于多源财经 API 自动抓取 · Claude API 智能分析 + 中文翻译 · 每天更新（含周末）<br>
     监控范围：半导体 / 光模块 / 创新药 / 黄金 &nbsp;|&nbsp; 包含韩国及美股半导体市场<br>
     <strong>免责声明：</strong>基于公开信息自动整理，不构成投资建议。股市有风险，投资需谨慎。
   </footer>
@@ -1390,7 +1388,7 @@ const REFRESH_URL = "https://1384887796-0ww1bkypy1.ap-guangzhou.tencentscf.com";
 // 勿在此写死密钥: 该值会被内联进公开页面,等同于直接发布
 const REFRESH_SECRET = "8d12ca84cba6f339f17425e8";
 const BASE = window.BASE || '';
-const PAGE_GENERATED_AT = "2026-11-20T04:31:25.257Z";
+const PAGE_GENERATED_AT = "2026-11-20T04:56:17.485Z";
 const PHASE_CN = { fetch: '抓取新闻', analyze: 'AI 分析', 'analyze-kw': '关键词引擎', chart: '图表数据', write: '写入文件', commit: '提交 git', push: '推送 git', cloud: '云端构建', done: '完成', skipped: '空报告,跳过推送', error: '失败' };
 let refreshStartedAt = 0;
 let refreshTimer = null;
