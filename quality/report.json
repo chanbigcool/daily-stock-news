@@ -4464,16 +4464,18 @@
     {
       "date": "20261122",
       "displayDate": "2026-11-22",
-      "isAi": true,
-      "aiCoverage": 100,
-      "newsCount": 13,
-      "missingSectors": [],
-      "covered": true,
+      "isAi": false,
+      "aiCoverage": 0,
+      "newsCount": 15,
+      "missingSectors": [
+        "创新药"
+      ],
+      "covered": false,
       "impact": {
         "vhigh": 0,
-        "high": 2
+        "high": 1
       },
-      "signalHitRate": 0,
+      "signalHitRate": 53,
       "directions": {
         "利好": 0,
         "利空": 4,
@@ -4491,6 +4493,11 @@
           "shock": "强"
         },
         {
+          "name": "黄金",
+          "direction": "利空",
+          "shock": "中"
+        },
+        {
           "name": "光模块",
           "direction": "利空",
           "shock": "弱"
@@ -4499,18 +4506,13 @@
           "name": "创新药",
           "direction": "利空",
           "shock": "弱"
-        },
-        {
-          "name": "黄金",
-          "direction": "利空",
-          "shock": "弱"
         }
       ]
     }
   ],
   "total": 100,
-  "coveredAll": 92,
-  "coverageRate": 92,
+  "coveredAll": 91,
+  "coverageRate": 91,
   "avgImpactHigh": 13,
   "matchedDays": 69,
   "etfHistoryDays": 251,
