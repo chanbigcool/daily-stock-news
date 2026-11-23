@@ -4506,11 +4506,59 @@
           "shock": "中"
         }
       ]
+    },
+    {
+      "date": "20261123",
+      "displayDate": "2026-11-23",
+      "isAi": false,
+      "aiCoverage": 0,
+      "newsCount": 26,
+      "missingSectors": [
+        "光模块"
+      ],
+      "covered": false,
+      "impact": {
+        "vhigh": 0,
+        "high": 4
+      },
+      "signalHitRate": 42,
+      "directions": {
+        "利好": 2,
+        "利空": 1,
+        "分化": 0,
+        "中性": 1
+      },
+      "health": {
+        "level": "ok",
+        "issues": []
+      },
+      "matrix": [
+        {
+          "name": "半导体",
+          "direction": "利好",
+          "shock": "强"
+        },
+        {
+          "name": "黄金",
+          "direction": "利空",
+          "shock": "强"
+        },
+        {
+          "name": "创新药",
+          "direction": "利好",
+          "shock": "中"
+        },
+        {
+          "name": "光模块",
+          "direction": "中性",
+          "shock": "弱"
+        }
+      ]
     }
   ],
-  "total": 100,
+  "total": 101,
   "coveredAll": 92,
-  "coverageRate": 92,
+  "coverageRate": 91,
   "avgImpactHigh": 13,
   "matchedDays": 69,
   "etfHistoryDays": 251,
@@ -4570,8 +4618,8 @@
         "reliable": true
       }
     },
-    "spearmanBinary": 0.10423925451718735,
-    "spearmanWeighted": 0.03555778397344116,
+    "spearmanBinary": 0.10319596488659627,
+    "spearmanWeighted": 0.03530202823251952,
     "baselines": {
       "inSample": {
         "alwaysUp": 42,
@@ -4617,15 +4665,15 @@
   },
   "forecast": {
     "n": 76,
-    "correct": 37,
-    "accuracy": 49,
+    "correct": 38,
+    "accuracy": 50,
     "nDays": 19,
     "brier": 0.2551,
     "brierBaseline": 0.25,
     "brierSkill": -0.02,
     "upRate": 39,
     "majority": 61,
-    "edge": -12,
+    "edge": -11,
     "lowSample": false,
     "minSample": 30,
     "bins": [
@@ -4663,8 +4711,8 @@
     "bySector": {
       "半导体": {
         "n": 19,
-        "correct": 6,
-        "accuracy": 32
+        "correct": 7,
+        "accuracy": 37
       },
       "光模块": {
         "n": 19,
@@ -4695,8 +4743,8 @@
       },
       "下行": {
         "n": 40,
-        "correct": 25,
-        "accuracy": 63
+        "correct": 26,
+        "accuracy": 65
       },
       "震荡": {
         "n": 8,
