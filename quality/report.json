@@ -4510,23 +4510,21 @@
     {
       "date": "20261123",
       "displayDate": "2026-11-23",
-      "isAi": true,
-      "aiCoverage": 100,
-      "newsCount": 26,
-      "missingSectors": [
-        "光模块"
-      ],
-      "covered": false,
+      "isAi": false,
+      "aiCoverage": 0,
+      "newsCount": 63,
+      "missingSectors": [],
+      "covered": true,
       "impact": {
-        "vhigh": 0,
-        "high": 2
+        "vhigh": 1,
+        "high": 6
       },
-      "signalHitRate": 0,
+      "signalHitRate": 57,
       "directions": {
-        "利好": 2,
-        "利空": 1,
+        "利好": 1,
+        "利空": 0,
         "分化": 0,
-        "中性": 1
+        "中性": 3
       },
       "health": {
         "level": "ok",
@@ -4535,41 +4533,41 @@
       "matrix": [
         {
           "name": "半导体",
-          "direction": "利好",
+          "direction": "中性",
+          "shock": "强"
+        },
+        {
+          "name": "黄金",
+          "direction": "中性",
           "shock": "强"
         },
         {
           "name": "创新药",
           "direction": "利好",
-          "shock": "中"
-        },
-        {
-          "name": "黄金",
-          "direction": "利空",
-          "shock": "弱"
+          "shock": "强"
         },
         {
           "name": "光模块",
           "direction": "中性",
-          "shock": "弱"
+          "shock": "中"
         }
       ]
     }
   ],
   "total": 101,
-  "coveredAll": 92,
-  "coverageRate": 91,
+  "coveredAll": 93,
+  "coverageRate": 92,
   "avgImpactHigh": 13,
   "matchedDays": 69,
   "etfHistoryDays": 251,
   "research": {
     "total": 232,
     "stated": 213,
-    "correct": 105,
+    "correct": 106,
     "abstained": 19,
     "abstainRate": 8,
     "statedShare": 0.9181034482758621,
-    "accuracy": 49,
+    "accuracy": 50,
     "lowSample": false,
     "reliable": true,
     "bySector": {
@@ -4587,11 +4585,11 @@
       "光模块": {
         "total": 49,
         "stated": 46,
-        "correct": 21,
+        "correct": 22,
         "abstained": 3,
         "abstainRate": 6,
         "statedShare": 0.9387755102040817,
-        "accuracy": 46,
+        "accuracy": 48,
         "lowSample": false,
         "reliable": true
       },
@@ -4618,37 +4616,37 @@
         "reliable": true
       }
     },
-    "spearmanBinary": 0.10319596488659627,
-    "spearmanWeighted": 0.03530202823251952,
+    "spearmanBinary": 0.09464736248999293,
+    "spearmanWeighted": 0.032955100462252,
     "baselines": {
       "inSample": {
-        "alwaysUp": 42,
-        "alwaysDown": 58,
-        "majority": 58,
+        "alwaysUp": 43,
+        "alwaysDown": 57,
+        "majority": 57,
         "bullishBias": 84
       },
       "unconditional": {
         "obs": 1000,
-        "alwaysUp": 47,
-        "alwaysDown": 53,
-        "majority": 53
+        "alwaysUp": 48,
+        "alwaysDown": 52,
+        "majority": 52
       }
     }
   },
   "recap": {
-    "fired": 150,
-    "hit": 137,
-    "rate": 91,
+    "fired": 153,
+    "hit": 140,
+    "rate": 92,
     "since": "2026-08-19",
     "bySector": {
       "半导体": {
-        "fired": 43,
-        "hit": 37,
+        "fired": 44,
+        "hit": 38,
         "rate": 86
       },
       "光模块": {
-        "fired": 43,
-        "hit": 40,
+        "fired": 44,
+        "hit": 41,
         "rate": 93
       },
       "创新药": {
@@ -4657,8 +4655,8 @@
         "rate": 91
       },
       "黄金": {
-        "fired": 30,
-        "hit": 29,
+        "fired": 31,
+        "hit": 30,
         "rate": 97
       }
     }
@@ -4668,12 +4666,12 @@
     "correct": 38,
     "accuracy": 50,
     "nDays": 19,
-    "brier": 0.2551,
+    "brier": 0.2622,
     "brierBaseline": 0.25,
-    "brierSkill": -0.02,
-    "upRate": 39,
-    "majority": 61,
-    "edge": -11,
+    "brierSkill": -0.049,
+    "upRate": 43,
+    "majority": 57,
+    "edge": -7,
     "lowSample": false,
     "minSample": 30,
     "bins": [
@@ -4681,7 +4679,7 @@
         "label": "≤40%",
         "n": 18,
         "avgP": 33,
-        "upRate": 44
+        "upRate": 50
       },
       {
         "label": "40–48%",
@@ -4693,7 +4691,7 @@
         "label": "48–52%",
         "n": 31,
         "avgP": 50,
-        "upRate": 39
+        "upRate": 45
       },
       {
         "label": "52–58%",
